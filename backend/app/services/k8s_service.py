@@ -120,9 +120,7 @@ class K8sTenantService:
                     ],
                 ),
             )
-            self._net_api.create_namespaced_network_policy(
-                namespace=namespace, body=net_policy
-            )
+            self._net_api.create_namespaced_network_policy(namespace=namespace, body=net_policy)
             result["resources_created"].append(f"NetworkPolicy/{namespace}/pantheon-default-deny")
         except ApiException as e:
             if e.status != 409:
@@ -148,9 +146,7 @@ class K8sTenantService:
                     }
                 ),
             )
-            self._core_api.create_namespaced_resource_quota(
-                namespace=namespace, body=quota
-            )
+            self._core_api.create_namespaced_resource_quota(namespace=namespace, body=quota)
             result["resources_created"].append(f"ResourceQuota/{namespace}/pantheon-quota")
         except ApiException as e:
             if e.status != 409:
@@ -175,9 +171,7 @@ class K8sTenantService:
                     ]
                 ),
             )
-            self._core_api.create_namespaced_limit_range(
-                namespace=namespace, body=limit_range
-            )
+            self._core_api.create_namespaced_limit_range(namespace=namespace, body=limit_range)
             result["resources_created"].append(f"LimitRange/{namespace}/pantheon-limits")
         except ApiException as e:
             if e.status != 409:
@@ -246,8 +240,7 @@ class K8sTenantService:
                         "type": s.spec.type,
                         "cluster_ip": s.spec.cluster_ip,
                         "ports": [
-                            f"{p.port}:{p.target_port}/{p.protocol}"
-                            for p in (s.spec.ports or [])
+                            f"{p.port}:{p.target_port}/{p.protocol}" for p in (s.spec.ports or [])
                         ],
                     }
                 )
@@ -306,6 +299,7 @@ class K8sTenantService:
             "pods": pods_list,
             "network_policies": policies_list,
         }
+
     async def apply_manifests(
         self,
         namespace: str,
@@ -386,9 +380,7 @@ class K8sTenantService:
             try:
                 self._core_api.create_namespaced_service(namespace=namespace, body=service)
                 result["applied"].append(f"Service/{namespace}/{service.metadata.name}")
-                logger.info(
-                    "k8s_service_created", name=service.metadata.name, namespace=namespace
-                )
+                logger.info("k8s_service_created", name=service.metadata.name, namespace=namespace)
             except ApiException as e:
                 if e.status == 409:
                     # Services can't be fully replaced; patch instead
@@ -404,9 +396,7 @@ class K8sTenantService:
 
         return result
 
-    async def delete_app_resources(
-        self, namespace: str, app_name: str
-    ) -> dict[str, Any]:
+    async def delete_app_resources(self, namespace: str, app_name: str) -> dict[str, Any]:
         """Delete all K8s resources for an app (deployment, service, secret).
 
         Used for cleanup on failed builds or app deletion.
@@ -438,4 +428,3 @@ class K8sTenantService:
 
 # Global singleton service instance
 k8s_tenant_service = K8sTenantService()
-

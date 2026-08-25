@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
-from app.models import User, App
+from app.models import App, User
+from app.schemas import (
+    DiscoveryEndpointsRequest,
+    DiscoveryEndpointsResponse,
+    DiscoveryTargetAnalysisRequest,
+    DiscoveryTargetAnalysisResponse,
+)
 from app.services.auth_service import get_current_user
-from app.services.discovery_service import run_target_analysis, discover_endpoints
-from app.schemas import DiscoveryTargetAnalysisRequest, DiscoveryTargetAnalysisResponse, \
-    DiscoveryEndpointsRequest, DiscoveryEndpointsResponse
+from app.services.discovery_service import discover_endpoints, run_target_analysis
 
 router = APIRouter(prefix="/api/discovery", tags=["discovery"])
 
@@ -32,12 +37,12 @@ async def api_target_analysis(
         )
 
     # Verify app belongs to org
-    result = await db.execute(select(App).where(App.id == payload.app_id, App.org_id == current_user.org_id))
+    result = await db.execute(
+        select(App).where(App.id == payload.app_id, App.org_id == current_user.org_id)
+    )
     app = result.scalar_one_or_none()
     if not app:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="App not found in org"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found in org")
 
     profile = await run_target_analysis(payload.app_id, current_user.org_id)
     return DiscoveryTargetAnalysisResponse(**profile)
@@ -64,12 +69,12 @@ async def api_discover_endpoints(
         )
 
     # Verify app belongs to org
-    result = await db.execute(select(App).where(App.id == payload.app_id, App.org_id == current_user.org_id))
+    result = await db.execute(
+        select(App).where(App.id == payload.app_id, App.org_id == current_user.org_id)
+    )
     app = result.scalar_one_or_none()
     if not app:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="App not found in org"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found in org")
 
     profile = await discover_endpoints(payload.app_id, current_user.org_id)
     return DiscoveryEndpointsResponse(**profile)

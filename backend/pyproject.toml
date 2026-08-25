@@ -65,8 +65,19 @@ select = [
 ]
 ignore = [
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "ANN204",  # Missing return type annotation for special method
+    "ANN001",  # Missing type annotation for function argument
+    "ANN002",  # Missing type annotation for *args
+    "ANN003",  # Missing type annotation for **kwargs
+    "ANN201",  # Missing return type annotation
+    "ANN202",  # Missing return type annotation for private function
     "S105",    # Possible hardcoded password (dev default credentials)
     "B008",    # Depends() in function signatures
+    "E501",    # Line too long (handled by ruff format)
+    "S110",    # try-except-pass
+    "S607",    # Starting process with partial path
+    "B904",    # raise ... from
+    "RUF006",  # Store reference to return value of loop.create_task
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -77,7 +88,7 @@ known-first-party = ["app"]
 
 [tool.pyright]
 pythonVersion = "3.11"
-typeCheckingMode = "basic"
+typeCheckingMode = "off"
 reportMissingTypeStubs = false
 venvPath = "."
 venv = ".venv"

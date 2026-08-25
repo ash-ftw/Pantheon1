@@ -80,7 +80,7 @@ class ImageScanner:
             return self._trivy_available
 
         try:
-            result = subprocess.run(  # noqa: S603, S607
+            result = subprocess.run(
                 ["trivy", "--version"],
                 capture_output=True,
                 text=True,
@@ -119,24 +119,30 @@ class ImageScanner:
 
         if not self._check_trivy():
             _log("Trivy CLI not found. Skipping vulnerability scan.")
-            _log("Install Trivy: https://aquasecurity.github.io/trivy/latest/getting-started/installation/")
+            _log(
+                "Install Trivy: https://aquasecurity.github.io/trivy/latest/getting-started/installation/"
+            )
             return ScanResult(
                 scan_available=False,
                 error="Trivy CLI not installed. Install with: choco install trivy (Windows) "
-                      "or brew install trivy (macOS).",
+                "or brew install trivy (macOS).",
             )
 
         _log(f"Scanning image: {image_tag}")
 
         try:
             # Run Trivy in JSON output mode for structured parsing
-            result = subprocess.run(  # noqa: S603, S607
+            result = subprocess.run(  # noqa: S603
                 [
-                    "trivy", "image",
-                    "--format", "json",
-                    "--severity", "CRITICAL,HIGH,MEDIUM,LOW",
+                    "trivy",
+                    "image",
+                    "--format",
+                    "json",
+                    "--severity",
+                    "CRITICAL,HIGH,MEDIUM,LOW",
                     "--no-progress",
-                    "--timeout", "5m",
+                    "--timeout",
+                    "5m",
                     image_tag,
                 ],
                 capture_output=True,
@@ -194,15 +200,17 @@ class ImageScanner:
                 else:
                     severity_counts["UNKNOWN"] += 1
 
-                findings.append({
-                    "id": vuln.get("VulnerabilityID", ""),
-                    "severity": severity,
-                    "package": vuln.get("PkgName", ""),
-                    "installed_version": vuln.get("InstalledVersion", ""),
-                    "fixed_version": vuln.get("FixedVersion", ""),
-                    "title": vuln.get("Title", ""),
-                    "target": target,
-                })
+                findings.append(
+                    {
+                        "id": vuln.get("VulnerabilityID", ""),
+                        "severity": severity,
+                        "package": vuln.get("PkgName", ""),
+                        "installed_version": vuln.get("InstalledVersion", ""),
+                        "fixed_version": vuln.get("FixedVersion", ""),
+                        "title": vuln.get("Title", ""),
+                        "target": target,
+                    }
+                )
 
         scan_result = ScanResult(
             critical=severity_counts["CRITICAL"],

@@ -38,9 +38,7 @@ async def get_current_org(
     result = await db.execute(select(Org).where(Org.id == current_user.org_id))
     org = result.scalar_one_or_none()
     if not org:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
     return org
 
@@ -87,9 +85,7 @@ async def update_member_role(
 ) -> OrgMemberRead:
     """Update team member role (Admin role required)."""
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
 
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
@@ -140,16 +136,12 @@ async def remove_member(
 ) -> None:
     """Remove member from org (Admin role required)."""
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
 
     result = await db.execute(
-        select(OrgMember).where(
-            OrgMember.id == member_id, OrgMember.org_id == current_user.org_id
-        )
+        select(OrgMember).where(OrgMember.id == member_id, OrgMember.org_id == current_user.org_id)
     )
     member = result.scalar_one_or_none()
     if not member:
@@ -183,9 +175,7 @@ async def invite_member(
 ) -> Invitation:
     """Invite teammate by email — PRD §7.1."""
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
 
@@ -290,9 +280,7 @@ async def accept_invitation(
     )
     await db.commit()
 
-    token = create_access_token(
-        user_id=user.id, email=user.email, org_id=inv.org_id, role=inv.role
-    )
+    token = create_access_token(user_id=user.id, email=user.email, org_id=inv.org_id, role=inv.role)
     return TokenResponse(access_token=token, expires_in_seconds=1440 * 60)
 
 

@@ -12,7 +12,6 @@ from typing import Any
 import docker
 from docker.errors import BuildError, DockerException
 
-from app.config import settings
 from app.logging import get_logger
 
 logger = get_logger(__name__)
@@ -113,8 +112,8 @@ class DockerBuilder:
                 path=build_context,
                 dockerfile=dockerfile,
                 tag=image_tag,
-                rm=True,           # Remove intermediate containers
-                forcerm=True,      # Force removal on error
+                rm=True,  # Remove intermediate containers
+                forcerm=True,  # Force removal on error
                 buildargs={"BUILDKIT_INLINE_CACHE": "1"},
             )
 
@@ -262,9 +261,13 @@ class DockerBuilder:
         try:
             result = subprocess.run(  # noqa: S603
                 [
-                    "pack", "build", image_tag,
-                    "--path", source_dir,
-                    "--builder", "paketobuildpacks/builder-jammy-base",
+                    "pack",
+                    "build",
+                    image_tag,
+                    "--path",
+                    source_dir,
+                    "--builder",
+                    "paketobuildpacks/builder-jammy-base",
                     "--trust-builder",
                 ],
                 capture_output=True,
@@ -280,8 +283,7 @@ class DockerBuilder:
                 for line in result.stderr.splitlines():
                     _log(f"ERROR: {line}")
                 raise DockerBuildError(
-                    f"Buildpack build failed (exit code {result.returncode}): "
-                    f"{result.stderr[:500]}"
+                    f"Buildpack build failed (exit code {result.returncode}): {result.stderr[:500]}"
                 )
 
             _log("Buildpack build completed successfully.")

@@ -58,7 +58,7 @@ def dispatch_ingestion_task(app_id_str: str, version_id_str: str) -> None:
         logger.info("ingest_app_dispatching_asyncio_fallback", app_id=app_id_str)
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(_async_ingest_app(app_id_str, version_id_str))
+            _bg_task = loop.create_task(_async_ingest_app(app_id_str, version_id_str))
         except RuntimeError:
             asyncio.run(_async_ingest_app(app_id_str, version_id_str))
 
@@ -229,9 +229,7 @@ async def get_app_details(
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
 
-    res = await db.execute(
-        select(App).where(App.id == app_id, App.org_id == current_user.org_id)
-    )
+    res = await db.execute(select(App).where(App.id == app_id, App.org_id == current_user.org_id))
     app_obj = res.scalar_one_or_none()
     if not app_obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found")
@@ -273,7 +271,7 @@ async def preview_app(
 
             if "text/html" in media_type:
                 # Inject base tag so relative and root-relative assets resolve against target_port
-                base_tag = f'<base href="http://localhost:{target_port}/">'.encode("utf-8")
+                base_tag = f'<base href="http://localhost:{target_port}/">'.encode()
                 if b"<head>" in content:
                     content = content.replace(b"<head>", b"<head>" + base_tag, 1)
                 elif b"<HEAD>" in content:

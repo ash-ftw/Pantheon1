@@ -38,7 +38,7 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
     render(
       <MemoryRouter>
         <DesignPreviewPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText('Design System Foundation')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
         <MemoryRouter>
           <TeamManagementPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Auth, Organization & Team Management')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
         <MemoryRouter>
           <InfrastructureViewPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Infrastructure & Provisioning')).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
         <MemoryRouter>
           <AppOnboardingPage />
         </MemoryRouter>
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     expect(screen.getAllByText(/App Onboarding|Import Application/i).length).toBeGreaterThan(0);

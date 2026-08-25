@@ -54,9 +54,7 @@ class ManifestBuilder:
                     client.V1EnvVar(
                         name=k,
                         value_from=client.V1EnvVarSource(
-                            secret_key_ref=client.V1SecretKeySelector(
-                                name=secret_name, key=k
-                            )
+                            secret_key_ref=client.V1SecretKeySelector(name=secret_name, key=k)
                         ),
                     )
                 )

@@ -15,7 +15,6 @@ async def test_full_auth_org_and_infra_flow() -> None:
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-
         # 1. Register User & Org
         reg_payload = {
             "email": admin_email,
@@ -53,9 +52,7 @@ async def test_full_auth_org_and_infra_flow() -> None:
 
         # 5. Invite Teammate (/api/orgs/invitations)
         invite_payload = {"email": tester_email, "role": "tester"}
-        res_inv = await client.post(
-            "/api/orgs/invitations", json=invite_payload, headers=headers
-        )
+        res_inv = await client.post("/api/orgs/invitations", json=invite_payload, headers=headers)
         assert res_inv.status_code == 201
         inv_data = res_inv.json()
         assert inv_data["email"] == tester_email

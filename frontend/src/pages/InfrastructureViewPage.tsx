@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, HardDrive, Cpu, Layers, Lock, RefreshCw, Server, Shield } from 'lucide-react';
+import { HardDrive, Cpu, Layers, Lock, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { TenantProvisioningBanner } from '../components/TenantProvisioningBanner';
 import {
@@ -64,7 +64,8 @@ export const InfrastructureViewPage: React.FC = () => {
             <Badge variant="primary">Phase 3</Badge>
           </div>
           <p className="page-subtitle">
-            Read-only observation of tenant-isolated Kubernetes namespace, network security controls, and resource boundaries.
+            Read-only observation of tenant-isolated Kubernetes namespace, network security
+            controls, and resource boundaries.
           </p>
         </div>
         <Button
@@ -104,12 +105,17 @@ export const InfrastructureViewPage: React.FC = () => {
                   className="bg-[var(--secondary)] border border-[var(--card-border)] rounded-lg p-3.5 space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-[var(--primary)]">{pol.name}</span>
+                    <span className="font-mono text-xs font-bold text-[var(--primary)]">
+                      {pol.name}
+                    </span>
                     <Badge variant="success">{pol.status.toUpperCase()}</Badge>
                   </div>
                   <div className="flex items-center gap-2 pt-1">
                     {pol.types?.map((t) => (
-                      <span key={t} className="px-2 py-0.5 bg-[var(--muted)] text-[var(--foreground)] text-[10px] font-mono rounded border border-[var(--card-border)]">
+                      <span
+                        key={t}
+                        className="px-2 py-0.5 bg-[var(--muted)] text-[var(--foreground)] text-[10px] font-mono rounded border border-[var(--card-border)]"
+                      >
                         {t}
                       </span>
                     ))}
@@ -134,15 +140,21 @@ export const InfrastructureViewPage: React.FC = () => {
           <CardContent className="space-y-3 font-mono text-xs">
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">Max Pod Capacity</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.quota?.max_pods || data?.quota?.pods || '20'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.quota?.max_pods || data?.quota?.pods || '20'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">CPU Ceiling</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.quota?.max_cpu || data?.quota?.cpu_requested || '4 Cores'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.quota?.max_cpu || data?.quota?.cpu_requested || '4 Cores'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">Memory Ceiling</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.quota?.max_memory || data?.quota?.memory_requested || '8 GiB'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.quota?.max_memory || data?.quota?.memory_requested || '8 GiB'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -161,15 +173,21 @@ export const InfrastructureViewPage: React.FC = () => {
           <CardContent className="space-y-3 font-mono text-xs">
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">Default CPU Request</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.limit_range?.default_cpu || '100m'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.limit_range?.default_cpu || '100m'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">Default Memory Request</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.limit_range?.default_memory || '128Mi'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.limit_range?.default_memory || '128Mi'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-[var(--secondary)] rounded border border-[var(--card-border)]">
               <span className="text-[var(--secondary-foreground)]">Storage Reservation</span>
-              <span className="font-bold text-[var(--foreground)]">{data?.quota?.max_storage || '20 GiB'}</span>
+              <span className="font-bold text-[var(--foreground)]">
+                {data?.quota?.max_storage || '20 GiB'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -177,7 +195,10 @@ export const InfrastructureViewPage: React.FC = () => {
 
       {/* Safety Notice */}
       <Alert type="info" title="Kubernetes Client Scoping Policy">
-        Raw <code className="font-mono text-[var(--primary)] font-bold">kubectl</code> access is strictly prohibited. All queries operate via scoped Python <code className="font-mono text-[var(--primary)] font-bold">kubernetes</code> client bindings with tenant-isolated service account authority.
+        Raw <code className="font-mono text-[var(--primary)] font-bold">kubectl</code> access is
+        strictly prohibited. All queries operate via scoped Python{' '}
+        <code className="font-mono text-[var(--primary)] font-bold">kubernetes</code> client
+        bindings with tenant-isolated service account authority.
       </Alert>
     </div>
   );

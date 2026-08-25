@@ -17,9 +17,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     org_id will be added here once auth is wired (Phase 2).
     """
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         request_id = str(uuid.uuid4())
 
         # Clear and bind fresh context for this request

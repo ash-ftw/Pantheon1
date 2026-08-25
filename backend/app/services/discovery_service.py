@@ -1,14 +1,11 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import Request
 try:
     from prance import ResolvingParser  # type: ignore[import-untyped]
 except ImportError:
     ResolvingParser = None
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.logging import get_logger
 from app.services.k8s_service import k8s_tenant_service
@@ -20,7 +17,8 @@ logger = get_logger(__name__)
 # Target Analysis
 # ---------------------------------------------------------------------------
 
-async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str, Any]:
+
+async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, Any]:
     """Profile a deployed app: language, framework, ports, DB, auth.
 
     Scopes all discovery to the org/tenant namespace.
@@ -30,7 +28,7 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str,
     # Attempt K8s connection; fall back to simulated data
     has_k8s = k8s_tenant_service._get_client()
 
-    profile: Dict[str, Any] = {
+    profile: dict[str, Any] = {
         "app_id": str(app_id),
         "org_id": str(org_id),
         "namespace": namespace,
@@ -58,7 +56,9 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str,
     try:
         deps = k8s_tenant_service._apps_api.list_namespaced_deployment(namespace=namespace)
         for d in deps.items:
-            container = d.spec.template.spec.containers[0] if d.spec.template.spec.containers else None
+            container = (
+                d.spec.template.spec.containers[0] if d.spec.template.spec.containers else None
+            )
             image = container.image if container else None
 
             # Detect language/framework from image tag / name patterns
@@ -85,11 +85,32 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str,
     # --- Check environment variables for DB and auth detection ---
     try:
         pods = k8s_tenant_service._core_api.list_namespaced_pod(namespace=namespace)
-        db_env_keys = {"db_host", "db_port", "db_name", "db_user", "db_password", "db_suffix",
-                       "POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "MYSQL_HOST", "MYSQL_PORT",
-                       "MONGO_HOST", "MONGO_PORT", "PG_HOST", "PG_PORT"}
-        auth_env_keys = {"auth_secret", "jwt_secret", "api_key", "auth_token", "oauth_secret",
-                         "private_key", "session_secret"}
+        db_env_keys = {
+            "db_host",
+            "db_port",
+            "db_name",
+            "db_user",
+            "db_password",
+            "db_suffix",
+            "POSTGRES_HOST",
+            "POSTGRES_PORT",
+            "POSTGRES_DB",
+            "MYSQL_HOST",
+            "MYSQL_PORT",
+            "MONGO_HOST",
+            "MONGO_PORT",
+            "PG_HOST",
+            "PG_PORT",
+        }
+        auth_env_keys = {
+            "auth_secret",
+            "jwt_secret",
+            "api_key",
+            "auth_token",
+            "oauth_secret",
+            "private_key",
+            "session_secret",
+        }
 
         found_db_env: set[str] = set()
         found_auth_env: set[str] = set()
@@ -107,7 +128,12 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str,
         profile["auth_env_variables"] = sorted(found_auth_env)
 
         # Derive detected_db from env var patterns
-        if "DB_HOST" in found_db_env or "POSTGRES_HOST" in found_db_env or "MYSQL_HOST" in found_db_env or "MONGO_HOST" in found_db_env:
+        if (
+            "DB_HOST" in found_db_env
+            or "POSTGRES_HOST" in found_db_env
+            or "MYSQL_HOST" in found_db_env
+            or "MONGO_HOST" in found_db_env
+        ):
             profile["detected_db"] = "database"
         elif found_db_env:
             profile["detected_db"] = "database"
@@ -129,7 +155,7 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str,
     return profile
 
 
-def _detect_language_framework(image: str, profile: Dict[str, Any]) -> Dict[str, Any]:
+def _detect_language_framework(image: str, profile: dict[str, Any]) -> dict[str, Any]:
     """Heuristic language/framework detection from Docker image name."""
     img = image.lower()
     if "node-" in img or "node:" in img:
@@ -175,7 +201,8 @@ def _detect_language_framework(image: str, profile: Dict[str, Any]) -> Dict[str,
 # Endpoint Discovery
 # ---------------------------------------------------------------------------
 
-async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str, Any]:
+
+async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, Any]:
     """Probe common OpenAPI/Swagger paths inside the tenant cluster.
 
     Extracts endpoints, methods, parameters and classifies them:
@@ -187,7 +214,7 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str, 
     """
     namespace = k8s_tenant_service.get_namespace_name(org_id)
 
-    profile: Dict[str, Any] = {
+    profile: dict[str, Any] = {
         "app_id": str(app_id),
         "org_id": str(org_id),
         "namespace": namespace,
@@ -235,9 +262,7 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> Dict[str, 
                             profile["endpoints"].append(endpoint_info)
 
                             # Classify the endpoint
-                            classification = _classify_endpoint(
-                                route_path, method, details
-                            )
+                            classification = _classify_endpoint(route_path, method, details)
                             # Add to classification buckets
                             bucket = profile["classification"].setdefault(classification, [])
                             bucket.append(endpoint_info)
@@ -255,13 +280,17 @@ def _classify_endpoint(path: str, method: str, details: dict) -> str:
     description_lower = (details.get("description") or "").lower()
 
     # Upload detection
-    if any(kw in path_lower or kw in summary_lower or kw in description_lower
-           for kw in ["upload", "file", "attach", "avatar", "image", "photo"]):
+    if any(
+        kw in path_lower or kw in summary_lower or kw in description_lower
+        for kw in ["upload", "file", "attach", "avatar", "image", "photo"]
+    ):
         return "upload"
 
     # Search detection
-    if any(kw in path_lower or kw in summary_lower or kw in description_lower
-           for kw in ["search", "query", "filter", "list", "find"]):
+    if any(
+        kw in path_lower or kw in summary_lower or kw in description_lower
+        for kw in ["search", "query", "filter", "list", "find"]
+    ):
         return "search"
 
     # Likely admin paths

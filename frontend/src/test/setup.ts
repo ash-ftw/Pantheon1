@@ -4,7 +4,10 @@
 import '@testing-library/jest-dom';
 
 // Ensure localStorage mock is present in test environment
-if (typeof window !== 'undefined' && (!window.localStorage || typeof window.localStorage.getItem !== 'function')) {
+if (
+  typeof window !== 'undefined' &&
+  (!window.localStorage || typeof window.localStorage.getItem !== 'function')
+) {
   const store: Record<string, string> = {};
   const localStorageMock = {
     getItem: (key: string) => store[key] || null,

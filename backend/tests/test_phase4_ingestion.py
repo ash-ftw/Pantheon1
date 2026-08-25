@@ -111,14 +111,13 @@ async def test_app_ingestion_api_flow() -> None:
     test_email = f"ingest_admin_{unique_suffix}@pantheon.io"
     org_name = f"Ingest Org {unique_suffix}"
 
-    with patch("app.routers.apps.ingest_app.delay") as mock_ingest, patch(
-        "app.routers.auth.provision_tenant_cluster.delay"
-    ) as mock_prov:
+    with (
+        patch("app.routers.apps.ingest_app.delay") as mock_ingest,
+        patch("app.routers.auth.provision_tenant_cluster.delay") as mock_prov,
+    ):
         mock_ingest.return_value = None
         mock_prov.return_value = None
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as ac:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             # 1. Register Org & User
             reg_res = await ac.post(
                 "/api/auth/register",

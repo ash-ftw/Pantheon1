@@ -55,7 +55,10 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   ...props
 }) => {
   return (
-    <p className={`text-xs text-[var(--secondary-foreground)] mt-1.5 leading-relaxed ${className}`} {...props}>
+    <p
+      className={`text-xs text-[var(--secondary-foreground)] mt-1.5 leading-relaxed ${className}`}
+      {...props}
+    >
       {children}
     </p>
   );

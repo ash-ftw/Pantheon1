@@ -71,7 +71,7 @@ interface AuditLogEntry {
   action: string;
   resource_type: string;
   resource_id: string | null;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   ip_address: string | null;
   created_at: string;
 }
@@ -123,7 +123,11 @@ export const TeamManagementPage: React.FC = () => {
   });
 
   // 2. Fetch Team Members
-  const { data: members = [], isLoading: isLoadingMembers, refetch: refetchMembers } = useQuery<OrgMember[]>({
+  const {
+    data: members = [],
+    isLoading: isLoadingMembers,
+    refetch: refetchMembers,
+  } = useQuery<OrgMember[]>({
     queryKey: ['org', 'members'],
     queryFn: async () => {
       const res = await fetch('/api/orgs/members', { headers: getHeaders() });
@@ -143,7 +147,7 @@ export const TeamManagementPage: React.FC = () => {
   });
 
   // 4. Fetch Audit Log
-  const { data: auditLogs = [], isLoading: isLoadingAudit, refetch: refetchAudit } = useQuery<AuditLogEntry[]>({
+  const { data: auditLogs = [], refetch: refetchAudit } = useQuery<AuditLogEntry[]>({
     queryKey: ['org', 'audit-log'],
     queryFn: async () => {
       const res = await fetch('/api/orgs/audit-log', { headers: getHeaders() });
@@ -223,9 +227,15 @@ export const TeamManagementPage: React.FC = () => {
     setAuthError(null);
     try {
       const url = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const body = authMode === 'register'
-        ? { email: authEmail, password: authPassword, full_name: authFullName, org_name: authOrgName }
-        : { email: authEmail, password: authPassword };
+      const body =
+        authMode === 'register'
+          ? {
+              email: authEmail,
+              password: authPassword,
+              full_name: authFullName,
+              org_name: authOrgName,
+            }
+          : { email: authEmail, password: authPassword };
 
       const res = await fetch(url, {
         method: 'POST',
@@ -253,8 +263,8 @@ export const TeamManagementPage: React.FC = () => {
 
       setIsAuthModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['org'] });
-    } catch (err: any) {
-      setAuthError(err.message);
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -274,7 +284,8 @@ export const TeamManagementPage: React.FC = () => {
             <Badge variant="primary">Phase 2</Badge>
           </div>
           <p className="page-subtitle">
-            Manage organization members, RBAC security roles, pending team invitations, and audit logs.
+            Manage organization members, RBAC security roles, pending team invitations, and audit
+            logs.
           </p>
         </div>
 
@@ -282,15 +293,28 @@ export const TeamManagementPage: React.FC = () => {
           {token || user ? (
             <div className="flex items-center gap-3 bg-[var(--card)] border border-[var(--card-border)] px-4 py-2 rounded">
               <div className="text-right">
-                <div className="text-xs font-semibold text-[var(--foreground)]">{user?.name || user?.email || 'Logged In'}</div>
-                <div className="text-[10px] font-mono text-[var(--primary)] uppercase">{user?.role || 'Admin'}</div>
+                <div className="text-xs font-semibold text-[var(--foreground)]">
+                  {user?.name || user?.email || 'Logged In'}
+                </div>
+                <div className="text-[10px] font-mono text-[var(--primary)] uppercase">
+                  {user?.role || 'Admin'}
+                </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout} iconLeft={<LogOut size={12} />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                iconLeft={<LogOut size={12} />}
+              >
                 Logout
               </Button>
             </div>
           ) : (
-            <Button variant="primary" iconLeft={<Key size={14} />} onClick={() => setIsAuthModalOpen(true)}>
+            <Button
+              variant="primary"
+              iconLeft={<Key size={14} />}
+              onClick={() => setIsAuthModalOpen(true)}
+            >
               Login / Sign Up
             </Button>
           )}
@@ -315,8 +339,12 @@ export const TeamManagementPage: React.FC = () => {
         <Card accentColor="primary">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">Organization Name</div>
-              <div className="text-lg font-bold text-[var(--foreground)] mt-1">{orgData?.name || org?.name || 'Default Organization'}</div>
+              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">
+                Organization Name
+              </div>
+              <div className="text-lg font-bold text-[var(--foreground)] mt-1">
+                {orgData?.name || org?.name || 'Default Organization'}
+              </div>
             </div>
             <Users size={24} className="text-[var(--primary)]" />
           </CardContent>
@@ -325,8 +353,12 @@ export const TeamManagementPage: React.FC = () => {
         <Card accentColor="info">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">Org Slug</div>
-              <div className="text-xs font-mono text-[var(--primary)] mt-1">{orgData?.slug || 'default-org'}</div>
+              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">
+                Org Slug
+              </div>
+              <div className="text-xs font-mono text-[var(--primary)] mt-1">
+                {orgData?.slug || 'default-org'}
+              </div>
             </div>
             <Shield size={24} className="text-[var(--info)]" />
           </CardContent>
@@ -335,8 +367,12 @@ export const TeamManagementPage: React.FC = () => {
         <Card accentColor="accent">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">Subscription Plan</div>
-              <div className="text-sm font-bold text-[var(--accent)] mt-1 uppercase">{orgData?.plan || 'Starter'}</div>
+              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">
+                Subscription Plan
+              </div>
+              <div className="text-sm font-bold text-[var(--accent)] mt-1 uppercase">
+                {orgData?.plan || 'Starter'}
+              </div>
             </div>
             <FileText size={24} className="text-[var(--accent)]" />
           </CardContent>
@@ -345,8 +381,12 @@ export const TeamManagementPage: React.FC = () => {
         <Card accentColor="warning">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">Tenant Cluster Status</div>
-              <div className="text-xs font-semibold text-[var(--warning)] mt-1 uppercase">{orgData?.cluster_status || 'Provisioning'}</div>
+              <div className="text-[11px] font-mono text-[var(--muted-foreground)] uppercase">
+                Tenant Cluster Status
+              </div>
+              <div className="text-xs font-semibold text-[var(--warning)] mt-1 uppercase">
+                {orgData?.cluster_status || 'Provisioning'}
+              </div>
             </div>
             <Lock size={24} className="text-[var(--warning)]" />
           </CardContent>
@@ -361,9 +401,15 @@ export const TeamManagementPage: React.FC = () => {
               <UserCheck size={18} className="text-[var(--primary)]" />
               Team Members ({members.length})
             </CardTitle>
-            <CardDescription>Role-Based Access Control (RBAC) enforced per organization scope</CardDescription>
+            <CardDescription>
+              Role-Based Access Control (RBAC) enforced per organization scope
+            </CardDescription>
           </div>
-          <Button variant="primary" iconLeft={<UserPlus size={14} />} onClick={() => setIsInviteModalOpen(true)}>
+          <Button
+            variant="primary"
+            iconLeft={<UserPlus size={14} />}
+            onClick={() => setIsInviteModalOpen(true)}
+          >
             Invite Teammate
           </Button>
         </CardHeader>
@@ -387,10 +433,18 @@ export const TeamManagementPage: React.FC = () => {
             ) : (
               members.map((m) => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-semibold text-[var(--foreground)]">{m.user_name}</TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--secondary-foreground)]">{m.user_email}</TableCell>
+                  <TableCell className="font-semibold text-[var(--foreground)]">
+                    {m.user_name}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-[var(--secondary-foreground)]">
+                    {m.user_email}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={m.role === 'admin' ? 'primary' : m.role === 'tester' ? 'info' : 'neutral'}>
+                    <Badge
+                      variant={
+                        m.role === 'admin' ? 'primary' : m.role === 'tester' ? 'info' : 'neutral'
+                      }
+                    >
                       {m.role.toUpperCase()}
                     </Badge>
                   </TableCell>
@@ -435,7 +489,9 @@ export const TeamManagementPage: React.FC = () => {
               <Mail size={18} className="text-[var(--accent)]" />
               Pending Team Invitations ({invitations.length})
             </CardTitle>
-            <CardDescription>Invitations sent via email awaiting recipient password setup</CardDescription>
+            <CardDescription>
+              Invitations sent via email awaiting recipient password setup
+            </CardDescription>
           </CardHeader>
           <Table>
             <TableHeader>
@@ -449,7 +505,9 @@ export const TeamManagementPage: React.FC = () => {
             <TableBody>
               {invitations.map((inv) => (
                 <TableRow key={inv.id}>
-                  <TableCell className="font-mono text-xs text-[var(--foreground)]">{inv.email}</TableCell>
+                  <TableCell className="font-mono text-xs text-[var(--foreground)]">
+                    {inv.email}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="accent">{inv.role.toUpperCase()}</Badge>
                   </TableCell>
@@ -475,7 +533,9 @@ export const TeamManagementPage: React.FC = () => {
             <Clock size={18} className="text-[var(--primary)]" />
             Append-Only Security Audit Log
           </CardTitle>
-          <CardDescription>Immutable record of all mutating tenant operations and security events</CardDescription>
+          <CardDescription>
+            Immutable record of all mutating tenant operations and security events
+          </CardDescription>
         </CardHeader>
         <Table>
           <TableHeader>
@@ -501,13 +561,20 @@ export const TeamManagementPage: React.FC = () => {
                     {new Date(log.created_at).toLocaleTimeString()}
                   </TableCell>
                   <TableCell>
-                    <span className="font-mono text-xs font-bold text-[var(--primary)]">{log.action}</span>
+                    <span className="font-mono text-xs font-bold text-[var(--primary)]">
+                      {log.action}
+                    </span>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-[var(--secondary-foreground)]">
-                    {log.resource_type} {log.resource_id ? `(${log.resource_id.substring(0, 8)})` : ''}
+                    {log.resource_type}{' '}
+                    {log.resource_id ? `(${log.resource_id.substring(0, 8)})` : ''}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--foreground)]">{log.user_email || 'System'}</TableCell>
-                  <TableCell className="font-mono text-xs text-[var(--muted-foreground)]">{log.ip_address || '127.0.0.1'}</TableCell>
+                  <TableCell className="font-mono text-xs text-[var(--foreground)]">
+                    {log.user_email || 'System'}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-[var(--muted-foreground)]">
+                    {log.ip_address || '127.0.0.1'}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -536,7 +603,11 @@ export const TeamManagementPage: React.FC = () => {
         }
       >
         <div className="space-y-4">
-          {inviteError && <Alert type="danger" title="Invitation Failed">{inviteError}</Alert>}
+          {inviteError && (
+            <Alert type="danger" title="Invitation Failed">
+              {inviteError}
+            </Alert>
+          )}
 
           <Input
             label="Recipient Email Address"
@@ -549,7 +620,7 @@ export const TeamManagementPage: React.FC = () => {
           <Select
             label="Assigned RBAC Role"
             value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value as any)}
+            onChange={(e) => setInviteRole(e.target.value as 'admin' | 'tester' | 'viewer')}
             options={[
               { value: 'admin', label: 'Admin (Full cluster, team, and ingestion privileges)' },
               { value: 'tester', label: 'Tester (Can trigger builds, runs, and view findings)' },
@@ -585,13 +656,14 @@ export const TeamManagementPage: React.FC = () => {
       >
         <div className="space-y-4">
           <p className="text-xs text-[var(--secondary-foreground)]">
-            Updating security role for <strong className="text-[var(--foreground)]">{editingMember?.user_email}</strong>.
+            Updating security role for{' '}
+            <strong className="text-[var(--foreground)]">{editingMember?.user_email}</strong>.
           </p>
 
           <Select
             label="Security Role"
             value={newRole}
-            onChange={(e) => setNewRole(e.target.value as any)}
+            onChange={(e) => setNewRole(e.target.value as 'admin' | 'tester' | 'viewer')}
             options={[
               { value: 'admin', label: 'Admin (Full Access)' },
               { value: 'tester', label: 'Tester (Standard Operations)' },
@@ -608,7 +680,10 @@ export const TeamManagementPage: React.FC = () => {
         title={authMode === 'login' ? 'User Login' : 'Register New Organization'}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
+            <Button
+              variant="secondary"
+              onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+            >
               Switch to {authMode === 'login' ? 'Sign Up' : 'Login'}
             </Button>
             <Button variant="primary" onClick={handleAuthSubmit}>
@@ -618,7 +693,11 @@ export const TeamManagementPage: React.FC = () => {
         }
       >
         <form onSubmit={handleAuthSubmit} className="space-y-4">
-          {authError && <Alert type="danger" title="Auth Failed">{authError}</Alert>}
+          {authError && (
+            <Alert type="danger" title="Auth Failed">
+              {authError}
+            </Alert>
+          )}
 
           {authMode === 'register' && (
             <>

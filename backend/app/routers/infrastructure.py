@@ -42,9 +42,7 @@ async def trigger_provisioning(
         )
 
     if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
 
     try:
         provision_tenant_cluster.delay(str(current_user.org_id))

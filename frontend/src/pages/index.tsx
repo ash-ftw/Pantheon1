@@ -18,7 +18,6 @@ import {
   Shield,
   ShieldAlert,
   Sparkles,
-  Users,
   Wrench,
 } from 'lucide-react';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';

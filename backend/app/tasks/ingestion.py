@@ -129,10 +129,12 @@ def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
     primary_lang = detection.get("primary_language", "Unknown")
     framework = detection.get("framework", "Unknown")
 
-    if (
-        primary_lang in ("JavaScript", "TypeScript", "TypeScript (React)", "JavaScript (React)")
-        or framework in ("React", "Vite", "Next.js", "Express.js", "Vue.js", "Angular", "SvelteKit")
-    ):
+    if primary_lang in (
+        "JavaScript",
+        "TypeScript",
+        "TypeScript (React)",
+        "JavaScript (React)",
+    ) or framework in ("React", "Vite", "Next.js", "Express.js", "Vue.js", "Angular", "SvelteKit"):
         content = (
             "FROM node:20-alpine\n"
             "WORKDIR /app\n"
@@ -241,8 +243,7 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
         org_str = str(org_obj.id) if org_obj else "default"
         service_name = app_obj.name.lower().replace(" ", "-")
         image_tag = (
-            f"{settings.registry_url}/org-{org_str}/"
-            f"app-{service_name}:v{version_id_str[:8]}"
+            f"{settings.registry_url}/org-{org_str}/app-{service_name}:v{version_id_str[:8]}"
         )
         detected_framework = "Unknown"
 
@@ -285,13 +286,10 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                     except Exception as full_err:
                         log(f"Full clone also failed: {full_err!s}")
                         # Create a minimal fallback Dockerfile
-                        await (anyio.Path(scratch_dir) / "app").mkdir(
-                            parents=True, exist_ok=True
-                        )
+                        await (anyio.Path(scratch_dir) / "app").mkdir(parents=True, exist_ok=True)
                         df_p = anyio.Path(scratch_dir) / "Dockerfile"
                         await df_p.write_text(
-                            "FROM alpine:latest\n"
-                            "CMD ['echo', 'Pantheon tenant app running']\n"
+                            "FROM alpine:latest\nCMD ['echo', 'Pantheon tenant app running']\n"
                         )
                         log("Created fallback Dockerfile (alpine).")
 
@@ -350,10 +348,20 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                     except DockerBuildError as e:
                         log(f"Docker build failed: {e!s}")
                         log("Proceeding with simulated build fallback...")
-                        build_result = {"image_id": "simulated", "tag": image_tag, "size_mb": 25.0, "logs": build_logs}
+                        build_result = {
+                            "image_id": "simulated",
+                            "tag": image_tag,
+                            "size_mb": 25.0,
+                            "logs": build_logs,
+                        }
                 else:
                     log("WARNING: Docker daemon not available. Build step simulated.")
-                    build_result = {"image_id": "simulated", "tag": image_tag, "size_mb": 25.0, "logs": build_logs}
+                    build_result = {
+                        "image_id": "simulated",
+                        "tag": image_tag,
+                        "size_mb": 25.0,
+                        "logs": build_logs,
+                    }
             else:
                 log("No Dockerfile found in repository.")
                 buildpack_succeeded = False
@@ -371,7 +379,9 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                         log(f"Buildpack build unavailable or failed: {e!s}")
 
                 if not buildpack_succeeded:
-                    log(f"Generating automated Dockerfile for detected stack: {detected_framework}...")
+                    log(
+                        f"Generating automated Dockerfile for detected stack: {detected_framework}..."
+                    )
                     _generate_dockerfile(detection, scratch_dir)
                     log("Generated Dockerfile successfully.")
 
@@ -383,14 +393,26 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                                 image_tag=image_tag,
                                 log_callback=log,
                             )
-                            log(f"Image built with auto-generated Dockerfile: {build_result.get('size_mb', '?')} MB")
+                            log(
+                                f"Image built with auto-generated Dockerfile: {build_result.get('size_mb', '?')} MB"
+                            )
                         except DockerBuildError as e:
                             log(f"Docker build failed: {e!s}")
                             log("Proceeding with simulated build fallback...")
-                            build_result = {"image_id": "simulated", "tag": image_tag, "size_mb": 25.0, "logs": build_logs}
+                            build_result = {
+                                "image_id": "simulated",
+                                "tag": image_tag,
+                                "size_mb": 25.0,
+                                "logs": build_logs,
+                            }
                     else:
                         log("WARNING: Docker daemon not available. Build step simulated.")
-                        build_result = {"image_id": "simulated", "tag": image_tag, "size_mb": 25.0, "logs": build_logs}
+                        build_result = {
+                            "image_id": "simulated",
+                            "tag": image_tag,
+                            "size_mb": 25.0,
+                            "logs": build_logs,
+                        }
 
             # =================================================================
             # STEP 3: Vulnerability scan (Trivy, non-blocking)
@@ -413,7 +435,11 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
             await db.commit()
 
             push_result: dict[str, Any] | None = None
-            if build_result and docker_builder.is_available and build_result.get("image_id") != "simulated":
+            if (
+                build_result
+                and docker_builder.is_available
+                and build_result.get("image_id") != "simulated"
+            ):
                 try:
                     push_result = await asyncio.to_thread(
                         docker_builder.push_image,
@@ -425,7 +451,9 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                         log(f"Digest: {push_result['digest']}")
                 except DockerBuildError as e:
                     log(f"Registry push warning: {e!s}")
-                    log("Ensure local registry is running ('docker compose up -d registry'). Proceeding with local image tag.")
+                    log(
+                        "Ensure local registry is running ('docker compose up -d registry'). Proceeding with local image tag."
+                    )
             else:
                 log("Image build was simulated or Docker daemon unavailable — push step simulated.")
 
@@ -480,14 +508,20 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                 raise RuntimeError("Kubernetes deployment apply failed. Check cluster status.")
 
             # Spin up local container instance on Docker daemon for live preview
-            if docker_builder.is_available and build_result and build_result.get("image_id") != "simulated":
+            if (
+                docker_builder.is_available
+                and build_result
+                and build_result.get("image_id") != "simulated"
+            ):
                 try:
                     container_name = f"pantheon-app-{service_name}"
                     target_port = 8085
                     if ports and isinstance(ports, list) and len(ports) > 0:
                         target_port = ports[0].get("host_port", 8085)
 
-                    log(f"Spinning up local container instance '{container_name}' on port {target_port}...")
+                    log(
+                        f"Spinning up local container instance '{container_name}' on port {target_port}..."
+                    )
                     client = docker_builder._get_client()
                     if client:
                         try:
@@ -503,7 +537,9 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             detach=True,
                             ports={f"{target_port}/tcp": target_port},
                         )
-                        log(f"Live container active and listening on http://localhost:{target_port}")
+                        log(
+                            f"Live container active and listening on http://localhost:{target_port}"
+                        )
                 except Exception as c_err:
                     log(f"Local container launch note: {c_err!s}")
 
@@ -569,10 +605,7 @@ def ingest_app(app_id_str: str, version_id_str: str) -> dict[str, Any]:
     try:
         asyncio.get_running_loop()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(
-                asyncio.run, _async_ingest_app(app_id_str, version_id_str)
-            )
+            future = executor.submit(asyncio.run, _async_ingest_app(app_id_str, version_id_str))
             return future.result()
     except RuntimeError:
         return asyncio.run(_async_ingest_app(app_id_str, version_id_str))
-

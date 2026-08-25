@@ -137,9 +137,18 @@ class LanguageDetector:
             # Skip hidden dirs, node_modules, vendor, .git, venv, etc.
             parts = file_path.parts
             if any(
-                p.startswith(".") or p in (
-                    "node_modules", "vendor", "__pycache__", "venv",
-                    ".venv", "dist", "build", "target", ".git",
+                p.startswith(".")
+                or p
+                in (
+                    "node_modules",
+                    "vendor",
+                    "__pycache__",
+                    "venv",
+                    ".venv",
+                    "dist",
+                    "build",
+                    "target",
+                    ".git",
                 )
                 for p in parts
             ):

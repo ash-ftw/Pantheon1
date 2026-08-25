@@ -35,18 +35,14 @@ async def _async_provision_tenant(org_id_str: str) -> dict[str, Any]:
             )
 
             # Update status to ready
-            await db.execute(
-                update(Org).where(Org.id == org_id).values(cluster_status="ready")
-            )
+            await db.execute(update(Org).where(Org.id == org_id).values(cluster_status="ready"))
             await db.commit()
 
             logger.info("provision_task_completed", org_id=org_id_str)
             return prov_result
         except Exception as e:
             logger.error("provision_task_failed", org_id=org_id_str, error=str(e))
-            await db.execute(
-                update(Org).where(Org.id == org_id).values(cluster_status="failed")
-            )
+            await db.execute(update(Org).where(Org.id == org_id).values(cluster_status="failed"))
             await db.commit()
             return {"status": "failed", "error": str(e)}
 

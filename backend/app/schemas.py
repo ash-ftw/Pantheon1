@@ -110,6 +110,7 @@ class AuditLogRead(BaseModel):
 
 # --- Discovery Schemas ---
 
+
 class DiscoveryTargetAnalysisRequest(BaseModel):
     app_id: uuid.UUID
 
@@ -152,7 +153,9 @@ class InfrastructureRead(BaseModel):
     status: str
     k8s_connected: bool
     quota: dict[str, Any]
-    limit_range: dict[str, Any] = Field(default_factory=lambda: {"default_cpu": "100m", "default_memory": "128Mi"})
+    limit_range: dict[str, Any] = Field(
+        default_factory=lambda: {"default_cpu": "100m", "default_memory": "128Mi"}
+    )
     deployments: list[dict[str, Any]]
     services: list[dict[str, Any]]
     pods: list[dict[str, Any]]

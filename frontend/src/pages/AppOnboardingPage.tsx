@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Clock,
   ExternalLink,
   GitBranch,
   Loader2,
@@ -137,7 +136,10 @@ function BuildLogPanel({ appId, onClose }: { appId: string; onClose: () => void 
 
   return (
     <div className="build-log-panel card animate-slide-in">
-      <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div
+        className="card-header"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Terminal size={14} />
           <span className="card-title">Build Logs</span>
@@ -152,18 +154,20 @@ function BuildLogPanel({ appId, onClose }: { appId: string; onClose: () => void 
         </button>
       </div>
       <div className="build-log-content font-mono">
-        {lines.length === 0 && (
-          <div className="log-empty">Waiting for build output...</div>
-        )}
+        {lines.length === 0 && <div className="log-empty">Waiting for build output...</div>}
         {lines.map((line, i) => (
           <div
             key={i}
             className={`log-line ${
-              line.includes('===') ? 'log-step' :
-              line.includes('ERROR') || line.includes('failed') ? 'log-error' :
-              line.includes('WARNING') ? 'log-warn' :
-              line.includes('successfully') || line.includes('complete') ? 'log-success' :
-              ''
+              line.includes('===')
+                ? 'log-step'
+                : line.includes('ERROR') || line.includes('failed')
+                  ? 'log-error'
+                  : line.includes('WARNING')
+                    ? 'log-warn'
+                    : line.includes('successfully') || line.includes('complete')
+                      ? 'log-success'
+                      : ''
             }`}
           >
             {line}
@@ -185,14 +189,14 @@ function VersionHistoryPanel({ appId, token }: { appId: string; token: string | 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     apiGet<AppVersion[]>(`/apps/${appId}/versions`, token)
       .then(setVersions)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [appId, token]);
 
-  if (loading) return <div style={{ color: 'var(--muted-foreground)', padding: 12 }}>Loading versions...</div>;
+  if (loading)
+    return <div style={{ color: 'var(--muted-foreground)', padding: 12 }}>Loading versions...</div>;
   if (versions.length === 0) return null;
 
   return (
@@ -204,7 +208,9 @@ function VersionHistoryPanel({ appId, token }: { appId: string; token: string | 
             onClick={() => setExpanded(expanded === v.id ? null : v.id)}
           >
             {expanded === v.id ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            <span className="font-mono" style={{ fontSize: 11 }}>v{v.version_number}</span>
+            <span className="font-mono" style={{ fontSize: 11 }}>
+              v{v.version_number}
+            </span>
             {v.detected_framework && (
               <span className="badge badge-info">{v.detected_framework}</span>
             )}
@@ -217,7 +223,9 @@ function VersionHistoryPanel({ appId, token }: { appId: string; token: string | 
           {expanded === v.id && v.build_logs && (
             <div className="version-logs font-mono">
               {v.build_logs.split('\n').map((line, i) => (
-                <div key={i} className="log-line">{line}</div>
+                <div key={i} className="log-line">
+                  {line}
+                </div>
               ))}
             </div>
           )}
@@ -437,7 +445,7 @@ export function AppOnboardingPage() {
   const [token] = useState<string | null>(() =>
     typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function'
       ? localStorage.getItem('pantheon_token')
-      : null
+      : null,
   );
 
   // Fetch apps list
@@ -482,15 +490,23 @@ export function AppOnboardingPage() {
       let result: AppRecord;
 
       if (mode === 'git') {
-        result = await apiPost<AppRecord>('/apps/ingest/git', {
-          name: appName.trim(),
-          git_url: gitUrl.trim(),
-        }, token);
+        result = await apiPost<AppRecord>(
+          '/apps/ingest/git',
+          {
+            name: appName.trim(),
+            git_url: gitUrl.trim(),
+          },
+          token,
+        );
       } else {
-        result = await apiPost<AppRecord>('/apps/ingest/compose', {
-          name: appName.trim(),
-          compose_yaml: composeYaml.trim(),
-        }, token);
+        result = await apiPost<AppRecord>(
+          '/apps/ingest/compose',
+          {
+            name: appName.trim(),
+            compose_yaml: composeYaml.trim(),
+          },
+          token,
+        );
       }
 
       setSuccessMsg(`App "${result.name}" submitted for ingestion!`);
@@ -499,8 +515,8 @@ export function AppOnboardingPage() {
       setComposeYaml('');
       setSelectedLogApp(result.id);
       fetchApps();
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit app');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to submit app');
     } finally {
       setSubmitting(false);
     }
@@ -512,8 +528,8 @@ export function AppOnboardingPage() {
       await apiPost<AppRecord>(`/apps/${appId}/redeploy`, {}, token);
       setSelectedLogApp(appId);
       fetchApps();
-    } catch (err: any) {
-      setError(err.message || 'Redeploy failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Redeploy failed');
     }
   };
 
@@ -523,8 +539,8 @@ export function AppOnboardingPage() {
       <div className="page-header">
         <h1 className="page-title">App Onboarding</h1>
         <p className="page-subtitle">
-          Deploy your application from a Git repository or Docker Compose file.
-          The ingestion pipeline will clone, build, scan, and deploy to your tenant namespace.
+          Deploy your application from a Git repository or Docker Compose file. The ingestion
+          pipeline will clone, build, scan, and deploy to your tenant namespace.
         </p>
       </div>
 
@@ -562,7 +578,9 @@ export function AppOnboardingPage() {
               <form onSubmit={handleSubmit}>
                 {/* App Name */}
                 <div className="form-group">
-                  <label className="form-label" htmlFor="app-name">Application Name</label>
+                  <label className="form-label" htmlFor="app-name">
+                    Application Name
+                  </label>
                   <input
                     id="app-name"
                     type="text"
@@ -577,7 +595,9 @@ export function AppOnboardingPage() {
                 {/* Git URL Input */}
                 {mode === 'git' && (
                   <div className="form-group">
-                    <label className="form-label" htmlFor="git-url">Git Repository URL</label>
+                    <label className="form-label" htmlFor="git-url">
+                      Git Repository URL
+                    </label>
                     <input
                       id="git-url"
                       type="url"
@@ -596,7 +616,9 @@ export function AppOnboardingPage() {
                 {/* Compose YAML Input */}
                 {mode === 'compose' && (
                   <div className="form-group">
-                    <label className="form-label" htmlFor="compose-yaml">Docker Compose YAML</label>
+                    <label className="form-label" htmlFor="compose-yaml">
+                      Docker Compose YAML
+                    </label>
                     <textarea
                       id="compose-yaml"
                       className="input compose-textarea font-mono"
@@ -624,11 +646,7 @@ export function AppOnboardingPage() {
                 )}
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="btn-primary submit-btn"
-                  disabled={submitting}
-                >
+                <button type="submit" className="btn-primary submit-btn" disabled={submitting}>
                   {submitting ? (
                     <>
                       <Loader2 size={14} className="spin" />
@@ -693,7 +711,10 @@ export function AppOnboardingPage() {
         <div className="onboarding-list-section">
           {/* App List */}
           <div className="card">
-            <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div
+              className="card-header"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Box size={14} />
                 <span className="card-title">Deployed Applications</span>
@@ -726,10 +747,18 @@ export function AppOnboardingPage() {
                             className="app-expand-btn"
                             onClick={() => setExpandedApp(expandedApp === app.id ? null : app.id)}
                           >
-                            {expandedApp === app.id ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                            {expandedApp === app.id ? (
+                              <ChevronDown size={12} />
+                            ) : (
+                              <ChevronRight size={12} />
+                            )}
                           </button>
                           <div className="app-item-icon">
-                            {app.source_type === 'git' ? <GitBranch size={14} /> : <Package size={14} />}
+                            {app.source_type === 'git' ? (
+                              <GitBranch size={14} />
+                            ) : (
+                              <Package size={14} />
+                            )}
                           </div>
                           <div>
                             <div className="app-item-name">{app.name}</div>
@@ -740,15 +769,29 @@ export function AppOnboardingPage() {
                         </div>
                         <div className="app-item-actions">
                           <StatusBadge status={app.status} />
-                          {(app.status === 'building' || app.status === 'pushing' || app.status === 'deploying' || app.status === 'queued') && (
-                            <Loader2 size={14} className="spin" style={{ color: 'var(--warning)' }} />
+                          {(app.status === 'building' ||
+                            app.status === 'pushing' ||
+                            app.status === 'deploying' ||
+                            app.status === 'queued') && (
+                            <Loader2
+                              size={14}
+                              className="spin"
+                              style={{ color: 'var(--warning)' }}
+                            />
                           )}
                           {app.status === 'running' && (
                             <button
                               className="mode-btn mode-active"
                               onClick={() => setSelectedPreviewApp(app)}
                               title="View Live App Preview"
-                              style={{ padding: '3px 10px', fontSize: 11, textTransform: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              style={{
+                                padding: '3px 10px',
+                                fontSize: 11,
+                                textTransform: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}
                             >
                               <ExternalLink size={12} />
                               Live Preview
@@ -756,7 +799,9 @@ export function AppOnboardingPage() {
                           )}
                           <button
                             className="btn-secondary"
-                            onClick={() => setSelectedLogApp(selectedLogApp === app.id ? null : app.id)}
+                            onClick={() =>
+                              setSelectedLogApp(selectedLogApp === app.id ? null : app.id)
+                            }
                             title="View build logs"
                             style={{ padding: '3px 8px', fontSize: 10 }}
                           >
@@ -786,20 +831,14 @@ export function AppOnboardingPage() {
 
           {/* Live Build Logs */}
           {selectedLogApp && (
-            <BuildLogPanel
-              appId={selectedLogApp}
-              onClose={() => setSelectedLogApp(null)}
-            />
+            <BuildLogPanel appId={selectedLogApp} onClose={() => setSelectedLogApp(null)} />
           )}
         </div>
       </div>
 
       {/* Live App Preview Modal */}
       {selectedPreviewApp && (
-        <LivePreviewModal
-          app={selectedPreviewApp}
-          onClose={() => setSelectedPreviewApp(null)}
-        />
+        <LivePreviewModal app={selectedPreviewApp} onClose={() => setSelectedPreviewApp(null)} />
       )}
     </div>
   );
