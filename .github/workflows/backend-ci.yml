@@ -15,6 +15,32 @@ on:
 jobs:
   lint-typecheck-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pantheon
+          POSTGRES_PASSWORD: pantheon_dev
+          POSTGRES_DB: pantheon
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: backend
@@ -39,5 +65,13 @@ jobs:
       - name: Type check (Pyright)
         run: pyright
 
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://pantheon:pantheon_dev@localhost:5432/pantheon
+        run: alembic upgrade head
+
       - name: Test (Pytest)
+        env:
+          DATABASE_URL: postgresql+asyncpg://pantheon:pantheon_dev@localhost:5432/pantheon
+          REDIS_URL: redis://localhost:6379/0
         run: pytest -v

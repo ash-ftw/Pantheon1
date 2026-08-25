@@ -33,6 +33,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=settings.app_env.value,
         debug=settings.app_debug,
     )
+    try:
+        from app.database import Base, engine
+
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        logger.warning("auto_db_init_warning", error=str(e))
+
     yield
     logger.info("pantheon_backend_shutting_down")
 
