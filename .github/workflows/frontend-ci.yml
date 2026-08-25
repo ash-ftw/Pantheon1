@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
 
 jobs:
   lint-and-test:
@@ -34,6 +36,9 @@ jobs:
 
       - name: Format check (Prettier)
         run: npm run format:check
+
+      - name: Type check & Build
+        run: npm run build
 
       - name: Test (Vitest)
         run: npm run test
