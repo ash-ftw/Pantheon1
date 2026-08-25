@@ -1,0 +1,103 @@
+# Pantheon — Local Development Services
+# PostgreSQL 16, Redis 7, MinIO (S3-compatible), Docker Registry (MinIO-backed)
+#
+# Usage: docker compose up -d
+# Backend and frontend run natively (not in containers).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pantheon-postgres
+    environment:
+      POSTGRES_USER: pantheon
+      POSTGRES_PASSWORD: pantheon_dev
+      POSTGRES_DB: pantheon
+    ports:
+      - "5432:5432"
+    volumes:
+      - pantheon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pantheon"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: pantheon-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - pantheon_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: pantheon-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # MinIO Console
+    volumes:
+      - pantheon_miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Auto-create the registry bucket in MinIO on first startup
+  minio-init:
+    image: minio/mc:latest
+    container_name: pantheon-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set pantheon http://minio:9000 minioadmin minioadmin;
+        mc mb --ignore-existing pantheon/pantheon-registry;
+        mc mb --ignore-existing pantheon/pantheon-artifacts;
+        echo 'Buckets ready';
+      "
+    restart: "no"
+
+  # Docker Registry v2 — stores image blobs in MinIO (S3-compatible)
+  registry:
+    image: registry:2
+    container_name: pantheon-registry
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      # S3 storage driver → MinIO
+      REGISTRY_STORAGE: s3
+      REGISTRY_STORAGE_S3_ACCESSKEY: minioadmin
+      REGISTRY_STORAGE_S3_SECRETKEY: minioadmin
+      REGISTRY_STORAGE_S3_REGION: us-east-1
+      REGISTRY_STORAGE_S3_REGIONENDPOINT: http://minio:9000
+      REGISTRY_STORAGE_S3_BUCKET: pantheon-registry
+      REGISTRY_STORAGE_S3_SECURE: "false"
+      REGISTRY_STORAGE_S3_FORCEPATHSTYLE: "true"
+      # Allow HTTP (no TLS for local dev)
+      REGISTRY_HTTP_ADDR: 0.0.0.0:5000
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    ports:
+      - "5000:5000"   # Registry API
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/v2/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pantheon_pgdata:
+  pantheon_redisdata:
+  pantheon_miniodata:

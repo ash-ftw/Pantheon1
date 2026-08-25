@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment files — NEVER commit
+.env
+.env.local
+.env.production
+
+# Keys
+keys/
+
+# IDE
+.vscode/
+.idea/
+
+# Ruff / pyright cache
+.ruff_cache/
+.pyright/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db

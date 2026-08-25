@@ -1,0 +1,52 @@
+# OS & System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment Variables & Credentials — never commit
+.env
+.env.*
+!.env.example
+
+# Python & Backend
+__pycache__/
+*.py[cod]
+*$py.class
+backend/.venv/
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite3
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+.npm
+.eslintcache
+
+# Terraform state — never commit
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Docker volumes & local persistent data
+pantheon_pgdata/
+pantheon_redisdata/
+pantheon_miniodata/
+
+# Logs
+*.log
+logs/

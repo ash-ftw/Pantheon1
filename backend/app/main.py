@@ -1,0 +1,74 @@
+"""Pantheon Backend — FastAPI application entry point.
+
+Phase 0: Empty app with /health endpoint.
+"""
+
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from typing import Any, cast
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+from app.config import settings
+from app.logging import get_logger, setup_logging
+from app.middleware import RequestContextMiddleware
+from app.routers import apps, auth, discovery, infrastructure, orgs
+
+logger = get_logger(__name__)
+
+# Rate limiter setup
+limiter = Limiter(key_func=get_remote_address)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifecycle manager."""
+    setup_logging()
+    logger.info(
+        "pantheon_backend_starting",
+        environment=settings.app_env.value,
+        debug=settings.app_debug,
+    )
+    yield
+    logger.info("pantheon_backend_shutting_down")
+
+
+app = FastAPI(
+    title="Pantheon API",
+    description="B2B Security Testing Platform — Deploy Your App, Attack It Safely",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# Slowapi state & error handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, cast(Any, _rate_limit_exceeded_handler))
+
+# CORS — permissive for local dev, lock down in production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Request context middleware
+app.add_middleware(RequestContextMiddleware)
+
+# Routers
+app.include_router(auth.router)
+app.include_router(orgs.router)
+app.include_router(infrastructure.router)
+app.include_router(apps.router)
+app.include_router(discovery.router)
+
+
+@app.get("/health", tags=["system"])
+async def health_check() -> dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "healthy", "service": "pantheon-api"}
