@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
@@ -86,5 +86,75 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
     );
 
     expect(screen.getAllByText(/App Onboarding|Import Application/i).length).toBeGreaterThan(0);
+  });
+
+  it('Phase 4: renders Start, Stop, and Delete controls for applications', async () => {
+    // Mock apps endpoint with running, stopped, and failed apps
+    const origFetch = global.fetch;
+    global.fetch = vi.fn((url: string | URL | Request) => {
+      const urlStr = url.toString();
+      if (urlStr.includes('/api/apps')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              {
+                id: 'app-run-1',
+                org_id: 'org-1',
+                name: 'Chess Run',
+                source_type: 'git',
+                source_url: 'https://github.com/example/chess.git',
+                status: 'running',
+                discovery_status: 'completed',
+              },
+              {
+                id: 'app-stop-2',
+                org_id: 'org-1',
+                name: 'Chess Stopped',
+                source_type: 'git',
+                source_url: 'https://github.com/example/chess.git',
+                status: 'stopped',
+                discovery_status: 'pending',
+              },
+              {
+                id: 'app-fail-3',
+                org_id: 'org-1',
+                name: 'Chess Failed',
+                source_type: 'git',
+                source_url: 'https://github.com/example/chess.git',
+                status: 'failed',
+                discovery_status: 'failed',
+              },
+            ]),
+        } as Response);
+      }
+      return origFetch ? origFetch(url) : Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+    });
+
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AppOnboardingPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Chess Run')).toBeInTheDocument();
+    expect(await screen.findByText('Chess Stopped')).toBeInTheDocument();
+    expect(await screen.findByText('Chess Failed')).toBeInTheDocument();
+
+    // Verify Start App button is present for stopped app
+    expect(screen.getByTestId('start-app-btn-app-stop-2')).toBeInTheDocument();
+
+    // Verify Stop button is present for running app
+    expect(screen.getByTestId('stop-app-btn-app-run-1')).toBeInTheDocument();
+
+    // Verify Delete buttons are present for all apps including failed
+    expect(screen.getByTestId('delete-app-btn-app-fail-3')).toBeInTheDocument();
+    expect(screen.getByTestId('delete-app-btn-app-stop-2')).toBeInTheDocument();
+    expect(screen.getByTestId('delete-app-btn-app-run-1')).toBeInTheDocument();
+
+    global.fetch = origFetch;
   });
 });

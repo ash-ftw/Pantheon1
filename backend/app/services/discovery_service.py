@@ -1,5 +1,17 @@
+"""Discovery Service - PRD Modules 5-6 (Phase 5).
+
+Target Analysis: profiles deployed apps (language, framework, ports, DB, auth).
+Endpoint Discovery: probes OpenAPI/Swagger specs and classifies endpoints.
+
+All discovery happens from within the tenant namespace — never from the
+range cluster — and is labeled as discovery, not an attack (FR-3.4).
+"""
+
+import os
 import uuid
 from typing import Any
+
+import httpx
 
 try:
     from prance import ResolvingParser  # type: ignore[import-untyped]
@@ -7,10 +19,27 @@ except ImportError:
     ResolvingParser = None
 
 
+from sqlalchemy import select
+
+from app.config import settings
+from app.database import async_session_factory
 from app.logging import get_logger
+from app.models import App, AppVersion
 from app.services.k8s_service import k8s_tenant_service
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_app_exposed_port(target_profile: dict[str, Any] | None) -> int:
+    """Return the first exposed port from the target profile, defaulting to 8085."""
+    if target_profile and target_profile.get("exposed_ports"):
+        return target_profile["exposed_ports"][0]
+    return 8085
 
 
 # ---------------------------------------------------------------------------
@@ -21,17 +50,19 @@ logger = get_logger(__name__)
 async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, Any]:
     """Profile a deployed app: language, framework, ports, DB, auth.
 
-    Scopes all discovery to the org/tenant namespace.
+    Merges data from:
+    1. AppVersion.detected_framework (captured during ingestion)
+    2. K8s introspection (image names, container ports, env vars)
+
+    Returns a profile dict with confidence scoring.
     """
     namespace = k8s_tenant_service.get_namespace_name(org_id)
-
-    # Attempt K8s connection; fall back to simulated data
-    has_k8s = k8s_tenant_service._get_client()
 
     profile: dict[str, Any] = {
         "app_id": str(app_id),
         "org_id": str(org_id),
         "namespace": namespace,
+        "discovery_status": "completed",
         "language": None,
         "framework": None,
         "exposed_ports": [],
@@ -39,20 +70,62 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
         "db_environment_variables": [],
         "auth_mechanisms": [],
         "auth_env_variables": [],
+        "confidence": "low",
+        "confidence_basis": "",
     }
+
+    confidence_signals: list[str] = []
+
+    # --- Step 1: Pull ingestion metadata from DB (highest confidence source) ---
+    try:
+        async with async_session_factory() as db:
+            res = await db.execute(
+                select(AppVersion)
+                .where(AppVersion.app_id == app_id)
+                .order_by(AppVersion.version_number.desc())
+            )
+            latest_version = res.scalars().first()
+
+            if latest_version and latest_version.detected_framework:
+                fw = latest_version.detected_framework
+                # Parse "Language (Framework)" or "Language" format
+                if "(" in fw:
+                    parts = fw.split("(")
+                    profile["language"] = parts[0].strip().lower()
+                    profile["framework"] = parts[1].rstrip(")").strip().lower()
+                else:
+                    profile["language"] = fw.strip().lower()
+
+                confidence_signals.append("ingestion-detected-framework")
+    except Exception as e:
+        logger.warning("discovery_db_read_error", error=str(e))
+
+    # --- Step 2: K8s introspection ---
+    has_k8s = k8s_tenant_service._get_client()
 
     if not has_k8s or not k8s_tenant_service._core_api or not k8s_tenant_service._apps_api:
         # Simulated profile for offline / mock mode
-        profile["language"] = "python"
-        profile["framework"] = "fastapi"
-        profile["exposed_ports"] = [8080]
-        profile["detected_db"] = "postgresql"
-        profile["db_environment_variables"] = ["DB_HOST", "DB_PORT", "DB_NAME"]
-        profile["auth_mechanisms"] = ["oauth2"]
-        profile["auth_env_variables"] = ["AUTH_SECRET", "JWT_SECRET"]
+        if not profile["language"]:
+            profile["language"] = "python"
+            profile["framework"] = "fastapi"
+        profile["exposed_ports"] = profile["exposed_ports"] or [8080]
+        profile["detected_db"] = profile["detected_db"] or "postgresql"
+        profile["db_environment_variables"] = profile["db_environment_variables"] or [
+            "DB_HOST",
+            "DB_PORT",
+            "DB_NAME",
+        ]
+        profile["auth_mechanisms"] = profile["auth_mechanisms"] or ["oauth2"]
+        profile["auth_env_variables"] = profile["auth_env_variables"] or [
+            "AUTH_SECRET",
+            "JWT_SECRET",
+        ]
+        confidence_signals.append("simulated-mode")
+        profile["confidence"] = "low"
+        profile["confidence_basis"] = "Simulated mode — no K8s cluster connected"
         return profile
 
-    # --- Query deployments for exposed ports & image info ---
+    # Query deployments for exposed ports & image info
     try:
         deps = k8s_tenant_service._apps_api.list_namespaced_deployment(namespace=namespace)
         for d in deps.items:
@@ -61,55 +134,49 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
             )
             image = container.image if container else None
 
-            # Detect language/framework from image tag / name patterns
-            if image:
+            # Detect language/framework from image tag if not already known from ingestion
+            if image and not profile["language"]:
                 profile = _detect_language_framework(image, profile)
+                if profile["language"]:
+                    confidence_signals.append("k8s-image-heuristic")
 
-            # Collect ports from the deployment's services / container ports
-            # We'll also look at services below; for now record container port env hints
+            # Collect container ports
             for c in d.spec.template.spec.containers or []:
                 for port in c.ports or []:
-                    profile["exposed_ports"].append(port.container_port)
+                    if port.container_port not in profile["exposed_ports"]:
+                        profile["exposed_ports"].append(port.container_port)
     except Exception as e:
         logger.warning("target_analysis_deploy_read_error", error=str(e))
 
-    # --- Query services for port mapping ---
+    # Query services for port mapping
     try:
         svcs = k8s_tenant_service._core_api.list_namespaced_service(namespace=namespace)
         for s in svcs.items:
             for p in s.spec.ports or []:
-                profile["exposed_ports"].append(p.port)
+                if p.port not in profile["exposed_ports"]:
+                    profile["exposed_ports"].append(p.port)
     except Exception as e:
         logger.warning("target_analysis_service_read_error", error=str(e))
 
-    # --- Check environment variables for DB and auth detection ---
+    if profile["exposed_ports"]:
+        confidence_signals.append("k8s-port-discovery")
+
+    # Check environment variables for DB and auth detection
     try:
         pods = k8s_tenant_service._core_api.list_namespaced_pod(namespace=namespace)
         db_env_keys = {
-            "db_host",
-            "db_port",
-            "db_name",
-            "db_user",
-            "db_password",
-            "db_suffix",
-            "POSTGRES_HOST",
-            "POSTGRES_PORT",
-            "POSTGRES_DB",
-            "MYSQL_HOST",
-            "MYSQL_PORT",
-            "MONGO_HOST",
-            "MONGO_PORT",
-            "PG_HOST",
-            "PG_PORT",
+            "db_host", "db_port", "db_name", "db_user", "db_password", "db_suffix",
+            "postgres_host", "postgres_port", "postgres_db",
+            "mysql_host", "mysql_port",
+            "mongo_host", "mongo_port",
+            "pg_host", "pg_port",
+            "database_url", "database_host",
+            "redis_url", "redis_host",
         }
         auth_env_keys = {
-            "auth_secret",
-            "jwt_secret",
-            "api_key",
-            "auth_token",
-            "oauth_secret",
-            "private_key",
-            "session_secret",
+            "auth_secret", "jwt_secret", "api_key", "auth_token",
+            "oauth_secret", "private_key", "session_secret",
+            "jwt_private_key_path", "jwt_public_key_path",
         }
 
         found_db_env: set[str] = set()
@@ -128,29 +195,49 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
         profile["auth_env_variables"] = sorted(found_auth_env)
 
         # Derive detected_db from env var patterns
-        if (
-            "DB_HOST" in found_db_env
-            or "POSTGRES_HOST" in found_db_env
-            or "MYSQL_HOST" in found_db_env
-            or "MONGO_HOST" in found_db_env
-        ):
-            profile["detected_db"] = "database"
+        db_lower = {e.lower() for e in found_db_env}
+        if any(k in db_lower for k in ("postgres_host", "pg_host", "database_url")):
+            profile["detected_db"] = "postgresql"
+        elif any(k in db_lower for k in ("mysql_host",)):
+            profile["detected_db"] = "mysql"
+        elif any(k in db_lower for k in ("mongo_host",)):
+            profile["detected_db"] = "mongodb"
+        elif any(k in db_lower for k in ("redis_url", "redis_host")):
+            profile["detected_db"] = "redis"
         elif found_db_env:
             profile["detected_db"] = "database"
 
-        # Derive auth_mechanisms from env var names only
+        if found_db_env:
+            confidence_signals.append("k8s-env-db-detection")
+
+        # Derive auth_mechanisms from env var names
         if found_auth_env:
-            if "AUTH_SECRET" in found_auth_env or "JWT_SECRET" in found_auth_env:
-                profile["auth_mechanisms"] = ["jwt", "oauth2"]
-            elif "API_KEY" in found_auth_env:
+            auth_lower = {e.lower() for e in found_auth_env}
+            if any(k in auth_lower for k in ("jwt_secret", "jwt_private_key_path")):
+                profile["auth_mechanisms"] = ["jwt"]
+            elif "oauth_secret" in auth_lower:
+                profile["auth_mechanisms"] = ["oauth2"]
+            elif "api_key" in auth_lower:
                 profile["auth_mechanisms"] = ["api_key"]
+            elif "session_secret" in auth_lower:
+                profile["auth_mechanisms"] = ["session"]
             else:
                 profile["auth_mechanisms"] = ["unknown"]
+            confidence_signals.append("k8s-env-auth-detection")
         else:
             profile["auth_mechanisms"] = ["none detected"]
 
     except Exception as e:
         logger.warning("target_analysis_env_read_error", error=str(e))
+
+    # Compute overall confidence
+    if len(confidence_signals) >= 3:
+        profile["confidence"] = "high"
+    elif len(confidence_signals) >= 1:
+        profile["confidence"] = "medium"
+    else:
+        profile["confidence"] = "low"
+    profile["confidence_basis"] = ", ".join(confidence_signals) if confidence_signals else "no signals"
 
     return profile
 
@@ -158,13 +245,7 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
 def _detect_language_framework(image: str, profile: dict[str, Any]) -> dict[str, Any]:
     """Heuristic language/framework detection from Docker image name."""
     img = image.lower()
-    if "node-" in img or "node:" in img:
-        profile["language"] = "javascript"
-        if "express" in img or "next" in img:
-            profile["framework"] = "express"
-        else:
-            profile["framework"] = "unknown"
-    elif "python" in img:
+    if any(k in img for k in ("python", "fastapi", "uvicorn", "django", "flask")):
         profile["language"] = "python"
         if "fastapi" in img or "uvicorn" in img:
             profile["framework"] = "fastapi"
@@ -174,19 +255,25 @@ def _detect_language_framework(image: str, profile: dict[str, Any]) -> dict[str,
             profile["framework"] = "flask"
         else:
             profile["framework"] = "unknown"
-    elif "java" in img or "openjdk" in img:
+    elif any(k in img for k in ("node", "express", "next")):
+        profile["language"] = "javascript"
+        if "express" in img or "next" in img:
+            profile["framework"] = "express"
+        else:
+            profile["framework"] = "unknown"
+    elif any(k in img for k in ("java", "openjdk", "spring")):
         profile["language"] = "java"
         if "spring" in img:
             profile["framework"] = "spring boot"
         else:
             profile["framework"] = "unknown"
-    elif "ruby" in img:
+    elif any(k in img for k in ("ruby", "rails", "ror")):
         profile["language"] = "ruby"
         profile["framework"] = "ror"
-    elif "golang" in img or "go:" in img:
+    elif "golang" in img or "go:" in img or "go-" in img:
         profile["language"] = "go"
         profile["framework"] = "unknown"
-    elif "php" in img:
+    elif any(k in img for k in ("php", "laravel", "symfony")):
         profile["language"] = "php"
         if "laravel" in img:
             profile["framework"] = "laravel"
@@ -201,16 +288,32 @@ def _detect_language_framework(image: str, profile: dict[str, Any]) -> dict[str,
 # Endpoint Discovery
 # ---------------------------------------------------------------------------
 
+# Extended list of common OpenAPI/Swagger paths to probe
+_COMMON_SPEC_PATHS = [
+    "/openapi.json",
+    "/swagger.json",
+    "/api-docs",
+    "/docs",
+    "/v1/api-docs",
+    "/swagger/v1/swagger.json",
+    "/api/v1/openapi.json",
+    "/api/openapi.json",
+    "/api/swagger.json",
+    "/swagger-ui/api-docs",
+]
+
 
 async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, Any]:
-    """Probe common OpenAPI/Swagger paths inside the tenant cluster.
+    """Probe common OpenAPI/Swagger paths on the deployed app.
 
     Extracts endpoints, methods, parameters and classifies them:
       - public
-      - likely-admin
-      - likely-auth
+      - likely_admin
+      - likely_auth
       - upload
       - search
+
+    Each endpoint gets a confidence score and basis.
     """
     namespace = k8s_tenant_service.get_namespace_name(org_id)
 
@@ -218,6 +321,7 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
         "app_id": str(app_id),
         "org_id": str(org_id),
         "namespace": namespace,
+        "discovery_status": "completed",
         "specs_found": [],
         "endpoints": [],
         "classification": {
@@ -229,48 +333,98 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
         },
     }
 
-    if ResolvingParser is None:
-        logger.warning("prance_not_installed_skipping_endpoint_discovery")
-        return profile
+    # Determine the host and port to probe (network-readiness / K8s / container)
+    port = 8085
+    probe_host = os.getenv("PANTHEON_TARGET_HOST") or getattr(settings, "target_probe_host", "localhost")
+    try:
+        async with async_session_factory() as db:
+            res = await db.execute(select(App).where(App.id == app_id))
+            app_obj = res.scalar_one_or_none()
+            if app_obj and app_obj.target_profile:
+                port = _get_app_exposed_port(app_obj.target_profile)
+                if app_obj.target_profile.get("probe_host"):
+                    probe_host = app_obj.target_profile["probe_host"]
+    except Exception as e:
+        logger.warning("discovery_port_lookup_error", error=str(e))
 
-    # Probe common OpenAPI paths
-    common_paths = ["/openapi.json", "/swagger.json", "/api-docs"]
-
-    for path in common_paths:
+    # Try httpx probing first (works with or without prance)
+    for path in _COMMON_SPEC_PATHS:
+        full_url = f"http://{probe_host}:{port}{path}"
         try:
-            full_url = f"http://localhost:{path}"  # In-cluster would use service DNS
-            # For now, attempt ResolvingParser from local file or URL
-            # In production this would hit the service endpoint inside the namespace
-            parser = ResolvingParser(full_url, store_schema=False)
-            spec = parser.spec
-
-            profile["specs_found"].append(path)
-
-            # Extract paths and operations
-            if spec and "paths" in spec:
-                for route_path, methods in spec["paths"].items():
-                    for method, details in methods.items():
-                        if method in ("get", "post", "put", "delete", "patch", "head", "options"):
-                            endpoint_info = {
-                                "path": route_path,
-                                "method": method.upper(),
-                                "summary": details.get("summary", ""),
-                                "description": details.get("description", ""),
-                                "parameters": details.get("parameters", []),
-                                "responses": details.get("responses", {}),
-                            }
-                            profile["endpoints"].append(endpoint_info)
-
-                            # Classify the endpoint
-                            classification = _classify_endpoint(route_path, method, details)
-                            # Add to classification buckets
-                            bucket = profile["classification"].setdefault(classification, [])
-                            bucket.append(endpoint_info)
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                resp = await client.get(full_url)
+                if resp.status_code == 200:
+                    content_type = resp.headers.get("content-type", "")
+                    if "json" in content_type or "yaml" in content_type:
+                        spec = resp.json()
+                        if "paths" in spec or "openapi" in spec or "swagger" in spec:
+                            profile["specs_found"].append(path)
+                            _extract_endpoints_from_spec(spec, profile)
+                            logger.info(
+                                "endpoint_discovery_spec_found",
+                                path=path,
+                                host=probe_host,
+                                port=port,
+                                endpoint_count=len(profile["endpoints"]),
+                            )
+                            break  # Found a valid spec, stop probing
         except Exception as e:
-            logger.warning("endpoint_discovery_path_failed", path=path, error=str(e))
+            logger.debug("endpoint_discovery_probe_failed", path=full_url, error=str(e))
             continue
 
+    # Fallback: try prance ResolvingParser if no spec found via httpx
+    if not profile["specs_found"] and ResolvingParser is not None:
+        for path in _COMMON_SPEC_PATHS[:3]:
+            full_url = f"http://{probe_host}:{port}{path}"
+            try:
+                parser = ResolvingParser(full_url, store_schema=False)
+                spec = parser.spec
+                if spec:
+                    profile["specs_found"].append(path)
+                    _extract_endpoints_from_spec(spec, profile)
+                    break
+            except Exception as e:
+                logger.debug("prance_parse_failed", path=path, error=str(e))
+                continue
+
     return profile
+
+
+def _extract_endpoints_from_spec(spec: dict, profile: dict[str, Any]) -> None:
+    """Extract and classify endpoints from an OpenAPI/Swagger spec."""
+    if "paths" not in spec:
+        return
+
+    for route_path, methods in spec["paths"].items():
+        if not isinstance(methods, dict):
+            continue
+
+        for method, details in methods.items():
+            if method not in ("get", "post", "put", "delete", "patch", "head", "options"):
+                continue
+            if not isinstance(details, dict):
+                continue
+
+            classification = _classify_endpoint(route_path, method, details)
+            confidence, basis = _compute_classification_confidence(
+                route_path, method, details, classification
+            )
+
+            endpoint_info = {
+                "path": route_path,
+                "method": method.upper(),
+                "summary": details.get("summary", ""),
+                "description": details.get("description", ""),
+                "classification": classification,
+                "confidence": confidence,
+                "confidence_basis": basis,
+                "parameters": details.get("parameters", []),
+            }
+            profile["endpoints"].append(endpoint_info)
+
+            # Add to classification buckets
+            bucket = profile["classification"].setdefault(classification, [])
+            bucket.append(endpoint_info)
 
 
 def _classify_endpoint(path: str, method: str, details: dict) -> str:
@@ -289,19 +443,70 @@ def _classify_endpoint(path: str, method: str, details: dict) -> str:
     # Search detection
     if any(
         kw in path_lower or kw in summary_lower or kw in description_lower
-        for kw in ["search", "query", "filter", "list", "find"]
+        for kw in ["search", "query", "filter", "find"]
     ):
         return "search"
 
     # Likely admin paths
     admin_kw = ["admin", "manage", "delete", "drop", "configure", "settings"]
     if any(kw in path_lower for kw in admin_kw):
-        return "likely-admin"
+        return "likely_admin"
 
     # Likely auth endpoints
-    auth_kw = ["login", "logout", "auth", "token", "signup", "signin", "credentials"]
+    auth_kw = ["login", "logout", "auth", "token", "signup", "signin", "credentials", "register"]
     if any(kw in path_lower for kw in auth_kw):
-        return "likely-auth"
+        return "likely_auth"
 
     # Default to public
     return "public"
+
+
+def _compute_classification_confidence(
+    path: str, method: str, details: dict, classification: str
+) -> tuple[str, str]:
+    """Compute confidence level and basis string for an endpoint classification."""
+    path_lower = path.lower()
+    reasons: list[str] = []
+
+    # Path-based signals are stronger
+    if classification == "likely_auth":
+        auth_kw = ["login", "logout", "auth", "token", "signup", "signin", "register"]
+        matched = [kw for kw in auth_kw if kw in path_lower]
+        if matched:
+            reasons.append(f"path contains '{', '.join(matched)}'")
+    elif classification == "likely_admin":
+        admin_kw = ["admin", "manage", "settings"]
+        matched = [kw for kw in admin_kw if kw in path_lower]
+        if matched:
+            reasons.append(f"path contains '{', '.join(matched)}'")
+    elif classification == "upload":
+        upload_kw = ["upload", "file", "attach"]
+        matched = [kw for kw in upload_kw if kw in path_lower]
+        if matched:
+            reasons.append(f"path contains '{', '.join(matched)}'")
+    elif classification == "search":
+        search_kw = ["search", "query", "filter", "find"]
+        matched = [kw for kw in search_kw if kw in path_lower]
+        if matched:
+            reasons.append(f"path contains '{', '.join(matched)}'")
+
+    # Check summary/description for additional signals
+    summary = (details.get("summary") or "").lower()
+    if summary:
+        reasons.append("summary metadata present")
+
+    # Security scheme signals
+    security = details.get("security", [])
+    if security:
+        reasons.append("security scheme declared")
+
+    # Compute confidence from signal count
+    if len(reasons) >= 2:
+        confidence = "high"
+    elif len(reasons) == 1:
+        confidence = "medium"
+    else:
+        confidence = "low"
+        reasons.append("default classification")
+
+    return confidence, "; ".join(reasons)

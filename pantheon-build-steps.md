@@ -187,14 +187,22 @@ This must exist and be wired in *before* any scenario is allowed to execute — 
 The mechanism that makes cross-cluster attack execution safe. Must exist before any real attacker pod runs.
 
 1. Route object = one rule: range-cluster attacker pod → tenant-namespace/target-service:port, nothing else. Implemented as K8s `Ingress` or Traefik `IngressRoute`.
-2. **Critical safety property**: the range cluster never holds tenant credentials — the *tenant cluster* exposes the route; the range cluster only ever has a URL it's permitted to hit (NFR-1.3). Verify this holds at the code level, not just by convention.
-3. TTL enforcement: route carries an `expires-at` annotation; Celery beat periodic task sweeps every 30s and deletes anything expired, independent of whether the run finished cleanly (NFR-2.1).
-4. Kill switch: `DELETE /test-runs/{id}/route` — direct synchronous API call from `route_broker.py`, deletes the K8s object immediately, does not go through Celery. Target: under 5 seconds click-to-revoked end to end (NFR-3.1).
-5. Route status (open/target/opened-at/expires-at) visible in the UI at all times while active (FR-5.4).
-6. No route may ever grant L3/L4 access — application-layer (HTTP/HTTPS) to the declared target service/port only (FR-5.5).
-7. Every route create/delete written to `audit_log` in the same transaction as the K8s API call; if the K8s call fails, the audit entry still records the attempt.
+2. **Dual-URL Architecture**:
+   - `internal_url`: `http://route-{id}.{namespace}.svc.cluster.local:{port}` used exclusively by range attacker pods.
+   - `public_url`: `http://<host>:8000/r/{route_id}` (or `/r/{route_id}`) host-accessible reverse proxy endpoint for UI/Human testing without exposing Kubernetes services directly.
+3. **Controlled Destination-Locked Reverse Proxy**:
+   - Reverse proxy mounted at `/r/{route_id}` strictly resolves destination from database (zero SSRF).
+   - Validates route active state and server-side TTL expiration on every request (HTTP 410 on expired, 403 on revoked).
+4. **Critical safety property**: the range cluster never holds tenant credentials — the *tenant cluster* exposes the route; the range cluster only ever has a URL it's permitted to hit (NFR-1.3). Verify this holds at the code level, not just by convention.
+5. **TTL enforcement**: route carries an `expires-at` annotation; Celery beat periodic task sweeps every 30s and deletes anything expired, independent of whether the run finished cleanly (NFR-2.1).
+6. **Multi-Tier Kill switch**:
+   - Tier 1: Immediate in-memory/DB deny on proxy requests (0ms block).
+   - Tier 2: Synchronous direct API call deleting the K8s object immediately (sub-5s SLA, NFR-3.1).
+7. **Route status & UI**: Human `public_url` shown with Live Preview, internal `.cluster.local` attack URL available in Technical Details, live countdown timer (FR-5.4).
+8. No route may ever grant L3/L4 access — application-layer (HTTP/HTTPS) to the declared target service/port only (FR-5.5).
+9. Every route create/delete written to `audit_log` in the same transaction as the K8s API call; if the K8s call fails, the audit entry still records the attempt.
 
-**Exit criteria:** a route can be opened, is visible with a live countdown to expiry, and a kill-switch click revokes it in under 5 seconds, verified with a timer in an integration test. Confirm zero cross-tenant network path exists even under a simulated backend crash mid-run (NFR-1.1, NFR-2.1).
+**Exit criteria:** a route can be opened with both `internal_url` and `public_url`, is human-testable via the reverse proxy, shows live countdown to expiry with server-side 410 enforcement, and a kill-switch click revokes proxy access instantly and deletes the Kubernetes Ingress in under 5 seconds. Confirm zero cross-tenant network path exists even under a simulated backend crash mid-run (NFR-1.1, NFR-2.1).
 
 ---
 

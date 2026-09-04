@@ -11,7 +11,9 @@ Endpoints:
 """
 
 import asyncio
+import os
 import uuid
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -31,6 +33,7 @@ from app.database import get_db_session
 from app.logging import get_logger
 from app.models import App, AppVersion, User
 from app.routers.orgs import log_audit_event
+from app.services.app_runtime_service import app_runtime_service
 from app.services.auth_service import get_current_user
 from app.tasks.ingestion import _async_ingest_app, ingest_app
 
@@ -104,6 +107,7 @@ class AppRead(BaseModel):
     source_type: str
     source_url: str | None = None
     status: str
+    discovery_status: str = "pending"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -211,12 +215,26 @@ async def list_apps(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[App]:
-    """List applications for the user's organization."""
+    """List applications for the user's organization with live container status synchronization."""
     if not current_user.org_id:
         return []
 
-    res = await db.execute(select(App).where(App.org_id == current_user.org_id))
-    return list(res.scalars().all())
+    res = await db.execute(
+        select(App)
+        .where(App.org_id == current_user.org_id)
+        .order_by(App.created_at.desc())
+    )
+    apps = list(res.scalars().all())
+
+    # Sync runtime status for built apps (e.g. if container was stopped or exited on restart)
+    status_changed = False
+    for app in apps:
+        if await app_runtime_service.sync_app_status(app, db):
+            status_changed = True
+    if status_changed:
+        await db.commit()
+
+    return apps
 
 
 @router.get("/{app_id}", response_model=AppRead)
@@ -225,7 +243,7 @@ async def get_app_details(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> App:
-    """Get details for a specific application."""
+    """Get details for a specific application with live container status synchronization."""
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
 
@@ -234,19 +252,137 @@ async def get_app_details(
     if not app_obj:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found")
 
+    if await app_runtime_service.sync_app_status(app_obj, db):
+        await db.commit()
+
     return app_obj
+
+
+@router.post("/{app_id}/start", response_model=AppRead)
+async def start_app_instance(
+    app_id: uuid.UUID,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> App:
+    """Start application container instance if stopped or reopening system."""
+    if not current_user.org_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
+
+    res = await db.execute(select(App).where(App.id == app_id, App.org_id == current_user.org_id))
+    app_obj = res.scalar_one_or_none()
+    if not app_obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found")
+
+    try:
+        await app_runtime_service.start_app(app_obj, db)
+    except ValueError as err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(err))
+
+    await log_audit_event(
+        db,
+        org_id=current_user.org_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="app.start",
+        resource_type="App",
+        resource_id=str(app_obj.id),
+        details={"name": app_obj.name},
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return app_obj
+
+
+@router.post("/{app_id}/stop", response_model=AppRead)
+async def stop_app_instance(
+    app_id: uuid.UUID,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> App:
+    """Stop application container instance."""
+    if not current_user.org_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
+
+    res = await db.execute(select(App).where(App.id == app_id, App.org_id == current_user.org_id))
+    app_obj = res.scalar_one_or_none()
+    if not app_obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found")
+
+    await app_runtime_service.stop_app(app_obj, db)
+
+    await log_audit_event(
+        db,
+        org_id=current_user.org_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="app.stop",
+        resource_type="App",
+        resource_id=str(app_obj.id),
+        details={"name": app_obj.name},
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return app_obj
+
+
+@router.delete("/{app_id}", status_code=status.HTTP_200_OK)
+async def delete_app_instance(
+    app_id: uuid.UUID,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """Delete an application and all its versions, deployments, and container resources."""
+    if not current_user.org_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
+
+    res = await db.execute(select(App).where(App.id == app_id, App.org_id == current_user.org_id))
+    app_obj = res.scalar_one_or_none()
+    if not app_obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="App not found")
+
+    app_name = app_obj.name
+    # Clean up Docker resources
+    await app_runtime_service.delete_app_resources(app_name)
+
+    # Delete app from database (cascades to versions, deployments, routes)
+    await db.delete(app_obj)
+    await db.commit()
+
+    await log_audit_event(
+        db,
+        org_id=current_user.org_id,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="app.delete",
+        resource_type="App",
+        resource_id=str(app_id),
+        details={"name": app_name},
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return {"status": "deleted", "id": str(app_id), "name": app_name}
 
 
 @router.get("/{app_id}/preview")
 async def preview_app(
     app_id: uuid.UUID,
+    request: Request,
     target_port: int = 8085,
     db: AsyncSession = Depends(get_db_session),
 ) -> Response:
     """Proxy live app request and strip framing restrictions (X-Frame-Options, CSP) for preview."""
     import httpx
 
-    target_url = f"http://localhost:{target_port}/"
+    target_host = os.getenv("PANTHEON_TARGET_HOST", "localhost")
+    target_url = f"http://{target_host}:{target_port}/"
+
+    # Derive the external host the client used to reach Pantheon (for direct links and base tags)
+    client_host = request.headers.get("x-forwarded-host") or request.url.hostname or "localhost"
+    client_hostname = client_host.split(":")[0]
+
     async with httpx.AsyncClient(timeout=3.0) as client:
         try:
             resp = await client.get(target_url)
@@ -270,8 +406,8 @@ async def preview_app(
             media_type = resp.headers.get("content-type", "text/html")
 
             if "text/html" in media_type:
-                # Inject base tag so relative and root-relative assets resolve against target_port
-                base_tag = f'<base href="http://localhost:{target_port}/">'.encode()
+                # Inject base tag so relative and root-relative assets resolve against client_hostname:target_port
+                base_tag = f'<base href="http://{client_hostname}:{target_port}/">'.encode()
                 if b"<head>" in content:
                     content = content.replace(b"<head>", b"<head>" + base_tag, 1)
                 elif b"<HEAD>" in content:
@@ -305,7 +441,7 @@ async def preview_app(
     <div class="card">
         <h2>⚡ Pantheon App Instance Running</h2>
         <p>Your application is deployed and active in the tenant cluster on port <strong>{target_port}</strong>.</p>
-        <a href="http://localhost:{target_port}" target="_blank" class="btn">Launch Direct Window (http://localhost:{target_port})</a>
+        <a href="http://{client_hostname}:{target_port}" target="_blank" class="btn">Launch Direct Window (http://{client_hostname}:{target_port})</a>
     </div>
 </body>
 </html>"""
@@ -322,7 +458,8 @@ async def preview_app_subpath(
     """Proxy sub-path requests for previewing application assets and routes."""
     import httpx
 
-    target_url = f"http://localhost:{target_port}/{subpath}"
+    target_host = os.getenv("PANTHEON_TARGET_HOST", "localhost")
+    target_url = f"http://{target_host}:{target_port}/{subpath}"
     async with httpx.AsyncClient(timeout=5.0) as client:
         try:
             resp = await client.get(target_url)

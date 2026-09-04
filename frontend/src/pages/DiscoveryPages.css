@@ -1,0 +1,470 @@
+/* =============================================================
+   TargetAnalysisPage & EndpointDiscoveryPage — Phase 5
+   
+   Shared styles for the discovery module pages.
+   Uses design system tokens from index.css.
+   ============================================================= */
+
+/* ---- App Selector ---- */
+.discovery-app-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.discovery-app-selector select {
+  min-width: 280px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--foreground);
+  background-color: var(--secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.discovery-app-selector select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+}
+
+.discovery-app-selector select option {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+/* ---- Status Banner ---- */
+.discovery-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.discovery-status-banner.pending {
+  background-color: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: var(--info);
+}
+
+.discovery-status-banner.running {
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.discovery-status-banner.completed {
+  background-color: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.discovery-status-banner.failed {
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+
+/* ---- Profile Grid ---- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.profile-item {
+  background-color: var(--secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-item:hover {
+  border-color: rgba(0, 212, 170, 0.3);
+  box-shadow: 0 0 20px rgba(0, 212, 170, 0.05);
+}
+
+.profile-item-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+
+.profile-item-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-item-value .icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ---- Port Tags ---- */
+.port-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.port-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  background-color: rgba(0, 212, 170, 0.08);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 3px;
+  color: var(--primary);
+}
+
+/* ---- Env Variable List ---- */
+.env-var-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.env-var-item {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  background-color: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 3px;
+  color: var(--secondary-foreground);
+}
+
+/* ---- Confidence Meter ---- */
+.confidence-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confidence-bar {
+  display: flex;
+  gap: 3px;
+}
+
+.confidence-segment {
+  width: 24px;
+  height: 6px;
+  border-radius: 2px;
+  background-color: var(--muted);
+  transition: background-color 0.3s ease;
+}
+
+.confidence-segment.active.high {
+  background-color: var(--success);
+}
+
+.confidence-segment.active.medium {
+  background-color: var(--warning);
+}
+
+.confidence-segment.active.low {
+  background-color: var(--danger);
+}
+
+.confidence-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---- Endpoint Table ---- */
+.endpoint-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+}
+
+.endpoint-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.endpoint-table thead {
+  background-color: var(--secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.endpoint-table th {
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+  text-align: left;
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+}
+
+.endpoint-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(26, 35, 50, 0.5);
+  color: var(--foreground);
+  vertical-align: middle;
+}
+
+.endpoint-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.endpoint-table tbody tr:hover {
+  background-color: rgba(0, 212, 170, 0.03);
+}
+
+.endpoint-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Method badges */
+.method-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+
+.method-GET {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.method-POST {
+  color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.method-PUT {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.method-DELETE {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.method-PATCH {
+  color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.method-HEAD,
+.method-OPTIONS {
+  color: var(--muted-foreground);
+  background-color: rgba(75, 90, 110, 0.12);
+  border: 1px solid rgba(75, 90, 110, 0.25);
+}
+
+/* ---- Classification Filter Tabs ---- */
+.classification-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 4px;
+  background-color: var(--secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+}
+
+.classification-tab {
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--secondary-foreground);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.classification-tab:hover {
+  color: var(--foreground);
+  background-color: rgba(0, 212, 170, 0.05);
+}
+
+.classification-tab.active {
+  color: var(--primary);
+  background-color: rgba(0, 212, 170, 0.1);
+  border-color: rgba(0, 212, 170, 0.25);
+}
+
+.classification-tab .count {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background-color: rgba(0, 212, 170, 0.15);
+  color: var(--primary);
+}
+
+/* ---- Spec Status ---- */
+.spec-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--secondary-foreground);
+  padding: 8px 0;
+}
+
+.spec-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.spec-status .dot.found {
+  background-color: var(--success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.spec-status .dot.not-found {
+  background-color: var(--muted-foreground);
+}
+
+/* ---- Empty State ---- */
+.discovery-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.discovery-empty .icon {
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.discovery-empty h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--secondary-foreground);
+  margin-bottom: 8px;
+}
+
+.discovery-empty p {
+  font-size: 12px;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ---- Loading Skeleton ---- */
+.skeleton-line {
+  height: 14px;
+  background: linear-gradient(
+    90deg,
+    var(--secondary) 25%,
+    var(--muted) 37%,
+    var(--secondary) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 3px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ---- Auth Mechanism Tags ---- */
+.auth-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.auth-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 10px;
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 3px;
+  color: var(--warning);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Endpoint Path (code-like) ---- */
+.endpoint-path {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--foreground);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discovery-app-selector {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .discovery-app-selector select {
+    width: 100%;
+    min-width: unset;
+  }
+}

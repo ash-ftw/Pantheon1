@@ -55,6 +55,20 @@ class Settings(BaseSettings):
     jwt_private_key_path: str = "./keys/jwt_private.pem"
     jwt_public_key_path: str = "./keys/jwt_public.pem"
 
+    # Network, CORS & Container Probing (Network-readiness)
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ]
+    cors_origin_regex: str | None = r"^https?://.*"
+    target_probe_host: str = "localhost"
+
+    # Public-facing host for the backend API & reverse proxy
+    # In dev: http://localhost:8000, on LAN: http://<LAN-IP>:8000
+    pantheon_public_host: str = "http://localhost:8000"
+
     @property
     def is_development(self) -> bool:
         return self.app_env == Environment.DEVELOPMENT

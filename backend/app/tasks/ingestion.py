@@ -562,6 +562,67 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
             await db.commit()
 
             log("=== Ingestion Pipeline Completed Successfully ===")
+
+            # =================================================================
+            # Phase 5 - Auto-trigger Discovery (PRD Modules 5-6)
+            # Runs automatically after deploy - zero user action required.
+            # =================================================================
+            log("=== Step 6/6: Auto-Discovery (Target Analysis & Endpoints) ===")
+            app_obj.discovery_status = "running"
+            await db.commit()
+
+            # Wait for container to initialize before probing
+            log("Waiting 5 seconds for application startup...")
+            await asyncio.sleep(5)
+
+            try:
+                from app.services.discovery_service import discover_endpoints, run_target_analysis
+
+                # Target analysis
+                log("Running target analysis (language, framework, ports, DB, auth)...")
+                target_profile = await run_target_analysis(app_id, app_obj.org_id)
+                app_obj.target_profile = target_profile
+
+                lang = target_profile.get("language", "unknown")
+                fw = target_profile.get("framework", "unknown")
+                ports = target_profile.get("exposed_ports", [])
+                db_type = target_profile.get("detected_db", "none")
+                confidence = target_profile.get("confidence", "low")
+
+                log(f"  Language: {lang} | Framework: {fw}")
+                log(f"  Exposed ports: {ports}")
+                log(f"  Detected DB: {db_type}")
+                log(f"  Analysis confidence: {confidence}")
+
+                # Endpoint discovery
+                log("Running endpoint discovery (OpenAPI/Swagger probing)...")
+                endpoints_result = await discover_endpoints(app_id, app_obj.org_id)
+                app_obj.discovered_endpoints = endpoints_result
+
+                specs = endpoints_result.get("specs_found", [])
+                ep_count = len(endpoints_result.get("endpoints", []))
+                if specs:
+                    log(f"  OpenAPI specs found: {', '.join(specs)}")
+                else:
+                    log("  No OpenAPI/Swagger spec found (endpoints may need manual configuration)")
+                log(f"  Endpoints discovered: {ep_count}")
+
+                # Summarize classifications
+                classification = endpoints_result.get("classification", {})
+                for cls_name, cls_endpoints in classification.items():
+                    if cls_endpoints:
+                        log(f"  {cls_name}: {len(cls_endpoints)} endpoint(s)")
+
+                app_obj.discovery_status = "completed"
+                log("=== Auto-Discovery Completed Successfully ===")
+
+            except Exception as disc_err:
+                log(f"Discovery warning: {disc_err!s}")
+                app_obj.discovery_status = "failed"
+                log("Auto-discovery failed (non-blocking — app is still running)")
+
+            await db.commit()
+
             return {
                 "status": "success",
                 "app_id": app_id_str,
@@ -570,6 +631,7 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                 "detected_framework": detected_framework,
                 "scan_summary": scan_summary,
                 "k8s_applied": apply_result.get("applied", []),
+                "discovery_status": app_obj.discovery_status,
             }
 
         except Exception as err:

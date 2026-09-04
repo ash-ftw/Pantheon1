@@ -20,7 +20,9 @@ import {
   Package,
   Play,
   RefreshCw,
+  Square,
   Terminal,
+  Trash2,
   Upload,
   X,
 } from 'lucide-react';
@@ -38,7 +40,8 @@ interface AppRecord {
   name: string;
   source_type: 'git' | 'compose';
   source_url: string | null;
-  status: 'queued' | 'building' | 'pushing' | 'deploying' | 'running' | 'failed';
+  status: 'queued' | 'building' | 'pushing' | 'deploying' | 'running' | 'stopped' | 'failed';
+  discovery_status: string;
 }
 
 interface AppVersion {
@@ -84,6 +87,18 @@ async function apiPost<T>(path: string, body: unknown, token: string | null): Pr
   return res.json();
 }
 
+async function apiDelete<T>(path: string, token: string | null): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `API error ${res.status}`);
+  }
+  return res.json();
+}
+
 /* ------------------------------------------------------------------ */
 /*  Status badge helper                                                */
 /* ------------------------------------------------------------------ */
@@ -95,6 +110,7 @@ function StatusBadge({ status }: { status: string }) {
     pushing: { cls: 'badge-warning', label: 'Pushing' },
     deploying: { cls: 'badge-info', label: 'Deploying' },
     running: { cls: 'badge-success', label: 'Running' },
+    stopped: { cls: 'badge-warning', label: 'Stopped' },
     failed: { cls: 'badge-danger', label: 'Failed' },
   };
   const { cls, label } = map[status] || { cls: 'badge-info', label: status };
@@ -112,8 +128,10 @@ function BuildLogPanel({ appId, onClose }: { appId: string; onClose: () => void 
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Connect to WebSocket for live build logs
-    const wsUrl = `ws://localhost:8000/api/apps/${appId}/logs/ws`;
+    // Connect to WebSocket for live build logs (dynamically resolves host for LAN/network readiness)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl =
+      import.meta.env.VITE_WS_URL || `${protocol}//${window.location.host}/api/apps/${appId}/logs/ws`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -236,6 +254,86 @@ function VersionHistoryPanel({ appId, token }: { appId: string; token: string | 
 }
 
 /* ------------------------------------------------------------------ */
+/*  Discovery Summary Inline (Phase 5)                                 */
+/* ------------------------------------------------------------------ */
+
+interface DiscoverySummary {
+  discovery_status: string;
+  language: string | null;
+  framework: string | null;
+  exposed_ports: number[];
+  detected_db: string | null;
+  endpoint_count: number;
+  classification_counts: Record<string, number>;
+}
+
+function DiscoverySummaryInline({ appId, token }: { appId: string; token: string | null }) {
+  const [summary, setSummary] = useState<DiscoverySummary | null>(null);
+
+  useEffect(() => {
+    apiGet<DiscoverySummary>(`/discovery/${appId}/summary`, token)
+      .then(setSummary)
+      .catch(() => {});
+  }, [appId, token]);
+
+  if (!summary || summary.discovery_status !== 'completed') return null;
+
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        borderTop: '1px solid var(--card-border)',
+        background: 'rgba(0, 212, 170, 0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+        fontSize: 11,
+      }}
+    >
+      <span
+        className="font-mono"
+        style={{
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: 'var(--muted-foreground)',
+        }}
+      >
+        Discovery:
+      </span>
+      {summary.language && (
+        <span className="badge badge-info">{summary.language}</span>
+      )}
+      {summary.framework && (
+        <span className="badge badge-primary">{summary.framework}</span>
+      )}
+      {summary.detected_db && (
+        <span className="badge badge-warning">{summary.detected_db}</span>
+      )}
+      {summary.endpoint_count > 0 && (
+        <span style={{ color: 'var(--secondary-foreground)' }}>
+          {summary.endpoint_count} endpoint{summary.endpoint_count !== 1 ? 's' : ''}
+        </span>
+      )}
+      <a
+        href="/target-analysis"
+        style={{
+          marginLeft: 'auto',
+          fontSize: 10,
+          color: 'var(--primary)',
+          fontFamily: 'var(--font-mono)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}
+      >
+        View Full Profile →
+      </a>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Live App Preview Modal                                             */
 /* ------------------------------------------------------------------ */
 
@@ -307,7 +405,7 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <a
-              href={`http://localhost:${port}`}
+              href={`http://${window.location.hostname}:${port}`}
               target="_blank"
               rel="noreferrer"
               className="btn-secondary"
@@ -530,6 +628,76 @@ export function AppOnboardingPage() {
       fetchApps();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Redeploy failed');
+    }
+  };
+
+  // Action loading state (tracks start/stop/delete per app)
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
+
+  // Start app container handler
+  const handleStartApp = async (appId: string) => {
+    setActionLoading((prev) => ({ ...prev, [appId]: 'start' }));
+    setError(null);
+    try {
+      await apiPost<AppRecord>(`/apps/${appId}/start`, {}, token);
+      setSuccessMsg('Application container started successfully!');
+      fetchApps();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to start app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[appId];
+        return copy;
+      });
+    }
+  };
+
+  // Stop app container handler
+  const handleStopApp = async (appId: string) => {
+    setActionLoading((prev) => ({ ...prev, [appId]: 'stop' }));
+    setError(null);
+    try {
+      await apiPost<AppRecord>(`/apps/${appId}/stop`, {}, token);
+      setSuccessMsg('Application container stopped.');
+      fetchApps();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to stop app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[appId];
+        return copy;
+      });
+    }
+  };
+
+  // Delete app handler (removes app and all container/build records)
+  const handleDeleteApp = async (app: AppRecord) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove application "${app.name}"? This will delete build history and container resources.`,
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading((prev) => ({ ...prev, [app.id]: 'delete' }));
+    setError(null);
+    try {
+      await apiDelete(`/apps/${app.id}`, token);
+      setApps((prev) => prev.filter((a) => a.id !== app.id));
+      setSuccessMsg(`Application "${app.name}" removed successfully.`);
+      if (selectedLogApp === app.id) setSelectedLogApp(null);
+      if (selectedPreviewApp?.id === app.id) setSelectedPreviewApp(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[app.id];
+        return copy;
+      });
     }
   };
 
@@ -779,25 +947,67 @@ export function AppOnboardingPage() {
                               style={{ color: 'var(--warning)' }}
                             />
                           )}
-                          {app.status === 'running' && (
+
+                          {/* Start button: for stopped apps or reopening system */}
+                          {app.status === 'stopped' && (
                             <button
-                              className="mode-btn mode-active"
-                              onClick={() => setSelectedPreviewApp(app)}
-                              title="View Live App Preview"
-                              style={{
-                                padding: '3px 10px',
-                                fontSize: 11,
-                                textTransform: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4,
-                              }}
+                              type="button"
+                              className="btn-start-app"
+                              onClick={() => handleStartApp(app.id)}
+                              disabled={actionLoading[app.id] === 'start'}
+                              title="Start application container"
+                              data-testid={`start-app-btn-${app.id}`}
                             >
-                              <ExternalLink size={12} />
-                              Live Preview
+                              {actionLoading[app.id] === 'start' ? (
+                                <Loader2 size={12} className="spin" />
+                              ) : (
+                                <Play size={12} />
+                              )}
+                              Start App
                             </button>
                           )}
+
+                          {/* Live Preview and Stop button for running apps */}
+                          {app.status === 'running' && (
+                            <>
+                              <button
+                                type="button"
+                                className="mode-btn mode-active"
+                                onClick={() => setSelectedPreviewApp(app)}
+                                title="View Live App Preview"
+                                style={{
+                                  padding: '3px 10px',
+                                  fontSize: 11,
+                                  textTransform: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <ExternalLink size={12} />
+                                Live Preview
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-stop-app"
+                                onClick={() => handleStopApp(app.id)}
+                                disabled={actionLoading[app.id] === 'stop'}
+                                title="Stop application container"
+                                data-testid={`stop-app-btn-${app.id}`}
+                              >
+                                {actionLoading[app.id] === 'stop' ? (
+                                  <Loader2 size={12} className="spin" />
+                                ) : (
+                                  <Square size={11} />
+                                )}
+                                Stop
+                              </button>
+                            </>
+                          )}
+
                           <button
+                            type="button"
                             className="btn-secondary"
                             onClick={() =>
                               setSelectedLogApp(selectedLogApp === app.id ? null : app.id)
@@ -808,6 +1018,7 @@ export function AppOnboardingPage() {
                             <Terminal size={12} />
                           </button>
                           <button
+                            type="button"
                             className="btn-secondary"
                             onClick={() => handleRedeploy(app.id)}
                             title="Redeploy"
@@ -815,12 +1026,50 @@ export function AppOnboardingPage() {
                           >
                             <RefreshCw size={12} />
                           </button>
+
+                          {/* Delete button: removes failed or unwanted apps */}
+                          <button
+                            type="button"
+                            className="btn-delete-app"
+                            onClick={() => handleDeleteApp(app)}
+                            disabled={actionLoading[app.id] === 'delete'}
+                            title="Remove application ingestion"
+                            data-testid={`delete-app-btn-${app.id}`}
+                          >
+                            {actionLoading[app.id] === 'delete' ? (
+                              <Loader2 size={12} className="spin" />
+                            ) : (
+                              <Trash2 size={13} />
+                            )}
+                          </button>
                         </div>
                       </div>
 
                       {/* Version History (expanded) */}
                       {expandedApp === app.id && (
-                        <VersionHistoryPanel appId={app.id} token={token} />
+                        <>
+                          <VersionHistoryPanel appId={app.id} token={token} />
+                          {/* Phase 5 — Compact Discovery Summary */}
+                          {app.discovery_status === 'completed' && (
+                            <DiscoverySummaryInline appId={app.id} token={token} />
+                          )}
+                          {app.discovery_status === 'running' && (
+                            <div
+                              style={{
+                                padding: '10px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontSize: 11,
+                                color: 'var(--warning)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              <Loader2 size={12} className="spin" />
+                              Discovery running — analyzing application...
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   ))}

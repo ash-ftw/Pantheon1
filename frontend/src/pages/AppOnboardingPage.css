@@ -256,6 +256,64 @@
   flex-shrink: 0;
 }
 
+.btn-start-app {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(0, 212, 170, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(0, 212, 170, 0.35);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-start-app:hover {
+  background-color: var(--primary);
+  color: #07090d;
+}
+
+.btn-stop-app {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-stop-app:hover {
+  background-color: var(--warning);
+  color: #07090d;
+}
+
+.btn-delete-app {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.btn-delete-app:hover {
+  color: var(--danger);
+  background-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
 /* ---- Build Log Panel ---- */
 .build-log-panel {
   margin-top: 16px;
