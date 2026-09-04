@@ -99,17 +99,15 @@ async function apiPost<T>(path: string, body: unknown, token: string | null): Pr
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
-const classificationMeta: Record<
-  string,
-  { label: string; icon: React.ReactNode; color: string }
-> = {
-  all: { label: 'All', icon: <Filter size={12} />, color: 'var(--foreground)' },
-  public: { label: 'Public', icon: <Globe size={12} />, color: 'var(--success)' },
-  likely_admin: { label: 'Likely Admin', icon: <Shield size={12} />, color: 'var(--accent)' },
-  likely_auth: { label: 'Likely Auth', icon: <KeyRound size={12} />, color: 'var(--warning)' },
-  upload: { label: 'Upload', icon: <Upload size={12} />, color: 'var(--info)' },
-  search: { label: 'Search', icon: <Search size={12} />, color: 'var(--primary)' },
-};
+const classificationMeta: Record<string, { label: string; icon: React.ReactNode; color: string }> =
+  {
+    all: { label: 'All', icon: <Filter size={12} />, color: 'var(--foreground)' },
+    public: { label: 'Public', icon: <Globe size={12} />, color: 'var(--success)' },
+    likely_admin: { label: 'Likely Admin', icon: <Shield size={12} />, color: 'var(--accent)' },
+    likely_auth: { label: 'Likely Auth', icon: <KeyRound size={12} />, color: 'var(--warning)' },
+    upload: { label: 'Upload', icon: <Upload size={12} />, color: 'var(--info)' },
+    search: { label: 'Search', icon: <Search size={12} />, color: 'var(--primary)' },
+  };
 
 function ClassificationBadge({ classification }: { classification: string }) {
   const meta = classificationMeta[classification] || classificationMeta.public;
@@ -251,8 +249,8 @@ export function EndpointDiscoveryPage() {
       <div className="page-header">
         <div className="page-title">Endpoint Discovery</div>
         <div className="page-subtitle">
-          Automatic OpenAPI/Swagger spec detection and endpoint classification.
-          Discovers and categorizes your application's API surface for targeted security testing.
+          Automatic OpenAPI/Swagger spec detection and endpoint classification. Discovers and
+          categorizes your application's API surface for targeted security testing.
         </div>
       </div>
 
@@ -340,8 +338,8 @@ export function EndpointDiscoveryPage() {
                   <span className="dot not-found" />
                   <AlertTriangle size={12} style={{ color: 'var(--muted-foreground)' }} />
                   <span>
-                    No OpenAPI/Swagger spec detected — endpoints may need manual configuration
-                    or the app doesn't expose a spec
+                    No OpenAPI/Swagger spec detected — endpoints may need manual configuration or
+                    the app doesn't expose a spec
                   </span>
                 </div>
               )}
@@ -353,8 +351,18 @@ export function EndpointDiscoveryPage() {
                 }}
               >
                 {result.endpoints.length} endpoint{result.endpoints.length !== 1 ? 's' : ''}{' '}
-                discovered across {Object.keys(result.classification).filter(k => (result.classification[k] || []).length > 0).length}{' '}
-                classification{Object.keys(result.classification).filter(k => (result.classification[k] || []).length > 0).length !== 1 ? 's' : ''}
+                discovered across{' '}
+                {
+                  Object.keys(result.classification).filter(
+                    (k) => (result.classification[k] || []).length > 0,
+                  ).length
+                }{' '}
+                classification
+                {Object.keys(result.classification).filter(
+                  (k) => (result.classification[k] || []).length > 0,
+                ).length !== 1
+                  ? 's'
+                  : ''}
               </div>
             </div>
           </div>
@@ -442,8 +450,8 @@ export function EndpointDiscoveryPage() {
                   <Filter size={36} className="icon" />
                   <h3>No Matching Endpoints</h3>
                   <p>
-                    No endpoints match the "{classificationMeta[activeFilter]?.label}" filter.
-                    Try selecting "All" to see all discovered endpoints.
+                    No endpoints match the "{classificationMeta[activeFilter]?.label}" filter. Try
+                    selecting "All" to see all discovered endpoints.
                   </p>
                 </div>
               </div>
@@ -455,9 +463,9 @@ export function EndpointDiscoveryPage() {
                   <FileSearch size={48} className="icon" />
                   <h3>No Endpoints Discovered</h3>
                   <p>
-                    No API endpoints were found. The application may not expose an
-                    OpenAPI/Swagger spec, or the app may still be starting up. Try re-running
-                    discovery after the app is fully initialized.
+                    No API endpoints were found. The application may not expose an OpenAPI/Swagger
+                    spec, or the app may still be starting up. Try re-running discovery after the
+                    app is fully initialized.
                   </p>
                 </div>
               </div>

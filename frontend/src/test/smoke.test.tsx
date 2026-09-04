@@ -128,7 +128,9 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
             ]),
         } as Response);
       }
-      return origFetch ? origFetch(url) : Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
+      return origFetch
+        ? origFetch(url)
+        : Promise.resolve({ ok: true, json: () => Promise.resolve({}) } as Response);
     });
 
     const queryClient = createTestQueryClient();

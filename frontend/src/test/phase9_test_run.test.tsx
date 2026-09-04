@@ -136,7 +136,9 @@ describe('TestRunPage (Phase 9 — Simulation Engine & Test Run Execution)', () 
               id: 'run-new-999',
               status: 'stopped',
               stopped_at: new Date().toISOString(),
-              logs: [{ timestamp: '14:30:05', level: 'error', message: 'EMERGENCY STOP executed.' }],
+              logs: [
+                { timestamp: '14:30:05', level: 'error', message: 'EMERGENCY STOP executed.' },
+              ],
             }),
         } as Response);
       }
@@ -229,7 +231,7 @@ describe('TestRunPage (Phase 9 — Simulation Engine & Test Run Execution)', () 
     render(
       <MemoryRouter>
         <TestRunPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Verify Title & Subtitle
@@ -249,7 +251,7 @@ describe('TestRunPage (Phase 9 — Simulation Engine & Test Run Execution)', () 
     render(
       <MemoryRouter>
         <TestRunPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const launchBtn = screen.getByRole('button', { name: /Launch Simulation Run/i });
@@ -267,7 +269,7 @@ describe('TestRunPage (Phase 9 — Simulation Engine & Test Run Execution)', () 
     render(
       <MemoryRouter>
         <TestRunPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Open launcher modal
@@ -297,7 +299,7 @@ describe('TestRunPage (Phase 9 — Simulation Engine & Test Run Execution)', () 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/stop'),
-        expect.objectContaining({ method: 'POST' })
+        expect.objectContaining({ method: 'POST' }),
       );
     });
   });

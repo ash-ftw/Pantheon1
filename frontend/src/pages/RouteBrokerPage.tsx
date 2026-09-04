@@ -269,13 +269,10 @@ export function RouteBrokerPage() {
   const handleKillRoute = async (routeId: string) => {
     setKillingRouteId(routeId);
     try {
-      const res = await fetch(
-        `${API_BASE}/routes/${routeId}?reason=manual_kill_switch`,
-        {
-          method: 'DELETE',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        },
-      );
+      const res = await fetch(`${API_BASE}/routes/${routeId}?reason=manual_kill_switch`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -283,10 +280,10 @@ export function RouteBrokerPage() {
       }
 
       const revokedRoute: RouteRecord = await res.json();
-      setRoutes((prev) =>
-        prev.map((r) => (r.id === routeId ? { ...r, ...revokedRoute } : r)),
+      setRoutes((prev) => prev.map((r) => (r.id === routeId ? { ...r, ...revokedRoute } : r)));
+      setActionSuccessMessage(
+        `EMERGENCY KILL SWITCH: Route ${routeId.slice(0, 8)} revoked in <500ms.`,
       );
-      setActionSuccessMessage(`EMERGENCY KILL SWITCH: Route ${routeId.slice(0, 8)} revoked in <500ms.`);
       setTimeout(() => setActionSuccessMessage(null), 5000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to revoke route');
@@ -299,7 +296,11 @@ export function RouteBrokerPage() {
     const activeRoutes = routes.filter((r) => r.status === 'active');
     if (activeRoutes.length === 0) return;
 
-    if (!window.confirm(`Are you sure you want to execute EMERGENCY KILL SWITCH on ALL ${activeRoutes.length} active routes?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to execute EMERGENCY KILL SWITCH on ALL ${activeRoutes.length} active routes?`,
+      )
+    ) {
       return;
     }
 
@@ -314,7 +315,9 @@ export function RouteBrokerPage() {
         ),
       );
       await fetchRoutes();
-      setActionSuccessMessage(`EMERGENCY KILL ALL: ${activeRoutes.length} routes severed synchronously.`);
+      setActionSuccessMessage(
+        `EMERGENCY KILL ALL: ${activeRoutes.length} routes severed synchronously.`,
+      );
       setTimeout(() => setActionSuccessMessage(null), 5000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error executing Kill All');
@@ -375,7 +378,8 @@ export function RouteBrokerPage() {
             <Route className="page-title-icon" /> Route Broker & Kill Switch
           </h1>
           <p className="page-description">
-            Ephemeral, application-layer (HTTP/HTTPS) routing bridging range clusters to tenant environments with sub-5-second emergency revocation (PRD §7.5).
+            Ephemeral, application-layer (HTTP/HTTPS) routing bridging range clusters to tenant
+            environments with sub-5-second emergency revocation (PRD §7.5).
           </p>
         </div>
         <div className="route-broker-header-actions">
@@ -423,7 +427,10 @@ export function RouteBrokerPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="safety-notice-card" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+        <div
+          className="safety-notice-card"
+          style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+        >
           <AlertTriangle size={18} />
           <span>{error}</span>
         </div>
@@ -510,11 +517,7 @@ export function RouteBrokerPage() {
               : `No routes matching status "${activeTab}".`}
           </p>
           {activeTab === 'all' && (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => setIsModalOpen(true)}
-            >
+            <button type="button" className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
               <Plus size={14} /> Open First Route
             </button>
           )}
@@ -596,7 +599,11 @@ export function RouteBrokerPage() {
                       <Terminal size={12} />
                       <span>Attacker Pod Route & Technical Details</span>
                     </div>
-                    {expandedDetails[route.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    {expandedDetails[route.id] ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )}
                   </button>
 
                   {expandedDetails[route.id] && (
@@ -627,7 +634,9 @@ export function RouteBrokerPage() {
                       <div className="route-card-meta" style={{ marginTop: '8px' }}>
                         <div>
                           <span style={{ color: 'var(--muted-foreground)' }}>Ingress: </span>
-                          <strong style={{ color: 'var(--foreground)' }}>{route.ingress_name}</strong>
+                          <strong style={{ color: 'var(--foreground)' }}>
+                            {route.ingress_name}
+                          </strong>
                         </div>
                         <div>
                           <span style={{ color: 'var(--muted-foreground)' }}>Target Pod: </span>
@@ -663,9 +672,7 @@ export function RouteBrokerPage() {
                 {/* Revocation audit tag if revoked */}
                 {route.status === 'revoked' && route.revocation_reason && (
                   <div>
-                    <span className="route-revocation-tag">
-                      REVOKED: {route.revocation_reason}
-                    </span>
+                    <span className="route-revocation-tag">REVOKED: {route.revocation_reason}</span>
                   </div>
                 )}
 
@@ -732,7 +739,8 @@ export function RouteBrokerPage() {
                   <div>
                     <strong>PRD §7.5 Application-Layer Scoping:</strong>
                     <p style={{ marginTop: '2px' }}>
-                      Routes are strictly HTTP/HTTPS ingress paths. No L3/L4 network bridging, SSH, or raw socket exposure is permitted. Tenant credentials remain unexposed.
+                      Routes are strictly HTTP/HTTPS ingress paths. No L3/L4 network bridging, SSH,
+                      or raw socket exposure is permitted. Tenant credentials remain unexposed.
                     </p>
                   </div>
                 </div>

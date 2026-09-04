@@ -153,7 +153,7 @@ describe('AttackGraphPage (Phase 10 — Attack Graph & Replay Engine)', () => {
     render(
       <MemoryRouter>
         <AttackGraphPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Verify Title & Subtitle
@@ -176,7 +176,7 @@ describe('AttackGraphPage (Phase 10 — Attack Graph & Replay Engine)', () => {
     render(
       <MemoryRouter>
         <AttackGraphPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     // Wait for graph data to load
@@ -207,7 +207,7 @@ describe('AttackGraphPage (Phase 10 — Attack Graph & Replay Engine)', () => {
     render(
       <MemoryRouter>
         <AttackGraphPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => {

@@ -23,7 +23,9 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -89,7 +91,9 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
   padding: 20px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .profile-item:hover {
@@ -406,12 +410,7 @@
 /* ---- Loading Skeleton ---- */
 .skeleton-line {
   height: 14px;
-  background: linear-gradient(
-    90deg,
-    var(--secondary) 25%,
-    var(--muted) 37%,
-    var(--secondary) 63%
-  );
+  background: linear-gradient(90deg, var(--secondary) 25%, var(--muted) 37%, var(--secondary) 63%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 3px;

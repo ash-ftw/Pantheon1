@@ -4,12 +4,7 @@
  * implementation in the relevant phase.
  */
 
-import {
-  BarChart3,
-  Box,
-  type LucideProps,
-  Network,
-} from 'lucide-react';
+import { BarChart3, Box, type LucideProps, Network } from 'lucide-react';
 
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 
@@ -85,7 +80,6 @@ export { ObservabilityPage } from './ObservabilityPage';
 
 // PRD Module 14 — Defence Engine (Phase 11)
 export { DefenceEnginePage } from './DefenceEnginePage';
-
 
 // PRD Module 15 — Reporting (Phase 13)
 export const ReportingPage = makePlaceholder(

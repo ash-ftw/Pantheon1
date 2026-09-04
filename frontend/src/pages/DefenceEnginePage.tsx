@@ -21,7 +21,6 @@ import {
   Terminal,
   X,
   Zap,
-
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import './DefenceEnginePage.css';
@@ -38,7 +37,7 @@ export interface DefenceRecommendation {
   mechanically_applicable: boolean;
   status: 'suggested' | 'applied' | 'reverted' | 'dismissed';
   code_guidance: string;
-  infra_manifest: Record<string, any>;
+  infra_manifest: Record<string, unknown>;
   target_resource?: string | null;
   applied_at?: string | null;
   reverted_at?: string | null;
@@ -62,7 +61,10 @@ export function DefenceEnginePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
   const [selectedRec, setSelectedRec] = useState<DefenceRecommendation | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
   // Fetch Test Runs
@@ -186,7 +188,11 @@ export function DefenceEnginePage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className={`defence-toast ${toastMessage.type}`}>
-          {toastMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 size={16} />
+          ) : (
+            <AlertTriangle size={16} />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -196,7 +202,10 @@ export function DefenceEnginePage() {
         <div className="defence-header-title">
           <div className="defence-badge">PRD MODULE 14 · PHASE 11</div>
           <h1>DEFENCE ENGINE & REMEDIATION</h1>
-          <p>Deterministic finding mitigations, code-level remediation diffs, and 1-click infrastructure guardrails.</p>
+          <p>
+            Deterministic finding mitigations, code-level remediation diffs, and 1-click
+            infrastructure guardrails.
+          </p>
         </div>
 
         <div className="defence-header-controls">
@@ -216,7 +225,11 @@ export function DefenceEnginePage() {
             </select>
           </div>
 
-          <button onClick={fetchRecommendations} className="refresh-button" title="Refresh Recommendations">
+          <button
+            onClick={fetchRecommendations}
+            className="refresh-button"
+            title="Refresh Recommendations"
+          >
             <RefreshCw size={15} />
             <span>SYNC</span>
           </button>
@@ -311,7 +324,8 @@ export function DefenceEnginePage() {
             <ShieldCheck size={48} className="empty-icon" />
             <h3>NO MITIGATIONS MATCH FILTER</h3>
             <p>
-              Run an attack simulation in Test Runs to detect security findings and generate actionable recommendations.
+              Run an attack simulation in Test Runs to detect security findings and generate
+              actionable recommendations.
             </p>
           </div>
         ) : (
@@ -341,11 +355,17 @@ export function DefenceEnginePage() {
                       <td className="rec-title-cell">
                         <div className="rec-title-wrap">
                           <div className="rec-icon">
-                            {rec.mechanically_applicable ? <Zap size={16} className="text-cyan" /> : <Code2 size={16} />}
+                            {rec.mechanically_applicable ? (
+                              <Zap size={16} className="text-cyan" />
+                            ) : (
+                              <Code2 size={16} />
+                            )}
                           </div>
                           <div>
                             <span className="rec-main-title">{rec.title}</span>
-                            <span className="rec-subtitle">Linked to Finding ID: {rec.finding_id.slice(0, 8)}...</span>
+                            <span className="rec-subtitle">
+                              Linked to Finding ID: {rec.finding_id.slice(0, 8)}...
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -438,8 +458,12 @@ export function DefenceEnginePage() {
                 <span className="drawer-badge">{selectedRec.category.toUpperCase()}</span>
                 <h2>{selectedRec.title}</h2>
                 <div className="drawer-meta-line">
-                  <span className={`status-pill ${selectedRec.status}`}>{selectedRec.status.toUpperCase()}</span>
-                  <span className="drawer-target-code">{selectedRec.target_resource || 'Source Code Guidance'}</span>
+                  <span className={`status-pill ${selectedRec.status}`}>
+                    {selectedRec.status.toUpperCase()}
+                  </span>
+                  <span className="drawer-target-code">
+                    {selectedRec.target_resource || 'Source Code Guidance'}
+                  </span>
                 </div>
               </div>
               <button className="drawer-close" onClick={() => setSelectedRec(null)}>
@@ -455,7 +479,10 @@ export function DefenceEnginePage() {
                     <Zap size={18} className="text-cyan" />
                     <div>
                       <strong>Automated Infrastructure Remediation</strong>
-                      <p>Deploys a hardened Kubernetes NetworkPolicy / Traefik Middleware to isolate target pods.</p>
+                      <p>
+                        Deploys a hardened Kubernetes NetworkPolicy / Traefik Middleware to isolate
+                        target pods.
+                      </p>
                     </div>
                   </div>
                   {selectedRec.status !== 'applied' ? (
@@ -511,7 +538,10 @@ export function DefenceEnginePage() {
                     <button
                       className="copy-btn"
                       onClick={() =>
-                        copyToClipboard(JSON.stringify(selectedRec.infra_manifest, null, 2), 'manifest')
+                        copyToClipboard(
+                          JSON.stringify(selectedRec.infra_manifest, null, 2),
+                          'manifest',
+                        )
                       }
                     >
                       <Copy size={13} />
@@ -543,12 +573,16 @@ export function DefenceEnginePage() {
                   </div>
                   <div className="meta-item">
                     <span className="meta-label">GENERATED AT</span>
-                    <span className="meta-value">{new Date(selectedRec.created_at).toLocaleString()}</span>
+                    <span className="meta-value">
+                      {new Date(selectedRec.created_at).toLocaleString()}
+                    </span>
                   </div>
                   <div className="meta-item">
                     <span className="meta-label">APPLIED TIMESTAMP</span>
                     <span className="meta-value">
-                      {selectedRec.applied_at ? new Date(selectedRec.applied_at).toLocaleString() : 'Not Applied'}
+                      {selectedRec.applied_at
+                        ? new Date(selectedRec.applied_at).toLocaleString()
+                        : 'Not Applied'}
                     </span>
                   </div>
                 </div>

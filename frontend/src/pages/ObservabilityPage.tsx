@@ -68,7 +68,7 @@ interface ObservabilityEvent {
   severity: 'info' | 'warning' | 'error' | 'success';
   component: string;
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 interface LokiLogItem {
@@ -172,30 +172,33 @@ export function ObservabilityPage() {
   }, []);
 
   // Fetch Run Metrics & Events
-  const fetchRunData = useCallback(async (runId: string) => {
-    if (!runId) return;
-    setLoading(true);
-    try {
-      const [mRes, eRes] = await Promise.all([
-        fetch(`/api/observability/metrics/runs/${runId}`),
-        fetch(`/api/observability/events/runs/${runId}`),
-      ]);
+  const fetchRunData = useCallback(
+    async (runId: string) => {
+      if (!runId) return;
+      setLoading(true);
+      try {
+        const [mRes, eRes] = await Promise.all([
+          fetch(`/api/observability/metrics/runs/${runId}`),
+          fetch(`/api/observability/events/runs/${runId}`),
+        ]);
 
-      if (mRes.ok) {
-        const mData = await mRes.json();
-        setRunMetrics(mData);
+        if (mRes.ok) {
+          const mData = await mRes.json();
+          setRunMetrics(mData);
+        }
+        if (eRes.ok) {
+          const eData = await eRes.json();
+          setRunEvents(eData);
+        }
+        await fetchLokiLogs(runId);
+      } catch {
+        // Fallback
+      } finally {
+        setLoading(false);
       }
-      if (eRes.ok) {
-        const eData = await eRes.json();
-        setRunEvents(eData);
-      }
-      await fetchLokiLogs(runId);
-    } catch {
-      // Fallback
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchLokiLogs]);
+    },
+    [fetchLokiLogs],
+  );
 
   useEffect(() => {
     fetchRuns();
@@ -215,8 +218,7 @@ export function ObservabilityPage() {
       log.message.toLowerCase().includes(lokiFilter.toLowerCase()) ||
       log.service.toLowerCase().includes(lokiFilter.toLowerCase());
     const matchesSev =
-      lokiSeverity === 'all' ||
-      log.level.toLowerCase() === lokiSeverity.toLowerCase();
+      lokiSeverity === 'all' || log.level.toLowerCase() === lokiSeverity.toLowerCase();
     return matchesText && matchesSev;
   });
 
@@ -389,7 +391,10 @@ export function ObservabilityPage() {
         <div className="obs-empty-state">
           <Activity size={48} className="empty-icon" />
           <h3>NO RUN SELECTED</h3>
-          <p>Select a test run from the dropdown above to inspect detailed latency analytics and event logs.</p>
+          <p>
+            Select a test run from the dropdown above to inspect detailed latency analytics and
+            event logs.
+          </p>
         </div>
       ) : !runMetrics ? (
         <div className="obs-empty-state">
@@ -488,7 +493,7 @@ export function ObservabilityPage() {
                       const tagClass = is2xx ? 'status-2xx' : is4xx ? 'status-4xx' : 'status-5xx';
                       const totalProbeReqs = Object.values(runMetrics.status_code_counts).reduce(
                         (a, b) => a + b,
-                        0
+                        0,
                       );
 
                       return (
@@ -499,8 +504,8 @@ export function ObservabilityPage() {
                               {is2xx
                                 ? 'Allowed / Success'
                                 : is4xx
-                                ? 'Safety Guard Blocked'
-                                : 'Compromised / Exception'}
+                                  ? 'Safety Guard Blocked'
+                                  : 'Compromised / Exception'}
                             </span>
                           </div>
                           <div className="status-code-meter">
@@ -509,7 +514,7 @@ export function ObservabilityPage() {
                               style={{
                                 width: `${Math.min(
                                   100,
-                                  (count / Math.max(totalProbeReqs, 1)) * 100
+                                  (count / Math.max(totalProbeReqs, 1)) * 100,
                                 )}%`,
                               }}
                             />
@@ -561,7 +566,9 @@ export function ObservabilityPage() {
                     <div className="gauge-bar-track">
                       <div
                         className="gauge-bar-fill cyan"
-                        style={{ width: `${Math.min(100, Math.max(4, runMetrics.cpu_utilization_pct))}%` }}
+                        style={{
+                          width: `${Math.min(100, Math.max(4, runMetrics.cpu_utilization_pct))}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -583,7 +590,7 @@ export function ObservabilityPage() {
                         style={{
                           width: `${Math.min(
                             100,
-                            Math.max(8, (runMetrics.memory_utilization_mb / 512) * 100)
+                            Math.max(8, (runMetrics.memory_utilization_mb / 512) * 100),
                           )}%`,
                         }}
                       />
@@ -607,7 +614,7 @@ export function ObservabilityPage() {
                         style={{
                           width: `${Math.min(
                             100,
-                            Math.max(6, (runMetrics.network_io_kbps / 1000) * 100)
+                            Math.max(6, (runMetrics.network_io_kbps / 1000) * 100),
                           )}%`,
                         }}
                       />
@@ -624,7 +631,9 @@ export function ObservabilityPage() {
                   <Terminal size={16} className="text-cyan" />
                   <div>
                     <h3>POD & EXECUTION EVENT STREAM</h3>
-                    <span className="panel-subtitle">Real-time Loki telemetry and container lifecycle events</span>
+                    <span className="panel-subtitle">
+                      Real-time Loki telemetry and container lifecycle events
+                    </span>
                   </div>
                 </div>
 

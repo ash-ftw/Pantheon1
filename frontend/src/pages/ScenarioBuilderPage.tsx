@@ -163,8 +163,9 @@ export function ScenarioBuilderPage() {
       <div className="page-header">
         <div className="page-title">AI Scenario Builder</div>
         <div className="page-subtitle">
-          Describe the security simulation or chaos resilience test you want to execute in plain English.
-          Pantheon parses your prompt, links Phase 5 discovered endpoints, and strictly re-validates against the execution schema.
+          Describe the security simulation or chaos resilience test you want to execute in plain
+          English. Pantheon parses your prompt, links Phase 5 discovered endpoints, and strictly
+          re-validates against the execution schema.
         </div>
       </div>
 
@@ -173,7 +174,14 @@ export function ScenarioBuilderPage() {
         {/* Target Context Selector Bar */}
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 18 }}>
           <div style={{ flex: 1, minWidth: 220 }}>
-            <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 11,
+                color: 'var(--muted-foreground)',
+                marginBottom: 6,
+              }}
+            >
               Target Application (Optional)
             </label>
             <select
@@ -203,7 +211,14 @@ export function ScenarioBuilderPage() {
 
           {discoveredEndpoints.length > 0 && (
             <div style={{ flex: 1, minWidth: 240 }}>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  color: 'var(--muted-foreground)',
+                  marginBottom: 6,
+                }}
+              >
                 Context Endpoint (Discovered via Phase 5)
               </label>
               <select
@@ -241,15 +256,19 @@ export function ScenarioBuilderPage() {
 
         {/* Prompt Suggestions */}
         <div className="prompt-suggestions">
-          <span style={{ fontSize: 11, color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span
+            style={{
+              fontSize: 11,
+              color: 'var(--muted-foreground)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
             <Zap size={11} /> Try:
           </span>
           {PROMPT_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              className="prompt-chip"
-              onClick={() => setPrompt(suggestion)}
-            >
+            <button key={suggestion} className="prompt-chip" onClick={() => setPrompt(suggestion)}>
               {suggestion}
             </button>
           ))}
@@ -296,10 +315,16 @@ export function ScenarioBuilderPage() {
       {/* Generated Result Preview */}
       {generatedScenario && (
         <div className="card animate-fade-in">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            className="card-header"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span className="card-title">Generated Scenario Specification</span>
-              <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span
+                className="badge badge-success"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
                 <CheckCircle2 size={11} /> Schema Validated
               </span>
             </div>
@@ -319,12 +344,31 @@ export function ScenarioBuilderPage() {
           <div className="card-body">
             {!showJson ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
                   <div>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--foreground)', marginBottom: 4 }}>
+                    <h3
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 18,
+                        color: 'var(--foreground)',
+                        marginBottom: 4,
+                      }}
+                    >
                       {generatedScenario.name}
                     </h3>
-                    <p style={{ color: 'var(--secondary-foreground)', fontSize: 13, lineHeight: 1.5 }}>
+                    <p
+                      style={{
+                        color: 'var(--secondary-foreground)',
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                      }}
+                    >
                       {generatedScenario.description}
                     </p>
                   </div>
@@ -339,7 +383,16 @@ export function ScenarioBuilderPage() {
                 </div>
 
                 {/* Target & Specs Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, backgroundColor: 'var(--secondary)', padding: 14, borderRadius: 'var(--radius)' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 14,
+                    backgroundColor: 'var(--secondary)',
+                    padding: 14,
+                    borderRadius: 'var(--radius)',
+                  }}
+                >
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Category</div>
                     <div className="font-mono" style={{ fontSize: 12, color: 'var(--primary)' }}>
@@ -347,13 +400,17 @@ export function ScenarioBuilderPage() {
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Target Path</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      Target Path
+                    </div>
                     <div className="font-mono" style={{ fontSize: 12 }}>
                       {generatedScenario.target?.path || '/'}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Concurrency</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      Concurrency
+                    </div>
                     <div className="font-mono" style={{ fontSize: 12 }}>
                       {generatedScenario.concurrency} workers
                     </div>
@@ -368,12 +425,26 @@ export function ScenarioBuilderPage() {
 
                 {/* Expected Signals */}
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--foreground)',
+                      marginBottom: 6,
+                    }}
+                  >
                     Expected Defense Signals
                   </div>
                   <div className="signal-tags">
                     {generatedScenario.expected_signals.map((sig) => (
-                      <span key={sig} className="signal-tag" style={{ backgroundColor: 'rgba(0, 212, 170, 0.08)', borderColor: 'rgba(0, 212, 170, 0.3)' }}>
+                      <span
+                        key={sig}
+                        className="signal-tag"
+                        style={{
+                          backgroundColor: 'rgba(0, 212, 170, 0.08)',
+                          borderColor: 'rgba(0, 212, 170, 0.3)',
+                        }}
+                      >
                         ● {sig}
                       </span>
                     ))}
@@ -398,19 +469,26 @@ export function ScenarioBuilderPage() {
             )}
 
             {/* Bottom Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--card-border)' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                marginTop: 24,
+                paddingTop: 16,
+                borderTop: '1px solid var(--card-border)',
+              }}
+            >
               <button
                 className="btn-secondary"
-                onClick={() => navigate('/custom-scenarios', { state: { template: generatedScenario } })}
+                onClick={() =>
+                  navigate('/custom-scenarios', { state: { template: generatedScenario } })
+                }
               >
                 <Wrench size={14} />
                 Edit in Custom Authoring
               </button>
-              <button
-                className="btn-primary"
-                onClick={handleSave}
-                disabled={saving || saveSuccess}
-              >
+              <button className="btn-primary" onClick={handleSave} disabled={saving || saveSuccess}>
                 {saving ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />

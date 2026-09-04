@@ -131,7 +131,8 @@ function BuildLogPanel({ appId, onClose }: { appId: string; onClose: () => void 
     // Connect to WebSocket for live build logs (dynamically resolves host for LAN/network readiness)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl =
-      import.meta.env.VITE_WS_URL || `${protocol}//${window.location.host}/api/apps/${appId}/logs/ws`;
+      import.meta.env.VITE_WS_URL ||
+      `${protocol}//${window.location.host}/api/apps/${appId}/logs/ws`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -302,15 +303,9 @@ function DiscoverySummaryInline({ appId, token }: { appId: string; token: string
       >
         Discovery:
       </span>
-      {summary.language && (
-        <span className="badge badge-info">{summary.language}</span>
-      )}
-      {summary.framework && (
-        <span className="badge badge-primary">{summary.framework}</span>
-      )}
-      {summary.detected_db && (
-        <span className="badge badge-warning">{summary.detected_db}</span>
-      )}
+      {summary.language && <span className="badge badge-info">{summary.language}</span>}
+      {summary.framework && <span className="badge badge-primary">{summary.framework}</span>}
+      {summary.detected_db && <span className="badge badge-warning">{summary.detected_db}</span>}
       {summary.endpoint_count > 0 && (
         <span style={{ color: 'var(--secondary-foreground)' }}>
           {summary.endpoint_count} endpoint{summary.endpoint_count !== 1 ? 's' : ''}

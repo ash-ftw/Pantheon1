@@ -101,15 +101,20 @@ function ConfidenceMeter({ level }: { level: string }) {
     <div className="confidence-meter">
       <div className="confidence-bar">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`confidence-segment ${i <= segments ? `active ${level}` : ''}`}
-          />
+          <div key={i} className={`confidence-segment ${i <= segments ? `active ${level}` : ''}`} />
         ))}
       </div>
-      <span className={`confidence-label`} style={{
-        color: level === 'high' ? 'var(--success)' : level === 'medium' ? 'var(--warning)' : 'var(--danger)',
-      }}>
+      <span
+        className={`confidence-label`}
+        style={{
+          color:
+            level === 'high'
+              ? 'var(--success)'
+              : level === 'medium'
+                ? 'var(--warning)'
+                : 'var(--danger)',
+        }}
+      >
         {level}
       </span>
     </div>
@@ -330,7 +335,10 @@ export function TargetAnalysisPage() {
 
           {/* Confidence + Namespace */}
           <div className="card">
-            <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div
+              className="card-header"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
               <span className="card-title">Analysis Overview</span>
               <ConfidenceMeter level={profile.confidence} />
             </div>
@@ -338,7 +346,9 @@ export function TargetAnalysisPage() {
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Server size={14} style={{ color: 'var(--muted-foreground)' }} />
-                  <span style={{ fontSize: 12, color: 'var(--secondary-foreground)' }}>Namespace:</span>
+                  <span style={{ fontSize: 12, color: 'var(--secondary-foreground)' }}>
+                    Namespace:
+                  </span>
                   <span className="font-mono" style={{ fontSize: 11, color: 'var(--primary)' }}>
                     {profile.namespace}
                   </span>
@@ -356,7 +366,11 @@ export function TargetAnalysisPage() {
           <div className="profile-grid">
             <ProfileCard label="Language" value={profile.language} icon={<Code2 size={18} />} />
             <ProfileCard label="Framework" value={profile.framework} icon={<Globe size={18} />} />
-            <ProfileCard label="Database" value={profile.detected_db} icon={<Database size={18} />} />
+            <ProfileCard
+              label="Database"
+              value={profile.detected_db}
+              icon={<Database size={18} />}
+            />
 
             {/* Exposed Ports */}
             <ProfileCard label="Exposed Ports" icon={<Network size={18} />}>
@@ -370,7 +384,9 @@ export function TargetAnalysisPage() {
                 </div>
               ) : (
                 <div className="profile-item-value">
-                  <span className="icon"><Network size={18} /></span>
+                  <span className="icon">
+                    <Network size={18} />
+                  </span>
                   No ports detected
                 </div>
               )}
@@ -389,7 +405,9 @@ export function TargetAnalysisPage() {
                 </div>
               ) : (
                 <div className="profile-item-value">
-                  <span className="icon"><KeyRound size={18} /></span>
+                  <span className="icon">
+                    <KeyRound size={18} />
+                  </span>
                   None detected
                 </div>
               )}
@@ -398,12 +416,20 @@ export function TargetAnalysisPage() {
             {/* Activity indicator */}
             <ProfileCard label="Discovery Status" icon={<Activity size={18} />}>
               <div className="profile-item-value">
-                <span className="icon"><Activity size={18} /></span>
-                <span className={`badge badge-${
-                  profile.discovery_status === 'completed' ? 'success' :
-                  profile.discovery_status === 'running' ? 'warning' :
-                  profile.discovery_status === 'failed' ? 'danger' : 'info'
-                }`}>
+                <span className="icon">
+                  <Activity size={18} />
+                </span>
+                <span
+                  className={`badge badge-${
+                    profile.discovery_status === 'completed'
+                      ? 'success'
+                      : profile.discovery_status === 'running'
+                        ? 'warning'
+                        : profile.discovery_status === 'failed'
+                          ? 'danger'
+                          : 'info'
+                  }`}
+                >
                   {profile.discovery_status}
                 </span>
               </div>

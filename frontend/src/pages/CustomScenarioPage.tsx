@@ -70,7 +70,17 @@ const CATEGORIES = [
   { value: 'multi_stage_chain', label: 'Multi-Stage Chain' },
 ];
 
-const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'POD_KILL', 'NETWORK_DELAY', 'CPU_STRESS', 'CHAINED_HTTP'];
+const METHODS = [
+  'GET',
+  'POST',
+  'PUT',
+  'DELETE',
+  'PATCH',
+  'POD_KILL',
+  'NETWORK_DELAY',
+  'CPU_STRESS',
+  'CHAINED_HTTP',
+];
 
 export function CustomScenarioPage() {
   const navigate = useNavigate();
@@ -81,7 +91,9 @@ export function CustomScenarioPage() {
   const templateScenario = location.state?.template as ScenarioDefinition | undefined;
 
   const [mode, setMode] = useState<'form' | 'json'>('form');
-  const [scenario, setScenario] = useState<ScenarioDefinition>(templateScenario || DEFAULT_SCENARIO);
+  const [scenario, setScenario] = useState<ScenarioDefinition>(
+    templateScenario || DEFAULT_SCENARIO,
+  );
   const [jsonText, setJsonText] = useState<string>(
     JSON.stringify(templateScenario || DEFAULT_SCENARIO, null, 2),
   );
@@ -89,7 +101,10 @@ export function CustomScenarioPage() {
   const [newSignal, setNewSignal] = useState('');
   const [presets, setPresets] = useState<{ name: string; definition: ScenarioDefinition }[]>([]);
   const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{ valid: boolean; errors: string[] } | null>(null);
+  const [validationResult, setValidationResult] = useState<{
+    valid: boolean;
+    errors: string[];
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +130,10 @@ export function CustomScenarioPage() {
   }, []);
 
   // Sync Form -> JSON
-  const updateScenarioField = <K extends keyof ScenarioDefinition>(key: K, value: ScenarioDefinition[K]) => {
+  const updateScenarioField = <K extends keyof ScenarioDefinition>(
+    key: K,
+    value: ScenarioDefinition[K],
+  ) => {
     const updated = { ...scenario, [key]: value };
     setScenario(updated);
     setJsonText(JSON.stringify(updated, null, 2));
@@ -228,7 +246,9 @@ export function CustomScenarioPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail?.message || errData.detail || `Server returned ${res.status}`);
+        throw new Error(
+          errData.detail?.message || errData.detail || `Server returned ${res.status}`,
+        );
       }
 
       setSaveSuccess(true);
@@ -253,17 +273,29 @@ export function CustomScenarioPage() {
   // Remove expected signal
   const handleRemoveSignal = (sig: string) => {
     const current = scenario.expected_signals || [];
-    updateScenarioField('expected_signals', current.filter((s) => s !== sig));
+    updateScenarioField(
+      'expected_signals',
+      current.filter((s) => s !== sig),
+    );
   };
 
   return (
     <div className="page-container animate-fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
         <div>
           <div className="page-title">Custom Scenario Authoring</div>
           <div className="page-subtitle">
-            Author custom security simulations or chaos engineering tests against Pantheon's strict Pydantic schema.
-            Use the visual form or edit raw JSON with live validation.
+            Author custom security simulations or chaos engineering tests against Pantheon's strict
+            Pydantic schema. Use the visual form or edit raw JSON with live validation.
           </div>
         </div>
 
@@ -291,7 +323,9 @@ export function CustomScenarioPage() {
               }}
               defaultValue=""
             >
-              <option value="" disabled>Preload Preset Template...</option>
+              <option value="" disabled>
+                Preload Preset Template...
+              </option>
               {presets.map((p) => (
                 <option key={p.name} value={p.name}>
                   {p.name}
@@ -301,17 +335,11 @@ export function CustomScenarioPage() {
           )}
 
           <div className="editor-toggle">
-            <button
-              className={mode === 'form' ? 'active' : ''}
-              onClick={() => setMode('form')}
-            >
+            <button className={mode === 'form' ? 'active' : ''} onClick={() => setMode('form')}>
               <FileText size={12} style={{ display: 'inline', marginRight: 4 }} />
               Form Mode
             </button>
-            <button
-              className={mode === 'json' ? 'active' : ''}
-              onClick={() => setMode('json')}
-            >
+            <button className={mode === 'json' ? 'active' : ''} onClick={() => setMode('json')}>
               <Code size={12} style={{ display: 'inline', marginRight: 4 }} />
               JSON Mode
             </button>
@@ -321,24 +349,38 @@ export function CustomScenarioPage() {
 
       {/* Validation Result Banner */}
       {validationResult && (
-        <div className={`validation-banner ${validationResult.valid ? 'success' : 'error'} animate-slide-in`}>
+        <div
+          className={`validation-banner ${validationResult.valid ? 'success' : 'error'} animate-slide-in`}
+        >
           {validationResult.valid ? (
             <>
               <CheckCircle2 size={16} />
               <div>
-                <strong>Simulation Guard & Schema Validated</strong> — Scenario complies strictly with Pantheon's execution specification and PRD §7.6 Safety Model boundaries.
+                <strong>Simulation Guard & Schema Validated</strong> — Scenario complies strictly
+                with Pantheon's execution specification and PRD §7.6 Safety Model boundaries.
               </div>
             </>
           ) : (
             <>
               <AlertCircle size={16} />
               <div>
-                <div style={{ fontWeight: 600, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div
+                  style={{
+                    fontWeight: 600,
+                    marginBottom: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
                   <ShieldAlert size={14} /> Validation & Safety Guard Violations:
                 </div>
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {validationResult.errors.map((err, idx) => (
-                    <li key={idx} style={{ color: err.includes('Simulation Guard') ? '#f87171' : 'inherit' }}>
+                    <li
+                      key={idx}
+                      style={{ color: err.includes('Simulation Guard') ? '#f87171' : 'inherit' }}
+                    >
                       {err}
                     </li>
                   ))}
@@ -372,7 +414,14 @@ export function CustomScenarioPage() {
             {/* Row 1: Title & Category */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   Scenario Title *
                 </label>
                 <input
@@ -392,7 +441,14 @@ export function CustomScenarioPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   Category *
                 </label>
                 <select
@@ -419,7 +475,14 @@ export function CustomScenarioPage() {
 
             {/* Description */}
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  color: 'var(--muted-foreground)',
+                  marginBottom: 6,
+                }}
+              >
                 Description *
               </label>
               <textarea
@@ -441,12 +504,26 @@ export function CustomScenarioPage() {
 
             {/* Target Specification Box */}
             <div className="card" style={{ backgroundColor: 'var(--secondary)', padding: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 12 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'var(--foreground)',
+                  marginBottom: 12,
+                }}
+              >
                 Target Destination Specification
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 10,
+                      color: 'var(--muted-foreground)',
+                      marginBottom: 4,
+                    }}
+                  >
                     Method
                   </label>
                   <select
@@ -471,7 +548,14 @@ export function CustomScenarioPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 10,
+                      color: 'var(--muted-foreground)',
+                      marginBottom: 4,
+                    }}
+                  >
                     Path
                   </label>
                   <input
@@ -479,7 +563,11 @@ export function CustomScenarioPage() {
                     value={scenario.target?.path || '/'}
                     onChange={(e) =>
                       updateScenarioField('target', {
-                        ...(scenario.target || { service: 'default', port: 8080, protocol: 'http' }),
+                        ...(scenario.target || {
+                          service: 'default',
+                          port: 8080,
+                          protocol: 'http',
+                        }),
                         path: e.target.value,
                       })
                     }
@@ -497,7 +585,14 @@ export function CustomScenarioPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 10,
+                      color: 'var(--muted-foreground)',
+                      marginBottom: 4,
+                    }}
+                  >
                     Port
                   </label>
                   <input
@@ -523,7 +618,14 @@ export function CustomScenarioPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                  <label
+                    style={{
+                      display: 'block',
+                      fontSize: 10,
+                      color: 'var(--muted-foreground)',
+                      marginBottom: 4,
+                    }}
+                  >
                     Protocol
                   </label>
                   <select
@@ -556,9 +658,19 @@ export function CustomScenarioPage() {
             {/* Execution Parameters: Concurrency, Duration, Impact */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   <span>Concurrency</span>
-                  <span className="font-mono" style={{ color: 'var(--primary)' }}>{scenario.concurrency} workers</span>
+                  <span className="font-mono" style={{ color: 'var(--primary)' }}>
+                    {scenario.concurrency} workers
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -571,9 +683,19 @@ export function CustomScenarioPage() {
               </div>
 
               <div>
-                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   <span>Duration</span>
-                  <span className="font-mono" style={{ color: 'var(--primary)' }}>{scenario.duration} seconds</span>
+                  <span className="font-mono" style={{ color: 'var(--primary)' }}>
+                    {scenario.duration} seconds
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -590,12 +712,24 @@ export function CustomScenarioPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   Estimated Impact
                 </label>
                 <select
                   value={scenario.estimated_impact}
-                  onChange={(e) => updateScenarioField('estimated_impact', e.target.value as 'low' | 'medium' | 'high' | 'critical')}
+                  onChange={(e) =>
+                    updateScenarioField(
+                      'estimated_impact',
+                      e.target.value as 'low' | 'medium' | 'high' | 'critical',
+                    )
+                  }
                   style={{
                     width: '100%',
                     padding: '8px 12px',
@@ -616,16 +750,33 @@ export function CustomScenarioPage() {
 
             {/* Expected Signals Tag Manager */}
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 6 }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  color: 'var(--muted-foreground)',
+                  marginBottom: 6,
+                }}
+              >
                 Expected Defense & Detection Signals (Min 1 required)
               </label>
               <div className="signal-tags" style={{ marginBottom: 10 }}>
                 {(scenario.expected_signals || []).map((sig) => (
-                  <span key={sig} className="signal-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    key={sig}
+                    className="signal-tag"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
                     <span>● {sig}</span>
                     <button
                       onClick={() => handleRemoveSignal(sig)}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: 0 }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--danger)',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
                     >
                       <Trash2 size={11} />
                     </button>
@@ -670,7 +821,10 @@ export function CustomScenarioPage() {
       ) : (
         /* JSON Mode View */
         <div className="card">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            className="card-header"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <span className="card-title">Raw Scenario Definition JSON</span>
             <button
               className="btn-secondary"
@@ -696,20 +850,12 @@ export function CustomScenarioPage() {
 
       {/* Action Toolbar */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
-        <button
-          className="btn-secondary"
-          onClick={handleValidate}
-          disabled={validating}
-        >
+        <button className="btn-secondary" onClick={handleValidate} disabled={validating}>
           {validating ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
           Validate Schema
         </button>
 
-        <button
-          className="btn-primary"
-          onClick={handleSave}
-          disabled={saving || saveSuccess}
-        >
+        <button className="btn-primary" onClick={handleSave} disabled={saving || saveSuccess}>
           {saving ? (
             <>
               <Loader2 size={14} className="animate-spin" />
@@ -726,10 +872,7 @@ export function CustomScenarioPage() {
 
       {/* Safety Guard Policies Modal */}
       {showSafetyModal && (
-        <div
-          className="scenario-modal-overlay"
-          onClick={() => setShowSafetyModal(false)}
-        >
+        <div className="scenario-modal-overlay" onClick={() => setShowSafetyModal(false)}>
           <div
             className="scenario-modal"
             onClick={(e) => e.stopPropagation()}
@@ -742,7 +885,12 @@ export function CustomScenarioPage() {
               </div>
               <button
                 onClick={() => setShowSafetyModal(false)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--muted-foreground)',
+                  cursor: 'pointer',
+                }}
               >
                 <X size={18} />
               </button>
@@ -753,19 +901,25 @@ export function CustomScenarioPage() {
                 <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
                   Permanently Disallowed Attack Classes (FR-6.2)
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--secondary-foreground)', marginBottom: 8 }}>
+                <div
+                  style={{ fontSize: 12, color: 'var(--secondary-foreground)', marginBottom: 8 }}
+                >
                   Hard-coded in code with zero configuration path to bypass:
                 </div>
                 <ul style={{ margin: 0, paddingLeft: 18, color: '#f87171', fontSize: 12 }}>
-                  {(safetyPolicies?.permanently_disallowed_classes || [
-                    'Real malware, rootkits, and Trojan payloads',
-                    'Persistence mechanisms (crontabs, autoruns, backdoor user creation)',
-                    'Credential theft against real external accounts',
-                    'Reverse shells and interactive TTY command injection',
-                    'Ransomware and mass file destruction',
-                    'Data exfiltration to external webhooks and public endpoints',
-                  ]).map((item, idx) => (
-                    <li key={idx} style={{ marginBottom: 4 }}>{item}</li>
+                  {(
+                    safetyPolicies?.permanently_disallowed_classes || [
+                      'Real malware, rootkits, and Trojan payloads',
+                      'Persistence mechanisms (crontabs, autoruns, backdoor user creation)',
+                      'Credential theft against real external accounts',
+                      'Reverse shells and interactive TTY command injection',
+                      'Ransomware and mass file destruction',
+                      'Data exfiltration to external webhooks and public endpoints',
+                    ]
+                  ).map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: 4 }}>
+                      {item}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -774,27 +928,44 @@ export function CustomScenarioPage() {
                 <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
                   Tenant Scope Boundaries (FR-6.3)
                 </div>
-                <ul style={{ margin: 0, paddingLeft: 18, color: 'var(--secondary-foreground)', fontSize: 12 }}>
-                  {(safetyPolicies?.scope_constraints || [
-                    'Simulations must target strictly within the customer tenant namespace',
-                    'Public internet IP addresses and external domain names are prohibited',
-                    'Cloud provider metadata endpoints (169.254.169.254) are permanently blocked',
-                  ]).map((item, idx) => (
-                    <li key={idx} style={{ marginBottom: 4 }}>{item}</li>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    color: 'var(--secondary-foreground)',
+                    fontSize: 12,
+                  }}
+                >
+                  {(
+                    safetyPolicies?.scope_constraints || [
+                      'Simulations must target strictly within the customer tenant namespace',
+                      'Public internet IP addresses and external domain names are prohibited',
+                      'Cloud provider metadata endpoints (169.254.169.254) are permanently blocked',
+                    ]
+                  ).map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: 4 }}>
+                      {item}
+                    </li>
                   ))}
                 </ul>
               </div>
 
-              <div style={{ padding: 10, backgroundColor: 'rgba(0, 212, 170, 0.08)', borderRadius: 'var(--radius)', border: '1px solid rgba(0, 212, 170, 0.2)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+              <div
+                style={{
+                  padding: 10,
+                  backgroundColor: 'rgba(0, 212, 170, 0.08)',
+                  borderRadius: 'var(--radius)',
+                  border: '1px solid rgba(0, 212, 170, 0.2)',
+                  fontSize: 11,
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
                 All safety rejections are automatically logged to the audit log (FR-6.4).
               </div>
             </div>
 
             <div className="scenario-modal-footer">
-              <button
-                className="btn-primary"
-                onClick={() => setShowSafetyModal(false)}
-              >
+              <button className="btn-primary" onClick={() => setShowSafetyModal(false)}>
                 Close Policies
               </button>
             </div>

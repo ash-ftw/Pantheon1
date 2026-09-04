@@ -79,7 +79,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: border-color 0.2s, transform 0.2s;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
 }
 
 .test-run-stat-card:hover {
@@ -177,7 +179,9 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 212, 170, 0.15);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 212, 170, 0.15);
 }
 
 .active-run-header {
@@ -212,9 +216,18 @@
 }
 
 @keyframes pulse-glow {
-  0% { transform: scale(0.95); box-shadow: 0 0 4px #00d4aa; }
-  50% { transform: scale(1.15); box-shadow: 0 0 16px #00d4aa; }
-  100% { transform: scale(0.95); box-shadow: 0 0 4px #00d4aa; }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 4px #00d4aa;
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 16px #00d4aa;
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 4px #00d4aa;
+  }
 }
 
 .active-run-title {
@@ -387,9 +400,15 @@
   border-radius: 50%;
 }
 
-.dot-red { background: #ef4444; }
-.dot-yellow { background: #f59e0b; }
-.dot-green { background: #10b981; }
+.dot-red {
+  background: #ef4444;
+}
+.dot-yellow {
+  background: #f59e0b;
+}
+.dot-green {
+  background: #10b981;
+}
 
 .terminal-body {
   height: 190px;
@@ -434,11 +453,21 @@
   flex-shrink: 0;
 }
 
-.level-info { color: #38bdf8; }
-.level-step { color: #00d4aa; }
-.level-alert { color: #ef4444; }
-.level-success { color: #34d399; }
-.level-warning { color: #fbbf24; }
+.level-info {
+  color: #38bdf8;
+}
+.level-step {
+  color: #00d4aa;
+}
+.level-alert {
+  color: #ef4444;
+}
+.level-success {
+  color: #34d399;
+}
+.level-warning {
+  color: #fbbf24;
+}
 
 .log-msg {
   color: #e2e8f0;
@@ -586,7 +615,9 @@
   border-radius: var(--radius);
   width: 100%;
   max-width: 540px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 212, 170, 0.2);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(0, 212, 170, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -656,7 +687,9 @@
   color: #ffffff;
   font-family: var(--font-body);
   font-size: 13px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .modal-body select:focus,

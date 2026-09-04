@@ -172,8 +172,14 @@ export function TestRunPage() {
             if (currentActive.status === 'running') {
               return {
                 ...updated,
-                logs: currentActive.logs.length > updated.logs.length ? currentActive.logs : updated.logs,
-                findings: currentActive.findings.length > updated.findings.length ? currentActive.findings : updated.findings,
+                logs:
+                  currentActive.logs.length > updated.logs.length
+                    ? currentActive.logs
+                    : updated.logs,
+                findings:
+                  currentActive.findings.length > updated.findings.length
+                    ? currentActive.findings
+                    : updated.findings,
                 current_step: Math.max(currentActive.current_step, updated.current_step),
                 metrics: currentActive.metrics || updated.metrics,
               };
@@ -194,7 +200,9 @@ export function TestRunPage() {
     try {
       const [appsRes, scenRes] = await Promise.all([
         fetch(`${API_BASE}/apps`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }),
-        fetch(`${API_BASE}/scenarios`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }),
+        fetch(`${API_BASE}/scenarios`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }),
       ]);
       if (appsRes.ok) {
         const appsData = await appsRes.json();
@@ -454,20 +462,29 @@ export function TestRunPage() {
 
   const getSeverityBadgeClass = (sev: string) => {
     switch (sev.toLowerCase()) {
-      case 'critical': return 'badge-danger';
-      case 'high': return 'badge-warning';
-      case 'medium': return 'badge-info';
-      default: return 'badge-secondary';
+      case 'critical':
+        return 'badge-danger';
+      case 'high':
+        return 'badge-warning';
+      case 'medium':
+        return 'badge-info';
+      default:
+        return 'badge-secondary';
     }
   };
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'running': return 'badge-success';
-      case 'completed': return 'badge-primary';
-      case 'stopped': return 'badge-danger';
-      case 'failed': return 'badge-danger';
-      default: return 'badge-secondary';
+      case 'running':
+        return 'badge-success';
+      case 'completed':
+        return 'badge-primary';
+      case 'stopped':
+        return 'badge-danger';
+      case 'failed':
+        return 'badge-danger';
+      default:
+        return 'badge-secondary';
     }
   };
 
@@ -687,10 +704,10 @@ export function TestRunPage() {
               {activeRun.logs && activeRun.logs.length > 0 ? (
                 activeRun.logs.map((log, idx) => (
                   <div key={idx} className="log-line">
-                    <span className="log-ts">
-                      {new Date(log.timestamp).toLocaleTimeString()}
+                    <span className="log-ts">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                    <span className={`log-level level-${log.level.toLowerCase()}`}>
+                      [{log.level}]
                     </span>
-                    <span className={`log-level level-${log.level.toLowerCase()}`}>[{log.level}]</span>
                     <span className="log-msg">{log.message}</span>
                   </div>
                 ))
@@ -703,7 +720,10 @@ export function TestRunPage() {
           {/* Findings Discovered */}
           {activeRun.findings && activeRun.findings.length > 0 && (
             <div className="findings-section">
-              <h3 className="text-md font-bold flex items-center gap-2" style={{ color: '#ef4444' }}>
+              <h3
+                className="text-md font-bold flex items-center gap-2"
+                style={{ color: '#ef4444' }}
+              >
                 <ShieldAlert size={18} />
                 Identified Security Findings ({activeRun.findings.length})
               </h3>
@@ -712,7 +732,9 @@ export function TestRunPage() {
                   <div className="finding-card-header">
                     <div className="finding-title">{finding.title}</div>
                     <div className="finding-badges">
-                      <span className={`badge ${getSeverityBadgeClass(finding.severity)} uppercase`}>
+                      <span
+                        className={`badge ${getSeverityBadgeClass(finding.severity)} uppercase`}
+                      >
                         {finding.severity}
                       </span>
                       {finding.cwe_id && (
@@ -774,14 +796,11 @@ export function TestRunPage() {
 
       {/* Test Run History Section */}
       <div className="runs-card">
-
         <div className="runs-table-container">
           {loading ? (
             <div className="p-8 text-center text-muted">Loading test runs...</div>
           ) : filteredRuns.length === 0 ? (
-            <div className="empty-runs-message">
-              No test runs match the selected filter.
-            </div>
+            <div className="empty-runs-message">No test runs match the selected filter.</div>
           ) : (
             <table className="runs-table">
               <thead>
@@ -815,9 +834,7 @@ export function TestRunPage() {
                     </td>
                     <td>
                       {run.findings && run.findings.length > 0 ? (
-                        <span className="badge badge-danger font-bold">
-                          {run.findings.length}
-                        </span>
+                        <span className="badge badge-danger font-bold">{run.findings.length}</span>
                       ) : (
                         <span className="text-xs text-muted">0</span>
                       )}
@@ -875,7 +892,9 @@ export function TestRunPage() {
                   value={selectedAppId}
                   onChange={(e) => setSelectedAppId(e.target.value)}
                 >
-                  <option value="" disabled>Select target application...</option>
+                  <option value="" disabled>
+                    Select target application...
+                  </option>
                   {apps.map((app) => (
                     <option key={app.id} value={app.id}>
                       {app.name} ({app.status} — Port:{' '}

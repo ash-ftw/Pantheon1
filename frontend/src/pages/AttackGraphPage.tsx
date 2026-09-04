@@ -177,16 +177,7 @@ function AttackNodeComponent({ data }: NodeProps<AttackNodeType>) {
 /* ------------------------------------------------------------------ */
 
 function AttackEdgeComponent(props: EdgeProps<AttackEdgeType>) {
-  const {
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    data,
-  } = props;
+  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data } = props;
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -511,7 +502,9 @@ export function AttackGraphPage() {
           nodeType: n.type,
           status: n.status,
           stepDiscovered: n.step_discovered,
-          isCurrentStep: isReplayMode ? n.step_discovered === currentStep && currentStep > 0 : false,
+          isCurrentStep: isReplayMode
+            ? n.step_discovered === currentStep && currentStep > 0
+            : false,
           metadata: n.metadata,
         },
       }));
@@ -533,7 +526,9 @@ export function AttackGraphPage() {
           status: e.status,
           stepDiscovered: e.step_discovered,
           label: e.label,
-          isCurrentStep: isReplayMode ? e.step_discovered === currentStep && currentStep > 0 : false,
+          isCurrentStep: isReplayMode
+            ? e.step_discovered === currentStep && currentStep > 0
+            : false,
           metadata: e.metadata,
         },
       }));
@@ -585,7 +580,8 @@ export function AttackGraphPage() {
             ) : (
               runs.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.scenario_name} ({r.status.toUpperCase()}) — {new Date(r.created_at).toLocaleTimeString()}
+                  {r.scenario_name} ({r.status.toUpperCase()}) —{' '}
+                  {new Date(r.created_at).toLocaleTimeString()}
                 </option>
               ))
             )}
@@ -618,7 +614,9 @@ export function AttackGraphPage() {
       <div className="attack-graph-stats">
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Total Graph Nodes</div>
-          <div className="attack-graph-stat-val">{displayNodes.length} / {rawNodes.length}</div>
+          <div className="attack-graph-stat-val">
+            {displayNodes.length} / {rawNodes.length}
+          </div>
         </div>
 
         <div className="attack-graph-stat-card">

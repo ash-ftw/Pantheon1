@@ -165,7 +165,9 @@ export function SimulationLibraryPage() {
         const matchesName = item.name.toLowerCase().includes(query);
         const matchesDesc = item.description.toLowerCase().includes(query);
         const matchesCat = item.category.toLowerCase().includes(query);
-        const matchesTag = (item.definition?.tags || []).some((t) => t.toLowerCase().includes(query));
+        const matchesTag = (item.definition?.tags || []).some((t) =>
+          t.toLowerCase().includes(query),
+        );
         if (!matchesName && !matchesDesc && !matchesCat && !matchesTag) return false;
       }
       return true;
@@ -183,27 +185,30 @@ export function SimulationLibraryPage() {
 
   return (
     <div className="page-container animate-fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
         <div>
           <div className="page-title">Simulation Library</div>
           <div className="page-subtitle">
-            Pre-built preset simulations and custom scenarios for security testing and chaos resilience.
-            Validated against Pantheon's strict execution schema (PRD Modules 7–9).
+            Pre-built preset simulations and custom scenarios for security testing and chaos
+            resilience. Validated against Pantheon's strict execution schema (PRD Modules 7–9).
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            className="btn-secondary"
-            onClick={() => navigate('/scenario-builder')}
-          >
+          <button className="btn-secondary" onClick={() => navigate('/scenario-builder')}>
             <Sparkles size={14} style={{ color: 'var(--primary)' }} />
             AI Builder
           </button>
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/custom-scenarios')}
-          >
+          <button className="btn-primary" onClick={() => navigate('/custom-scenarios')}>
             <Plus size={14} />
             Author Custom
           </button>
@@ -292,7 +297,13 @@ export function SimulationLibraryPage() {
                         </span>
                         <span
                           className="badge badge-success"
-                          style={{ fontSize: 9, padding: '1px 5px', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                          style={{
+                            fontSize: 9,
+                            padding: '1px 5px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
                           title="Validated by Simulation Guard (PRD §7.6)"
                         >
                           <ShieldCheck size={9} /> Guard
@@ -330,7 +341,11 @@ export function SimulationLibraryPage() {
                       <div className="scenario-card-meta-item" style={{ marginLeft: 'auto' }}>
                         <span
                           className={`badge ${
-                            item.source === 'preset' ? 'badge-primary' : item.source === 'ai' ? 'badge-info' : 'badge-warning'
+                            item.source === 'preset'
+                              ? 'badge-primary'
+                              : item.source === 'ai'
+                                ? 'badge-info'
+                                : 'badge-warning'
                           }`}
                         >
                           {item.source}
@@ -344,12 +359,30 @@ export function SimulationLibraryPage() {
           ) : (
             <div className="card">
               <div className="card-body" style={{ textAlign: 'center', padding: '48px 24px' }}>
-                <ShieldAlert size={48} style={{ color: 'var(--muted-foreground)', margin: '0 auto 16px' }} />
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--foreground)', marginBottom: 8 }}>
+                <ShieldAlert
+                  size={48}
+                  style={{ color: 'var(--muted-foreground)', margin: '0 auto 16px' }}
+                />
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 18,
+                    color: 'var(--foreground)',
+                    marginBottom: 8,
+                  }}
+                >
                   No Scenarios Found
                 </h3>
-                <p style={{ color: 'var(--secondary-foreground)', fontSize: 13, maxWidth: 440, margin: '0 auto 20px' }}>
-                  No scenarios match your current search or category filter. Try clearing your filters or create a new custom scenario.
+                <p
+                  style={{
+                    color: 'var(--secondary-foreground)',
+                    fontSize: 13,
+                    maxWidth: 440,
+                    margin: '0 auto 20px',
+                  }}
+                >
+                  No scenarios match your current search or category filter. Try clearing your
+                  filters or create a new custom scenario.
                 </p>
                 <button
                   className="btn-secondary"
@@ -369,27 +402,40 @@ export function SimulationLibraryPage() {
 
       {/* Scenario Detail Modal */}
       {activeModalScenario && (
-        <div
-          className="scenario-modal-overlay"
-          onClick={() => setActiveModalScenario(null)}
-        >
-          <div
-            className="scenario-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="scenario-modal-overlay" onClick={() => setActiveModalScenario(null)}>
+          <div className="scenario-modal" onClick={(e) => e.stopPropagation()}>
             <div className="scenario-modal-header">
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span className={`method-badge method-${activeModalScenario.definition?.method || 'GET'}`}>
+                  <span
+                    className={`method-badge method-${activeModalScenario.definition?.method || 'GET'}`}
+                  >
                     {activeModalScenario.definition?.method || 'GET'}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600 }}>
+                  <span
+                    style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600 }}
+                  >
                     {activeModalScenario.name}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 4, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span>Category: {activeModalScenario.category} · Source: {activeModalScenario.source}</span>
-                  <span className="badge badge-success" style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--muted-foreground)',
+                    marginTop: 4,
+                    fontFamily: 'var(--font-mono)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <span>
+                    Category: {activeModalScenario.category} · Source: {activeModalScenario.source}
+                  </span>
+                  <span
+                    className="badge badge-success"
+                    style={{ fontSize: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                  >
                     <ShieldCheck size={11} /> Simulation Guard: Verified (PRD §7.6)
                   </span>
                 </div>
@@ -397,7 +443,12 @@ export function SimulationLibraryPage() {
 
               <button
                 onClick={() => setActiveModalScenario(null)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--muted-foreground)', cursor: 'pointer' }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--muted-foreground)',
+                  cursor: 'pointer',
+                }}
               >
                 <X size={20} />
               </button>
@@ -405,10 +456,19 @@ export function SimulationLibraryPage() {
 
             <div className="scenario-modal-body">
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--foreground)',
+                    marginBottom: 6,
+                  }}
+                >
                   Description
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--secondary-foreground)', lineHeight: 1.6 }}>
+                <div
+                  style={{ fontSize: 13, color: 'var(--secondary-foreground)', lineHeight: 1.6 }}
+                >
                   {activeModalScenario.description}
                 </div>
               </div>
@@ -418,7 +478,10 @@ export function SimulationLibraryPage() {
                 <div className="card-header">
                   <span className="card-title">Target Specification</span>
                 </div>
-                <div className="card-body" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                <div
+                  className="card-body"
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}
+                >
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Path</div>
                     <div className="font-mono" style={{ fontSize: 13, color: 'var(--primary)' }}>
@@ -443,20 +506,28 @@ export function SimulationLibraryPage() {
               {/* Execution Specs */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>Concurrency</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                    Concurrency
+                  </div>
                   <div className="font-mono" style={{ fontSize: 15, fontWeight: 600 }}>
                     {activeModalScenario.definition?.concurrency || 10} workers
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>Duration</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                    Duration
+                  </div>
                   <div className="font-mono" style={{ fontSize: 15, fontWeight: 600 }}>
                     {activeModalScenario.definition?.duration || 30} seconds
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>Estimated Impact</div>
-                  <span className={`impact-badge ${activeModalScenario.definition?.estimated_impact || 'medium'}`}>
+                  <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                    Estimated Impact
+                  </div>
+                  <span
+                    className={`impact-badge ${activeModalScenario.definition?.estimated_impact || 'medium'}`}
+                  >
                     {activeModalScenario.definition?.estimated_impact || 'medium'}
                   </span>
                 </div>
@@ -464,12 +535,26 @@ export function SimulationLibraryPage() {
 
               {/* Expected Signals */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--foreground)',
+                    marginBottom: 8,
+                  }}
+                >
                   Expected Reaction Signals
                 </div>
                 <div className="signal-tags">
                   {(activeModalScenario.definition?.expected_signals || []).map((sig) => (
-                    <span key={sig} className="signal-tag" style={{ backgroundColor: 'rgba(0, 212, 170, 0.08)', borderColor: 'rgba(0, 212, 170, 0.3)' }}>
+                    <span
+                      key={sig}
+                      className="signal-tag"
+                      style={{
+                        backgroundColor: 'rgba(0, 212, 170, 0.08)',
+                        borderColor: 'rgba(0, 212, 170, 0.3)',
+                      }}
+                    >
                       ● {sig}
                     </span>
                   ))}
@@ -479,7 +564,14 @@ export function SimulationLibraryPage() {
               {/* Raw Parameters */}
               {Object.keys(activeModalScenario.definition?.parameters || {}).length > 0 && (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--foreground)',
+                      marginBottom: 8,
+                    }}
+                  >
                     Simulation Parameters
                   </div>
                   <pre

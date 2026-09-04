@@ -197,7 +197,9 @@ describe('RouteBrokerPage (Phase 8 — Route Broker & Kill Switch)', () => {
     fireEvent.click(screen.getByTestId('kill-route-btn-route-active-1'));
 
     await waitFor(() => {
-      expect(screen.getByText(/EMERGENCY KILL SWITCH: Route route-ac revoked in <500ms./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/EMERGENCY KILL SWITCH: Route route-ac revoked in <500ms./i),
+      ).toBeInTheDocument();
     });
 
     expect(global.fetch).toHaveBeenCalledWith(

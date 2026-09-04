@@ -55,9 +55,27 @@ const mockRunMetrics = {
   memory_utilization_mb: 154.2,
   network_io_kbps: 420.0,
   step_latencies: [
-    { step_number: 1, step_name: 'Syntax Probe', latency_ms: 22.0, status_code: 200, timestamp: new Date().toISOString() },
-    { step_number: 2, step_name: 'Tautology Probe', latency_ms: 38.5, status_code: 200, timestamp: new Date().toISOString() },
-    { step_number: 3, step_name: 'Union Query Probe', latency_ms: 92.5, status_code: 500, timestamp: new Date().toISOString() },
+    {
+      step_number: 1,
+      step_name: 'Syntax Probe',
+      latency_ms: 22.0,
+      status_code: 200,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      step_number: 2,
+      step_name: 'Tautology Probe',
+      latency_ms: 38.5,
+      status_code: 200,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      step_number: 3,
+      step_name: 'Union Query Probe',
+      latency_ms: 92.5,
+      status_code: 500,
+      timestamp: new Date().toISOString(),
+    },
   ],
 };
 
@@ -96,8 +114,7 @@ const mockPlatformMetrics = {
 describe('Phase 11 — Defence Engine & Observability Tests', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    global.fetch = vi.fn().mockImplementation((url: string, _opts?: any) => {
-
+    global.fetch = vi.fn().mockImplementation((url: string, _opts?: RequestInit) => {
       if (url.includes('/api/attack-graph/runs')) {
         return Promise.resolve({
           ok: true,
@@ -148,7 +165,7 @@ describe('Phase 11 — Defence Engine & Observability Tests', () => {
     render(
       <MemoryRouter>
         <DefenceEnginePage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText(/DEFENCE ENGINE & REMEDIATION/i)).toBeInTheDocument();
@@ -163,12 +180,11 @@ describe('Phase 11 — Defence Engine & Observability Tests', () => {
     expect(screen.getAllByText(/SUGGESTED/i).length).toBeGreaterThanOrEqual(1);
   });
 
-
   it('triggers 1-Click Apply mitigation on DefenceEnginePage', async () => {
     render(
       <MemoryRouter>
         <DefenceEnginePage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => {
@@ -183,7 +199,7 @@ describe('Phase 11 — Defence Engine & Observability Tests', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/defence/recommendations/rec-1/apply'),
-        expect.objectContaining({ method: 'POST' })
+        expect.objectContaining({ method: 'POST' }),
       );
     });
   });
@@ -192,7 +208,7 @@ describe('Phase 11 — Defence Engine & Observability Tests', () => {
     render(
       <MemoryRouter>
         <ObservabilityPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText(/SYSTEM & TEST RUN OBSERVABILITY/i)).toBeInTheDocument();
