@@ -518,7 +518,9 @@ class K8sTenantService:
                 logger.warning("k8s_ingress_route_already_exists", ingress_name=ingress_name)
                 return {"ingress_name": ingress_name, "namespace": namespace, "simulated": False}
             if e.status == 404:  # Namespace not yet provisioned in cluster
-                logger.warning("k8s_namespace_not_found_fallback_simulated", namespace=namespace, error=str(e))
+                logger.warning(
+                    "k8s_namespace_not_found_fallback_simulated", namespace=namespace, error=str(e)
+                )
                 return {
                     "ingress_name": ingress_name,
                     "namespace": namespace,

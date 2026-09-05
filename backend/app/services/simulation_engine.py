@@ -18,7 +18,7 @@ from typing import Any
 
 import httpx
 import redis.asyncio as aioredis
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -30,7 +30,6 @@ from app.models import (
     AttackGraphEdge,
     AttackGraphNode,
     Finding,
-    Route,
     Scenario,
     TestRun,
 )
@@ -138,9 +137,7 @@ class SimulationEngine:
             real_scenario_id = None
 
             if scenario_id:
-                scen_res = await session.execute(
-                    select(Scenario).where(Scenario.id == scenario_id)
-                )
+                scen_res = await session.execute(select(Scenario).where(Scenario.id == scenario_id))
                 scen = scen_res.scalar_one_or_none()
                 if scen:
                     real_scenario_id = scen.id
@@ -152,7 +149,9 @@ class SimulationEngine:
             if not real_scenario_id:
                 for p in PRESET_SCENARIOS:
                     preset_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, f"pantheon.preset.{p.name}")
-                    if (scenario_id and scenario_id == preset_uuid) or p.name.lower() == scen_name.lower():
+                    if (
+                        scenario_id and scenario_id == preset_uuid
+                    ) or p.name.lower() == scen_name.lower():
                         scen_cat = p.category.value
                         scen_name = p.name
                         scen_def = p.model_dump()
@@ -181,7 +180,7 @@ class SimulationEngine:
                 service=app.name.lower(),
             )
             tenant_ns = f"pantheon-tenant-{str(org_id).replace('-', '')[:12]}"
-            allowed, violation_type, reason = validate_scenario_scope(
+            allowed, _violation_type, reason = validate_scenario_scope(
                 target_spec, tenant_namespace=tenant_ns
             )
             if not allowed:
@@ -281,12 +280,13 @@ class SimulationEngine:
             now = _utcnow()
             run.status = "stopped"
             run.completed_at = now
-            run.logs = list(run.logs) + [
+            run.logs = [
+                *list(run.logs),
                 {
                     "timestamp": now.isoformat(),
                     "level": "ALERT",
                     "message": f"EMERGENCY STOP TRIGGERED: {reason}. All worker tasks severed.",
-                }
+                },
             ]
             session.add(run)
 
@@ -342,7 +342,7 @@ class SimulationEngine:
 
     def _append_log(self, run: TestRun, entry: dict[str, Any]) -> None:
         """Helper to append log entry and notify SQLAlchemy of in-place mutation."""
-        run.logs = list(run.logs or []) + [entry]
+        run.logs = [*list(run.logs or []), entry]
         flag_modified(run, "logs")
 
     async def _push_loki_log(
@@ -369,9 +369,7 @@ class SimulationEngine:
                 "streams": [
                     {
                         "stream": stream_labels,
-                        "values": [
-                            [str(time.time_ns()), f"[{level.upper()}] {message}"]
-                        ],
+                        "values": [[str(time.time_ns()), f"[{level.upper()}] {message}"]],
                     }
                 ]
             }
@@ -422,7 +420,10 @@ class SimulationEngine:
                 await self.publish_event(
                     run_id=run_id,
                     event_type="run_started",
-                    data={"status": "running", "started_at": run.started_at.isoformat()},
+                    data={
+                        "status": "running",
+                        "started_at": run.started_at.isoformat() if run.started_at else None,
+                    },
                 )
 
                 # Open ephemeral route via Route Broker (Phase 8)
@@ -620,7 +621,14 @@ class SimulationEngine:
                         step_node.status = "compromised"
                         step_edge.status = "compromised"
 
-                        res_type = "database" if any(k in f_data.get("category", "").lower() for k in ["sql", "db", "injection"]) else "service"
+                        res_type = (
+                            "database"
+                            if any(
+                                k in f_data.get("category", "").lower()
+                                for k in ["sql", "db", "injection"]
+                            )
+                            else "service"
+                        )
                         target_res_id = f"resource_{idx}"
                         target_res_node = AttackGraphNode(
                             id=uuid.uuid4(),
@@ -675,9 +683,10 @@ class SimulationEngine:
                                 session, new_finding
                             )
                         except Exception as de_err:
-                            logger.warning("defence_recommendation_generation_failed", error=str(de_err))
+                            logger.warning(
+                                "defence_recommendation_generation_failed", error=str(de_err)
+                            )
                         await session.commit()
-
 
                         finding_alert = f"🚨 VULNERABILITY IDENTIFIED: {f_data['title']} [{f_data['severity'].upper()}]"
                         self._append_log(
@@ -720,9 +729,15 @@ class SimulationEngine:
 
                     step_elapsed = round(time.monotonic() - step_start, 2)
                     step_lat_list = step_result.get("latencies", [])
-                    step_avg_lat = round(sum(step_lat_list) / len(step_lat_list), 2) if step_lat_list else 0.0
+                    step_avg_lat = (
+                        round(sum(step_lat_list) / len(step_lat_list), 2) if step_lat_list else 0.0
+                    )
                     step_sc_list = step_result.get("status_codes", [])
-                    step_primary_sc = step_sc_list[-1] if step_sc_list else (200 if step_result["errors"] == 0 else 500)
+                    step_primary_sc = (
+                        step_sc_list[-1]
+                        if step_sc_list
+                        else (200 if step_result["errors"] == 0 else 500)
+                    )
 
                     log_msg = f"Completed Step {idx}: {step['name']} in {step_elapsed}s (Requests: {step_result['requests_sent']}, Blocked: {step_result['blocked']}, Avg Latency: {step_avg_lat}ms)"
                     self._append_log(
@@ -762,7 +777,9 @@ class SimulationEngine:
                     # Publish incremental attack graph update
                     try:
                         g_data = await self.get_test_run_graph(run_id, db=session)
-                        await self.publish_event(run_id=run_id, event_type="graph_updated", data=g_data)
+                        await self.publish_event(
+                            run_id=run_id, event_type="graph_updated", data=g_data
+                        )
                     except Exception as g_err:
                         logger.debug("graph_publish_warning", error=str(g_err))
 
@@ -807,11 +824,13 @@ class SimulationEngine:
                     data={
                         "status": "completed",
                         "findings_count": len(findings_to_create),
-                        "completed_at": run.completed_at.isoformat(),
+                        "completed_at": run.completed_at.isoformat() if run.completed_at else None,
                         "metrics": run.metrics,
                     },
                 )
-                logger.info("test_run_completed", run_id=str(run_id), findings=len(findings_to_create))
+                logger.info(
+                    "test_run_completed", run_id=str(run_id), findings=len(findings_to_create)
+                )
 
         except asyncio.CancelledError:
             logger.info("test_run_task_cancelled", run_id=str(run_id))
@@ -1149,6 +1168,7 @@ class SimulationEngine:
         self, test_run_id: uuid.UUID, db: AsyncSession | None = None
     ) -> dict[str, Any]:
         """Fetch all graph nodes and edges for a test run with automatic backfill for older runs."""
+
         async def _get(session: AsyncSession) -> dict[str, Any]:
             n_res = await session.execute(
                 select(AttackGraphNode)
@@ -1169,7 +1189,9 @@ class SimulationEngine:
                 run_res = await session.execute(select(TestRun).where(TestRun.id == test_run_id))
                 run = run_res.scalar_one_or_none()
                 if run:
-                    f_res = await session.execute(select(Finding).where(Finding.test_run_id == test_run_id))
+                    f_res = await session.execute(
+                        select(Finding).where(Finding.test_run_id == test_run_id)
+                    )
                     findings = list(f_res.scalars().all())
 
                     attacker = AttackGraphNode(
@@ -1212,10 +1234,20 @@ class SimulationEngine:
                     nodes.extend([attacker, route_node])
                     edges.append(e0)
 
-                    steps = self._build_execution_steps(run.scenario_category, run.scenario_name, run.parameters)
+                    steps = self._build_execution_steps(
+                        run.scenario_category, run.scenario_name, run.parameters
+                    )
                     for s_idx, st in enumerate(steps, start=1):
                         matched_finding = findings[s_idx - 1] if s_idx - 1 < len(findings) else None
-                        st_status = "compromised" if matched_finding else ("blocked" if run.status == "stopped" and s_idx >= run.current_step else "safe")
+                        st_status = (
+                            "compromised"
+                            if matched_finding
+                            else (
+                                "blocked"
+                                if run.status == "stopped" and s_idx >= run.current_step
+                                else "safe"
+                            )
+                        )
 
                         s_node = AttackGraphNode(
                             id=uuid.uuid4(),
@@ -1245,7 +1277,11 @@ class SimulationEngine:
                         edges.append(s_edge)
 
                         if matched_finding:
-                            res_type = "database" if "sql" in matched_finding.category.lower() else "service"
+                            res_type = (
+                                "database"
+                                if "sql" in matched_finding.category.lower()
+                                else "service"
+                            )
                             t_node = AttackGraphNode(
                                 id=uuid.uuid4(),
                                 org_id=run.org_id,
@@ -1257,7 +1293,10 @@ class SimulationEngine:
                                 step_discovered=s_idx,
                                 position_x=860.0,
                                 position_y=100.0 + (s_idx - 1) * 110.0,
-                                metadata_json={"severity": matched_finding.severity, "category": matched_finding.category},
+                                metadata_json={
+                                    "severity": matched_finding.severity,
+                                    "category": matched_finding.category,
+                                },
                             )
                             t_edge = AttackGraphEdge(
                                 id=uuid.uuid4(),

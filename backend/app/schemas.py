@@ -342,6 +342,3 @@ class GrafanaConfigRead(BaseModel):
     prometheus_url: str
     loki_url: str
     status: str
-
-
-

@@ -97,7 +97,9 @@ class AppRuntimeService:
         except NotFound:
             pass
         except Exception as e:
-            logger.warning("container_start_failed_retrying_recreate", container=container_name, error=str(e))
+            logger.warning(
+                "container_start_failed_retrying_recreate", container=container_name, error=str(e)
+            )
 
         # 2. Recreate container from latest image version
         res = await db.execute(
@@ -107,7 +109,9 @@ class AppRuntimeService:
         )
         ver = res.scalars().first()
         if not ver or not ver.image_tag:
-            raise ValueError("No built container image found for this application. Please redeploy first.")
+            raise ValueError(
+                "No built container image found for this application. Please redeploy first."
+            )
 
         target_port = 8085
         if app.target_profile and "exposed_ports" in app.target_profile:

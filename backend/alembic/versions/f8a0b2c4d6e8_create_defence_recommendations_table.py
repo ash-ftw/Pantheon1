@@ -8,8 +8,9 @@ Create Date: 2026-09-04
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSON, UUID
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f8a0b2c4d6e8"

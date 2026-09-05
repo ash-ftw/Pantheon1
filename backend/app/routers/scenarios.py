@@ -59,7 +59,9 @@ def _format_preset_as_response(preset: ScenarioDefinition, index: int) -> dict[s
         "name": preset.name,
         "slug": slug,
         "description": preset.description,
-        "category": preset.category.value if isinstance(preset.category, ScenarioCategory) else preset.category,
+        "category": preset.category.value
+        if isinstance(preset.category, ScenarioCategory)
+        else preset.category,
         "source": "preset",
         "is_preset": True,
         "definition": preset,
@@ -109,10 +111,7 @@ async def list_scenarios(
                 continue
             if search:
                 s_lower = search.lower()
-                if (
-                    s_lower not in preset.name.lower()
-                    and s_lower not in preset.description.lower()
-                ):
+                if s_lower not in preset.name.lower() and s_lower not in preset.description.lower():
                     continue
             results.append(_format_preset_as_response(preset, idx))
 
@@ -254,7 +253,9 @@ async def create_scenario(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "message": "Scenario rejected by Simulation Guard",
-                "violation_type": safety_res.violation_type.value if safety_res.violation_type else None,
+                "violation_type": safety_res.violation_type.value
+                if safety_res.violation_type
+                else None,
                 "reason": safety_res.reason,
                 "violating_elements": safety_res.violating_elements,
             },
@@ -284,7 +285,11 @@ async def create_scenario(
         action="scenario.created",
         resource_type="scenario",
         resource_id=str(scenario_obj.id),
-        details={"name": scenario_obj.name, "category": scenario_obj.category, "source": scenario_obj.source},
+        details={
+            "name": scenario_obj.name,
+            "category": scenario_obj.category,
+            "source": scenario_obj.source,
+        },
     )
 
     logger.info(

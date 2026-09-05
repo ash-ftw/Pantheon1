@@ -220,9 +220,7 @@ async def list_apps(
         return []
 
     res = await db.execute(
-        select(App)
-        .where(App.org_id == current_user.org_id)
-        .order_by(App.created_at.desc())
+        select(App).where(App.org_id == current_user.org_id).order_by(App.created_at.desc())
     )
     apps = list(res.scalars().all())
 

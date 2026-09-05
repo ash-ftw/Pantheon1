@@ -26,9 +26,7 @@ from app.scenarios.schema import (
 logger = get_logger(__name__)
 
 
-async def generate_scenario(
-    request: AIGenerateScenarioRequest, org_id: UUID
-) -> ScenarioDefinition:
+async def generate_scenario(request: AIGenerateScenarioRequest, org_id: UUID) -> ScenarioDefinition:
     """Generate and strictly validate a scenario from user prompt and target context."""
     app_context: dict[str, Any] = {}
 
@@ -88,7 +86,9 @@ def _generate_scenario_definition_dict(
         port = profile["exposed_ports"][0]
 
     # Parse requested concurrency or duration if user mentioned numbers
-    concurrency = _extract_int_param(prompt_lower, r"(\d+)\s*(?:concurrent|workers|threads|users)", default=15)
+    concurrency = _extract_int_param(
+        prompt_lower, r"(\d+)\s*(?:concurrent|workers|threads|users)", default=15
+    )
     duration = _extract_int_param(prompt_lower, r"(\d+)\s*(?:seconds|sec|s\b)", default=30)
     concurrency = max(1, min(concurrency, 300))
     duration = max(5, min(duration, 300))
@@ -98,7 +98,7 @@ def _generate_scenario_definition_dict(
 
     return {
         "name": f"AI: {request.prompt[:60].strip().title()}",
-        "description": f"AI-generated scenario targeting {target_path} based on prompt: \"{request.prompt}\"",
+        "description": f'AI-generated scenario targeting {target_path} based on prompt: "{request.prompt}"',
         "category": category.value,
         "target": {
             "service": app_context.get("name", "app-workload"),
@@ -180,7 +180,11 @@ def _resolve_best_endpoint(
 
     # Search for matching endpoint classifications
     target_class = None
-    if category in (ScenarioCategory.BRUTE_FORCE, ScenarioCategory.CREDENTIAL_GUESSING, ScenarioCategory.AUTH_ABUSE):
+    if category in (
+        ScenarioCategory.BRUTE_FORCE,
+        ScenarioCategory.CREDENTIAL_GUESSING,
+        ScenarioCategory.AUTH_ABUSE,
+    ):
         target_class = "likely_auth"
     elif category in (ScenarioCategory.SQLI_RESILIENCE, ScenarioCategory.CACHE_PRESSURE):
         target_class = "search"
@@ -299,7 +303,9 @@ def _get_category_defaults(category: ScenarioCategory, path: str) -> dict[str, A
             "method": "CHAINED_HTTP",
             "payload_category": "killchain_stages",
             "expected_signals": ["step_1_ok", "step_2_blocked"],
-            "parameters": {"stages": [{"step": 1, "path": path}, {"step": 2, "path": "/api/admin"}]},
+            "parameters": {
+                "stages": [{"step": 1, "path": path}, {"step": 2, "path": "/api/admin"}]
+            },
             "estimated_impact": "medium",
         }
 

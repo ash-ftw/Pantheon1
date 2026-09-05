@@ -12,12 +12,13 @@ Tests:
 import asyncio
 import time
 import uuid
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.database import async_session_factory
 from app.main import app
-from app.models import App, Org, TestRun, User
+from app.models import App, Org, User
 from app.services.auth_service import create_access_token
 from app.services.simulation_engine import simulation_engine
 

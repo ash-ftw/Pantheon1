@@ -8,8 +8,9 @@ Create Date: 2026-09-04
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSON, UUID
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "e7f9a1b3c5d7"
@@ -43,7 +44,9 @@ def upgrade() -> None:
         sa.Column("position_x", sa.Float(), nullable=False, server_default="0.0"),
         sa.Column("position_y", sa.Float(), nullable=False, server_default="0.0"),
         sa.Column("metadata_json", JSON, nullable=False, server_default="{}"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
     )
     op.create_index("ix_attack_graph_nodes_org_id", "attack_graph_nodes", ["org_id"])
     op.create_index("ix_attack_graph_nodes_test_run_id", "attack_graph_nodes", ["test_run_id"])
@@ -66,7 +69,9 @@ def upgrade() -> None:
         sa.Column("status", sa.String(length=50), nullable=False, server_default="traversed"),
         sa.Column("step_discovered", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("metadata_json", JSON, nullable=False, server_default="{}"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
     )
     op.create_index("ix_attack_graph_edges_test_run_id", "attack_graph_edges", ["test_run_id"])
     op.create_index("ix_attack_graph_edges_created_at", "attack_graph_edges", ["created_at"])

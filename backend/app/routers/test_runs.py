@@ -31,9 +31,7 @@ from app.database import get_db_session
 from app.logging import get_logger
 from app.models import Finding, TestRun, User
 from app.schemas import (
-    FindingRead,
     TestRunCreate,
-    TestRunRead,
     TestRunStopRequest,
 )
 from app.services.auth_service import get_current_user
@@ -111,11 +109,7 @@ async def get_test_run(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Retrieve full test run details including logs and metrics."""
-    query = (
-        select(TestRun)
-        .where(TestRun.id == test_run_id)
-        .options(selectinload(TestRun.findings))
-    )
+    query = select(TestRun).where(TestRun.id == test_run_id).options(selectinload(TestRun.findings))
     if current_user.org_id:
         query = query.where(TestRun.org_id == current_user.org_id)
 

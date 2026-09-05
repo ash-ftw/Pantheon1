@@ -32,7 +32,6 @@ from app.routers import (
     test_runs,
 )
 
-
 logger = get_logger(__name__)
 
 # Rate limiter setup
@@ -98,7 +97,6 @@ app.include_router(test_runs.router)
 app.include_router(attack_graph.router)
 app.include_router(defence.router)
 app.include_router(observability.router)
-
 
 
 @app.get("/health", tags=["system"])

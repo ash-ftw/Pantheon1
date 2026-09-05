@@ -15,7 +15,7 @@ import structlog
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AuditLog, DefenceRecommendation, Finding, TestRun
+from app.models import AuditLog, DefenceRecommendation, Finding
 from app.schemas import DefenceActionResponse
 
 logger = structlog.get_logger(__name__)
@@ -41,7 +41,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "networking.k8s.io/v1",
             "kind": "NetworkPolicy",
-            "metadata": {"name": "isolate-database-access", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "isolate-database-access",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "podSelector": {"matchLabels": {"app": "pantheon-target"}},
                 "policyTypes": ["Ingress"],
@@ -68,7 +71,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "traefik.io/v1alpha1",
             "kind": "Middleware",
-            "metadata": {"name": "rate-limit-auth-endpoints", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "rate-limit-auth-endpoints",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "rateLimit": {
                     "average": 10,
@@ -93,7 +99,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "networking.k8s.io/v1",
             "kind": "NetworkPolicy",
-            "metadata": {"name": "restrict-tenant-inter-service", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "restrict-tenant-inter-service",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "podSelector": {"matchLabels": {"tier": "backend"}},
                 "policyTypes": ["Ingress"],
@@ -120,7 +129,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "networking.k8s.io/v1",
             "kind": "NetworkPolicy",
-            "metadata": {"name": "block-internal-cloud-egress", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "block-internal-cloud-egress",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "podSelector": {"matchLabels": {"app": "pantheon-target"}},
                 "policyTypes": ["Egress"],
@@ -130,7 +142,12 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
                             {
                                 "ipBlock": {
                                     "cidr": "0.0.0.0/0",
-                                    "except": ["169.254.169.254/32", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+                                    "except": [
+                                        "169.254.169.254/32",
+                                        "10.0.0.0/8",
+                                        "172.16.0.0/12",
+                                        "192.168.0.0/16",
+                                    ],
                                 }
                             }
                         ]
@@ -152,7 +169,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "v1",
             "kind": "ResourceQuota",
-            "metadata": {"name": "workload-compute-quota", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "workload-compute-quota",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "hard": {
                     "requests.cpu": "2",
@@ -176,7 +196,10 @@ MITIGATION_CATALOG: dict[str, dict[str, Any]] = {
         "infra_manifest": {
             "apiVersion": "traefik.io/v1alpha1",
             "kind": "Middleware",
-            "metadata": {"name": "secure-security-headers", "labels": {"pantheon.io/managed": "true"}},
+            "metadata": {
+                "name": "secure-security-headers",
+                "labels": {"pantheon.io/managed": "true"},
+            },
             "spec": {
                 "headers": {
                     "customResponseHeaders": {
@@ -403,7 +426,6 @@ class DefenceEngineService:
         )
         session.add(audit_entry)
         await session.commit()
-
 
         logger.info("defence_mitigation_reverted", rec_id=str(rec.id))
 

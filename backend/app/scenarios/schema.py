@@ -76,13 +76,9 @@ class ScenarioDefinition(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     name: str = Field(min_length=3, max_length=255, description="Scenario title")
-    description: str = Field(
-        min_length=5, description="Detailed description of simulation intent"
-    )
+    description: str = Field(min_length=5, description="Detailed description of simulation intent")
     category: ScenarioCategory = Field(description="One of the 13 required scenario categories")
-    target: ScenarioTarget = Field(
-        default_factory=ScenarioTarget, description="Target destination"
-    )
+    target: ScenarioTarget = Field(default_factory=ScenarioTarget, description="Target destination")
     method: str = Field(
         default="GET",
         description="HTTP method (GET, POST, PUT, DELETE, etc.) or Chaos action (pod_kill, latency, etc.)",

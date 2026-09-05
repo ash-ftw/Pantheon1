@@ -164,15 +164,41 @@ def test_schema_normalizes_target_path() -> None:
 
 def test_ai_scenario_detect_category_heuristics() -> None:
     """Verify prompt keyword heuristic classification."""
-    assert _detect_category_from_prompt("test SQL injection on search input") == ScenarioCategory.SQLI_RESILIENCE
-    assert _detect_category_from_prompt("brute force the login form") == ScenarioCategory.BRUTE_FORCE
-    assert _detect_category_from_prompt("credential stuffing with top passwords") == ScenarioCategory.CREDENTIAL_GUESSING
-    assert _detect_category_from_prompt("reflected cross-site scripting in comment box") == ScenarioCategory.XSS_REFLECTION
-    assert _detect_category_from_prompt("test broken object level authorization IDOR") == ScenarioCategory.BOLA
-    assert _detect_category_from_prompt("simulate pod crash and recovery") == ScenarioCategory.SERVICE_FAILURE
-    assert _detect_category_from_prompt("inject 200ms latency and packet loss") == ScenarioCategory.NETWORK_PARTITION
-    assert _detect_category_from_prompt("starve container cpu and memory") == ScenarioCategory.RESOURCE_EXHAUSTION
-    assert _detect_category_from_prompt("multi-step killchain attack") == ScenarioCategory.MULTI_STAGE_CHAIN
+    assert (
+        _detect_category_from_prompt("test SQL injection on search input")
+        == ScenarioCategory.SQLI_RESILIENCE
+    )
+    assert (
+        _detect_category_from_prompt("brute force the login form") == ScenarioCategory.BRUTE_FORCE
+    )
+    assert (
+        _detect_category_from_prompt("credential stuffing with top passwords")
+        == ScenarioCategory.CREDENTIAL_GUESSING
+    )
+    assert (
+        _detect_category_from_prompt("reflected cross-site scripting in comment box")
+        == ScenarioCategory.XSS_REFLECTION
+    )
+    assert (
+        _detect_category_from_prompt("test broken object level authorization IDOR")
+        == ScenarioCategory.BOLA
+    )
+    assert (
+        _detect_category_from_prompt("simulate pod crash and recovery")
+        == ScenarioCategory.SERVICE_FAILURE
+    )
+    assert (
+        _detect_category_from_prompt("inject 200ms latency and packet loss")
+        == ScenarioCategory.NETWORK_PARTITION
+    )
+    assert (
+        _detect_category_from_prompt("starve container cpu and memory")
+        == ScenarioCategory.RESOURCE_EXHAUSTION
+    )
+    assert (
+        _detect_category_from_prompt("multi-step killchain attack")
+        == ScenarioCategory.MULTI_STAGE_CHAIN
+    )
 
 
 def test_ai_scenario_resolve_best_endpoint() -> None:

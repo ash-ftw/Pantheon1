@@ -332,7 +332,10 @@ class TestRun(Base):
         UUID(as_uuid=True), ForeignKey("apps.id", ondelete="CASCADE"), nullable=False, index=True
     )
     scenario_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("scenarios.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("scenarios.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     scenario_name: Mapped[str] = mapped_column(String(255), nullable=False)
     scenario_category: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -377,7 +380,6 @@ class TestRun(Base):
     )
 
 
-
 class Finding(Base):
     """Security Finding record — PRD Module 10 / Module 14 (Phase 9 & Phase 11).
 
@@ -392,7 +394,10 @@ class Finding(Base):
         UUID(as_uuid=True), ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True
     )
     test_run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("test_runs.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("test_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     app_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("apps.id", ondelete="CASCADE"), nullable=False, index=True
@@ -409,7 +414,9 @@ class Finding(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     evidence: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     remediation_guidance: Mapped[str] = mapped_column(String, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="open", nullable=False)  # open, resolved, mitigated
+    status: Mapped[str] = mapped_column(
+        String(50), default="open", nullable=False
+    )  # open, resolved, mitigated
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False, index=True
@@ -421,7 +428,6 @@ class Finding(Base):
     recommendations: Mapped[list["DefenceRecommendation"]] = relationship(
         "DefenceRecommendation", back_populates="finding", cascade="all, delete-orphan"
     )
-
 
 
 class AttackGraphNode(Base):
@@ -439,7 +445,10 @@ class AttackGraphNode(Base):
         UUID(as_uuid=True), ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True
     )
     test_run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("test_runs.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("test_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     node_id: Mapped[str] = mapped_column(String(100), nullable=False)  # React Flow node id
     label: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -473,7 +482,10 @@ class AttackGraphEdge(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     test_run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("test_runs.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("test_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     edge_id: Mapped[str] = mapped_column(String(100), nullable=False)  # React Flow edge id
     source_node_id: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -508,10 +520,16 @@ class DefenceRecommendation(Base):
         UUID(as_uuid=True), ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True
     )
     test_run_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("test_runs.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("test_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     finding_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("findings.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("findings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     app_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("apps.id", ondelete="CASCADE"), nullable=False, index=True
@@ -540,7 +558,3 @@ class DefenceRecommendation(Base):
     finding: Mapped["Finding"] = relationship("Finding", back_populates="recommendations")
     test_run: Mapped["TestRun"] = relationship("TestRun", back_populates="recommendations")
     app: Mapped["App"] = relationship("App")
-
-
-
-

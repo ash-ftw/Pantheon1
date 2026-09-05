@@ -141,7 +141,7 @@ PROHIBITED_METADATA_IPS = {
     "169.254.169.254",  # AWS / GCP / Azure IMDS
     "169.254.169.123",  # AWS NTP
     "100.100.100.200",  # Alibaba Cloud IMDS
-    "fd00:ec2::254",    # AWS IPv6 IMDS
+    "fd00:ec2::254",  # AWS IPv6 IMDS
 }
 
 PROHIBITED_METADATA_DOMAINS = {
@@ -237,7 +237,9 @@ def validate_scenario_scope(
 # ---------------------------------------------------------------------------
 
 
-def validate_payload_safety(definition: ScenarioDefinition) -> tuple[bool, SafetyViolationType | None, str | None, list[str]]:
+def validate_payload_safety(
+    definition: ScenarioDefinition,
+) -> tuple[bool, SafetyViolationType | None, str | None, list[str]]:
     """Deep inspect parameters, headers, query params, and description for disallowed attack patterns."""
     text_corpus: list[str] = [
         definition.name,
@@ -366,7 +368,9 @@ async def check_simulation_safety(
         return res
 
     # 3. Deep payload & attack class inspection (FR-6.2)
-    payload_valid, payload_violation, payload_reason, matched_items = validate_payload_safety(definition)
+    payload_valid, payload_violation, payload_reason, matched_items = validate_payload_safety(
+        definition
+    )
     if not payload_valid:
         res = SimulationGuardResult(
             allowed=False,
@@ -412,7 +416,9 @@ async def _record_rejection_audit(
                 details={
                     "name": definition.name,
                     "category": str(definition.category),
-                    "violation_type": result.violation_type.value if result.violation_type else "unknown",
+                    "violation_type": result.violation_type.value
+                    if result.violation_type
+                    else "unknown",
                     "reason": result.reason,
                     "target_service": definition.target.service,
                     "target_path": definition.target.path,

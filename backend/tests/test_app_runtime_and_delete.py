@@ -101,8 +101,13 @@ async def test_list_apps_syncs_stopped_container_status(setup_app_test_data):
     app_running = data["app_running"]
 
     # Mock is_container_running to return False (simulating system restart / exited container)
-    with patch("app.services.app_runtime_service.app_runtime_service.is_container_running", return_value=False), \
-         patch("app.services.docker_builder.docker_builder._get_client", return_value=MagicMock()):
+    with (
+        patch(
+            "app.services.app_runtime_service.app_runtime_service.is_container_running",
+            return_value=False,
+        ),
+        patch("app.services.docker_builder.docker_builder._get_client", return_value=MagicMock()),
+    ):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
             resp = await ac.get(
                 "/api/apps",

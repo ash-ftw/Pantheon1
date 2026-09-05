@@ -11,6 +11,7 @@ Tests:
 """
 
 import uuid
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -18,8 +19,6 @@ from app.database import async_session_factory
 from app.main import app
 from app.models import (
     App,
-    AuditLog,
-    DefenceRecommendation,
     Finding,
     Org,
     TestRun,
@@ -257,11 +256,12 @@ async def test_defence_rest_endpoints() -> None:
     token = create_access_token(user_id=user_id, email=user.email, org_id=org_id, role="Admin")
     headers = {"Authorization": f"Bearer {token}"}
 
-
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. GET /api/defence/recommendations?test_run_id=...
-        list_resp = await client.get(f"/api/defence/recommendations?test_run_id={run_id}", headers=headers)
+        list_resp = await client.get(
+            f"/api/defence/recommendations?test_run_id={run_id}", headers=headers
+        )
         assert list_resp.status_code == 200
         recs = list_resp.json()
         assert len(recs) >= 1
@@ -274,14 +274,18 @@ async def test_defence_rest_endpoints() -> None:
         assert get_resp.json()["id"] == rec_id
 
         # 3. POST /api/defence/recommendations/{rec_id}/apply
-        apply_resp = await client.post(f"/api/defence/recommendations/{rec_id}/apply", headers=headers)
+        apply_resp = await client.post(
+            f"/api/defence/recommendations/{rec_id}/apply", headers=headers
+        )
         assert apply_resp.status_code == 200
         apply_data = apply_resp.json()
         assert apply_data["success"] is True
         assert apply_data["status"] == "applied"
 
         # 4. POST /api/defence/recommendations/{rec_id}/revert
-        revert_resp = await client.post(f"/api/defence/recommendations/{rec_id}/revert", headers=headers)
+        revert_resp = await client.post(
+            f"/api/defence/recommendations/{rec_id}/revert", headers=headers
+        )
         assert revert_resp.status_code == 200
         revert_data = revert_resp.json()
         assert revert_data["success"] is True
@@ -336,10 +340,34 @@ async def test_observability_endpoints_and_prometheus() -> None:
             current_step=4,
             metrics={"peak_rps": 250},
             logs=[
-                {"step": 1, "step_name": "Warmup Probe", "status": "success", "status_code": 200, "latency_ms": 18.2},
-                {"step": 2, "step_name": "Baseline Burst", "status": "success", "status_code": 200, "latency_ms": 28.5},
-                {"step": 3, "step_name": "Peak Load Test", "status": "success", "status_code": 200, "latency_ms": 84.1},
-                {"step": 4, "step_name": "Saturated Overload", "status": "compromised", "status_code": 503, "latency_ms": 142.6},
+                {
+                    "step": 1,
+                    "step_name": "Warmup Probe",
+                    "status": "success",
+                    "status_code": 200,
+                    "latency_ms": 18.2,
+                },
+                {
+                    "step": 2,
+                    "step_name": "Baseline Burst",
+                    "status": "success",
+                    "status_code": 200,
+                    "latency_ms": 28.5,
+                },
+                {
+                    "step": 3,
+                    "step_name": "Peak Load Test",
+                    "status": "success",
+                    "status_code": 200,
+                    "latency_ms": 84.1,
+                },
+                {
+                    "step": 4,
+                    "step_name": "Saturated Overload",
+                    "status": "compromised",
+                    "status_code": 503,
+                    "latency_ms": 142.6,
+                },
             ],
         )
         session.add(run)
@@ -348,11 +376,12 @@ async def test_observability_endpoints_and_prometheus() -> None:
     token = create_access_token(user_id=user_id, email=user.email, org_id=org_id, role="Admin")
     headers = {"Authorization": f"Bearer {token}"}
 
-
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. Per-run metrics
-        metrics_resp = await client.get(f"/api/observability/metrics/runs/{run_id}", headers=headers)
+        metrics_resp = await client.get(
+            f"/api/observability/metrics/runs/{run_id}", headers=headers
+        )
         assert metrics_resp.status_code == 200
         m_data = metrics_resp.json()
         assert m_data["test_run_id"] == str(run_id)
@@ -400,6 +429,8 @@ async def test_observability_endpoints_and_prometheus() -> None:
         assert "network_io_kbps" in c_data
 
         # 7. Loki log stream query endpoint
-        loki_resp = await client.get(f"/api/observability/loki/logs?test_run_id={run_id}", headers=headers)
+        loki_resp = await client.get(
+            f"/api/observability/loki/logs?test_run_id={run_id}", headers=headers
+        )
         assert loki_resp.status_code == 200
         assert isinstance(loki_resp.json(), list)

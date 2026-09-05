@@ -198,11 +198,12 @@ async def test_run_target_analysis_simulated_mode() -> None:
     org_id = uuid.uuid4()
 
     # Mock DB call in step 1 to raise or return None
-    with patch(
-        "app.services.discovery_service.async_session_factory"
-    ) as mock_session_factory, patch(
-        "app.services.discovery_service.k8s_tenant_service._get_client",
-        return_value=None,
+    with (
+        patch("app.services.discovery_service.async_session_factory") as mock_session_factory,
+        patch(
+            "app.services.discovery_service.k8s_tenant_service._get_client",
+            return_value=None,
+        ),
     ):
         mock_session = AsyncMock()
         mock_result = MagicMock()
@@ -252,11 +253,12 @@ async def test_discover_endpoints_mocked_http() -> None:
     mock_resp.headers = {"content-type": "application/json"}
     mock_resp.json.return_value = sample_openapi
 
-    with patch(
-        "app.services.discovery_service.async_session_factory"
-    ) as mock_session_factory, patch(
-        "httpx.AsyncClient.get",
-        new=AsyncMock(return_value=mock_resp),
+    with (
+        patch("app.services.discovery_service.async_session_factory") as mock_session_factory,
+        patch(
+            "httpx.AsyncClient.get",
+            new=AsyncMock(return_value=mock_resp),
+        ),
     ):
         mock_session = AsyncMock()
         mock_result = MagicMock()

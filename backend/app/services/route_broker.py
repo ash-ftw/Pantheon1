@@ -75,7 +75,9 @@ class RouteBrokerService:
 
         namespace = k8s_tenant_service.get_namespace_name(org_id)
         target_obj = ScenarioTarget(service=clean_service, path=path_prefix)
-        is_safe, _violation, reason = validate_scenario_scope(target_obj, tenant_namespace=namespace)
+        is_safe, _violation, reason = validate_scenario_scope(
+            target_obj, tenant_namespace=namespace
+        )
         if not is_safe:
             raise ValueError(f"Target outside permitted tenant scope: {reason}")
 
@@ -87,7 +89,9 @@ class RouteBrokerService:
         ingress_name = f"route-{str(route_id)[:8]}"
 
         # Standardized route URL
-        route_url = f"http://{ingress_name}.{namespace}.svc.cluster.local:{target_port}{path_prefix}"
+        route_url = (
+            f"http://{ingress_name}.{namespace}.svc.cluster.local:{target_port}{path_prefix}"
+        )
 
         # 2. Provision Kubernetes Ingress object in tenant namespace
         k8s_res = k8s_tenant_service.create_ingress_route(
@@ -246,6 +250,7 @@ class RouteBrokerService:
         db: AsyncSession | None = None,
     ) -> list[dict[str, Any]]:
         """Revoke all routes linked to a test run — PRD §7.5."""
+
         async def _find_and_revoke(session: AsyncSession) -> list[dict[str, Any]]:
             query = select(Route).where(
                 Route.test_run_id == test_run_id,
@@ -368,6 +373,7 @@ class RouteBrokerService:
         db: AsyncSession | None = None,
     ) -> dict[str, Any] | None:
         """Retrieve single route details."""
+
         async def _get(session: AsyncSession) -> dict[str, Any] | None:
             query = select(Route).where(Route.id == route_id)
             if org_id:

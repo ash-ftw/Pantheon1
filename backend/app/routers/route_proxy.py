@@ -37,9 +37,7 @@ async def _resolve_route(route_id_str: str, db: AsyncSession) -> Route:
         route = res.scalar_one_or_none()
     except ValueError:
         # Prefix match on UUID string (e.g. 8-char prefix '56002f75')
-        res = await db.execute(
-            select(Route).where(cast(Route.id, String).startswith(clean_id))
-        )
+        res = await db.execute(select(Route).where(cast(Route.id, String).startswith(clean_id)))
         route = res.scalars().first()
 
     if not route:
@@ -99,7 +97,7 @@ def _rewrite_urls_in_html(content: bytes, route_id_str: str, content_type: str |
     # Rewrite meta refresh: url=/path → url=/r/{id}/path
     text = re.sub(
         r'(url=)(/[^"\'\s>]+)',
-        lambda m: f'{m.group(1)}{proxy_base}{m.group(2)}',
+        lambda m: f"{m.group(1)}{proxy_base}{m.group(2)}",
         text,
         flags=re.IGNORECASE,
     )
@@ -107,7 +105,7 @@ def _rewrite_urls_in_html(content: bytes, route_id_str: str, content_type: str |
     # Rewrite href="/...", src="/...", action="/..."
     text = re.sub(
         r'((?:href|src|action)\s*=\s*["\'])(/[^"\']*)',
-        lambda m: f'{m.group(1)}{proxy_base}{m.group(2)}',
+        lambda m: f"{m.group(1)}{proxy_base}{m.group(2)}",
         text,
         flags=re.IGNORECASE,
     )
@@ -115,7 +113,7 @@ def _rewrite_urls_in_html(content: bytes, route_id_str: str, content_type: str |
     # Rewrite JS redirect patterns: redirect-url='/path'
     text = re.sub(
         r'(data-redirect-url\s*=\s*["\'])(/[^"\']*)',
-        lambda m: f'{m.group(1)}{proxy_base}{m.group(2)}',
+        lambda m: f"{m.group(1)}{proxy_base}{m.group(2)}",
         text,
         flags=re.IGNORECASE,
     )
@@ -247,7 +245,9 @@ async def _proxy_to_target(
         )
 
 
-@router.api_route("/{route_id}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+@router.api_route(
+    "/{route_id}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+)
 async def route_proxy_root(
     route_id: str,
     request: Request,
@@ -258,7 +258,10 @@ async def route_proxy_root(
     return await _proxy_to_target(route, "", request)
 
 
-@router.api_route("/{route_id}/{subpath:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
+@router.api_route(
+    "/{route_id}/{subpath:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+)
 async def route_proxy_subpath(
     route_id: str,
     subpath: str,

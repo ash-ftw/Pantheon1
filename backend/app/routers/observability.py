@@ -7,7 +7,6 @@ container resource utilization), event stream, and platform health metrics.
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,7 +33,9 @@ async def get_run_metrics(
     return metrics
 
 
-@router.get("/api/observability/events/runs/{test_run_id}", response_model=list[ObservabilityEventRead])
+@router.get(
+    "/api/observability/events/runs/{test_run_id}", response_model=list[ObservabilityEventRead]
+)
 async def get_run_events(
     test_run_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
@@ -53,7 +54,9 @@ async def get_platform_metrics(
 
 @router.get("/api/observability/loki/logs")
 async def get_loki_logs(
-    test_run_id: uuid.UUID | None = Query(default=None, description="Optional filter by test run ID"),
+    test_run_id: uuid.UUID | None = Query(
+        default=None, description="Optional filter by test run ID"
+    ),
     limit: int = Query(default=50, ge=1, le=200, description="Max log lines to return"),
 ) -> list[dict]:
     """Query live log stream from Grafana Loki HTTP API (PRD FR-8.2)."""
@@ -78,7 +81,6 @@ async def get_container_stats(
 async def get_prometheus_metrics(
     db: AsyncSession = Depends(get_db_session),
 ) -> Response:
-
     """Expose Prometheus exposition format metrics for scraping (PRD FR-8.1)."""
     p_metrics = await observability_service.get_platform_metrics(db)
 

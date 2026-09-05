@@ -37,9 +37,13 @@ class OpenRouteRequest(BaseModel):
         le=86400,
         description="Time-to-live in seconds before automatic revocation",
     )
-    path_prefix: str = Field(default="/", max_length=255, description="Application route path prefix")
+    path_prefix: str = Field(
+        default="/", max_length=255, description="Application route path prefix"
+    )
     app_id: uuid.UUID | None = Field(default=None, description="Optional deployed app ID")
-    test_run_id: uuid.UUID | None = Field(default=None, description="Optional associated test run ID")
+    test_run_id: uuid.UUID | None = Field(
+        default=None, description="Optional associated test run ID"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -95,7 +99,9 @@ async def open_route(
 
 @router.get("/routes", response_model=list[dict[str, Any]])
 async def list_routes(
-    status_filter: str | None = Query(None, alias="status", description="Filter by status (active, revoked, expired, all)"),
+    status_filter: str | None = Query(
+        None, alias="status", description="Filter by status (active, revoked, expired, all)"
+    ),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
 ) -> list[dict[str, Any]]:

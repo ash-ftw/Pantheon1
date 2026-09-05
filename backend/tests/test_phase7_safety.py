@@ -238,7 +238,9 @@ def test_permits_valid_tenant_workload_targets() -> None:
 
     for target in allowed_targets:
         valid, _violation, reason = validate_scenario_scope(target, "tenant-my-org")
-        assert valid is True, f"Legitimate tenant target incorrectly rejected: {target}, reason: {reason}"
+        assert valid is True, (
+            f"Legitimate tenant target incorrectly rejected: {target}, reason: {reason}"
+        )
 
 
 # ---------------------------------------------------------------------------

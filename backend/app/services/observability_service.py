@@ -16,7 +16,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import AuditLog, DefenceRecommendation, Finding, Route, TestRun
-from app.schemas import ObservabilityEventRead, PlatformMetricsRead, RunMetricsRead, StepLatencyMetric
+from app.schemas import (
+    ObservabilityEventRead,
+    PlatformMetricsRead,
+    RunMetricsRead,
+    StepLatencyMetric,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -32,6 +37,7 @@ class ObservabilityService:
         """Fetch real-time container metrics from Docker SDK (PRD Module 13)."""
         try:
             import docker
+
             client = docker.from_env()
             containers = client.containers.list()
 
@@ -39,13 +45,13 @@ class ObservabilityService:
             if app_name:
                 normalized = app_name.lower().replace(" ", "-")
                 for c in containers:
-                    if normalized in c.name.lower():
+                    if c.name and normalized in c.name.lower():
                         target_container = c
                         break
 
             if not target_container:
                 for c in containers:
-                    if "pantheon-app-" in c.name.lower():
+                    if c.name and "pantheon-app-" in c.name.lower():
                         target_container = c
                         break
 
@@ -58,24 +64,24 @@ class ObservabilityService:
                     "container_status": "not_running",
                 }
 
-            stats = target_container.stats(stream=False)
+            stats: dict[str, Any] = target_container.stats(stream=False)  # type: ignore[assignment]
             mem_stats = stats.get("memory_stats", {})
             mem_usage = mem_stats.get("usage", 0)
             mem_mb = round(mem_usage / (1024 * 1024), 1)
 
             cpu_stats = stats.get("cpu_stats", {})
             precpu_stats = stats.get("precpu_stats", {})
-            cpu_delta = (
-                cpu_stats.get("cpu_usage", {}).get("total_usage", 0)
-                - precpu_stats.get("cpu_usage", {}).get("total_usage", 0)
+            cpu_delta = cpu_stats.get("cpu_usage", {}).get("total_usage", 0) - precpu_stats.get(
+                "cpu_usage", {}
+            ).get("total_usage", 0)
+            system_cpu_delta = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get(
+                "system_cpu_usage", 0
             )
-            system_cpu_delta = (
-                cpu_stats.get("system_cpu_usage", 0)
-                - precpu_stats.get("system_cpu_usage", 0)
+            online_cpus = (
+                cpu_stats.get("online_cpus")
+                or len(cpu_stats.get("cpu_usage", {}).get("percpu_usage", [1]))
+                or 1
             )
-            online_cpus = cpu_stats.get("online_cpus") or len(
-                cpu_stats.get("cpu_usage", {}).get("percpu_usage", [1])
-            ) or 1
 
             if system_cpu_delta > 0 and cpu_delta > 0:
                 cpu_pct = round((cpu_delta / system_cpu_delta) * online_cpus * 100.0, 1)
@@ -112,9 +118,10 @@ class ObservabilityService:
         """Query real logs from Loki HTTP API (PRD Module 10 / FR-8.2)."""
         try:
             import httpx
+
             query_expr = '{app="pantheon"}'
             if test_run_id:
-                query_expr = f'{{app="pantheon", test_run_id="{str(test_run_id)}"}}'
+                query_expr = f'{{app="pantheon", test_run_id="{test_run_id!s}"}}'
 
             async with httpx.AsyncClient(timeout=3.0) as client:
                 res = await client.get(
@@ -135,13 +142,17 @@ class ObservabilityService:
                         stream_labels = stream_item.get("stream", {})
                         for val in stream_item.get("values", []):
                             ts_ns, line = val[0], val[1]
-                            parsed_logs.append({
-                                "timestamp": datetime.fromtimestamp(int(ts_ns) / 1e9, UTC).isoformat(),
-                                "message": line,
-                                "level": stream_labels.get("level", "info"),
-                                "service": stream_labels.get("service", "simulation-runner"),
-                                "labels": stream_labels,
-                            })
+                            parsed_logs.append(
+                                {
+                                    "timestamp": datetime.fromtimestamp(
+                                        int(ts_ns) / 1e9, UTC
+                                    ).isoformat(),
+                                    "message": line,
+                                    "level": stream_labels.get("level", "info"),
+                                    "service": stream_labels.get("service", "simulation-runner"),
+                                    "labels": stream_labels,
+                                }
+                            )
                     parsed_logs.sort(key=lambda x: x["timestamp"], reverse=True)
                     return parsed_logs
         except Exception as e:
@@ -159,7 +170,9 @@ class ObservabilityService:
             "status": "connected",
         }
 
-    async def get_run_metrics(self, session: AsyncSession, test_run_id: uuid.UUID) -> RunMetricsRead | None:
+    async def get_run_metrics(
+        self, session: AsyncSession, test_run_id: uuid.UUID
+    ) -> RunMetricsRead | None:
         """Fetch actual measured performance and container telemetry metrics for a test run (Zero mock data)."""
         run = await session.get(TestRun, test_run_id)
         if not run:
@@ -188,11 +201,15 @@ class ObservabilityService:
                         raw_latencies.append(step_lat)
 
                 # Actual probe response status codes
-                if log.get("status_codes") and isinstance(log["status_codes"], list) and log["status_codes"]:
+                if (
+                    log.get("status_codes")
+                    and isinstance(log["status_codes"], list)
+                    and log["status_codes"]
+                ):
                     for sc in log["status_codes"]:
                         sc_key = str(sc)
                         status_code_counts[sc_key] = status_code_counts.get(sc_key, 0) + 1
-                    primary_sc = int(log.get("status_code", log["status_codes"][-1]))
+                    primary_sc = int(log.get("status_code") or log["status_codes"][-1])
                 else:
                     primary_sc = int(log.get("status_code", 200))
                     sc_key = str(primary_sc)
@@ -255,7 +272,9 @@ class ObservabilityService:
             },
         )
 
-    async def get_run_events(self, session: AsyncSession, test_run_id: uuid.UUID) -> list[ObservabilityEventRead]:
+    async def get_run_events(
+        self, session: AsyncSession, test_run_id: uuid.UUID
+    ) -> list[ObservabilityEventRead]:
         """Fetch timeline of container, route, and security events for a test run."""
         run = await session.get(TestRun, test_run_id)
         if not run:
@@ -272,7 +291,10 @@ class ObservabilityService:
                 severity="info",
                 component="runner",
                 message=f"Attack simulation '{run.scenario_name}' initiated against target app.",
-                metadata={"scenario_category": run.scenario_category, "total_steps": run.total_steps},
+                metadata={
+                    "scenario_category": run.scenario_category,
+                    "total_steps": run.total_steps,
+                },
             )
         )
 
@@ -350,7 +372,9 @@ class ObservabilityService:
                     id=f"evt-{run.id}-finish",
                     timestamp=run.completed_at or utcnow(),
                     event_type=f"simulation.{run.status}",
-                    severity="warning" if run.status == "stopped" else ("error" if run.status == "failed" else "success"),
+                    severity="warning"
+                    if run.status == "stopped"
+                    else ("error" if run.status == "failed" else "success"),
                     component="runner",
                     message=f"Simulation run concluded with status: {run.status.upper()}.",
                     metadata={"current_step": run.current_step, "total_steps": run.total_steps},
@@ -365,7 +389,7 @@ class ObservabilityService:
         run_res = await session.execute(
             select(TestRun.status, func.count(TestRun.id)).group_by(TestRun.status)
         )
-        run_counts = dict(run_res.fetchall())
+        run_counts = dict(run_res.fetchall())  # type: ignore[arg-type]
         active_runs = run_counts.get("running", 0)
         completed_runs = (
             run_counts.get("completed", 0)
@@ -389,7 +413,7 @@ class ObservabilityService:
                 DefenceRecommendation.status
             )
         )
-        rec_counts = dict(rec_res.fetchall())
+        rec_counts = dict(rec_res.fetchall())  # type: ignore[arg-type]
         total_recs = sum(rec_counts.values())
         applied_mitigations = rec_counts.get("applied", 0)
 

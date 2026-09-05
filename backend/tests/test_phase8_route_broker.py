@@ -63,7 +63,9 @@ async def test_open_route_creates_active_record_and_ingress() -> None:
     assert route["ttl_seconds"] == 1800
     assert route["ttl_remaining_seconds"] > 1750
     assert route["route_url"].startswith("http://route-")
-    assert "payment-service:8080" not in route["route_url"]  # Ephemeral Ingress, not direct target credential
+    assert (
+        "payment-service:8080" not in route["route_url"]
+    )  # Ephemeral Ingress, not direct target credential
     assert route["ingress_name"].startswith("route-")
 
 

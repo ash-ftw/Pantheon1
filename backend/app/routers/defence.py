@@ -22,7 +22,9 @@ router = APIRouter(prefix="/api/defence", tags=["defence-engine"])
 @router.get("/recommendations", response_model=list[DefenceRecommendationRead])
 async def list_recommendations(
     test_run_id: Annotated[uuid.UUID | None, Query(description="Filter by Test Run ID")] = None,
-    status: Annotated[str | None, Query(description="Filter by status (suggested, applied, reverted, dismissed)")] = None,
+    status: Annotated[
+        str | None, Query(description="Filter by status (suggested, applied, reverted, dismissed)")
+    ] = None,
     category: Annotated[str | None, Query(description="Filter by category")] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
     db: AsyncSession = Depends(get_db_session),
@@ -85,7 +87,6 @@ async def revert_mitigation(
     recommendation_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
 ) -> DefenceActionResponse:
-
     """Roll back an applied infrastructure mitigation."""
     result = await defence_engine_service.revert_mitigation(db, recommendation_id)
     if not result.success and result.status == "not_found":

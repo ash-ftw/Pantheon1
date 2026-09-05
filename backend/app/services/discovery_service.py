@@ -165,18 +165,36 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
     try:
         pods = k8s_tenant_service._core_api.list_namespaced_pod(namespace=namespace)
         db_env_keys = {
-            "db_host", "db_port", "db_name", "db_user", "db_password", "db_suffix",
-            "postgres_host", "postgres_port", "postgres_db",
-            "mysql_host", "mysql_port",
-            "mongo_host", "mongo_port",
-            "pg_host", "pg_port",
-            "database_url", "database_host",
-            "redis_url", "redis_host",
+            "db_host",
+            "db_port",
+            "db_name",
+            "db_user",
+            "db_password",
+            "db_suffix",
+            "postgres_host",
+            "postgres_port",
+            "postgres_db",
+            "mysql_host",
+            "mysql_port",
+            "mongo_host",
+            "mongo_port",
+            "pg_host",
+            "pg_port",
+            "database_url",
+            "database_host",
+            "redis_url",
+            "redis_host",
         }
         auth_env_keys = {
-            "auth_secret", "jwt_secret", "api_key", "auth_token",
-            "oauth_secret", "private_key", "session_secret",
-            "jwt_private_key_path", "jwt_public_key_path",
+            "auth_secret",
+            "jwt_secret",
+            "api_key",
+            "auth_token",
+            "oauth_secret",
+            "private_key",
+            "session_secret",
+            "jwt_private_key_path",
+            "jwt_public_key_path",
         }
 
         found_db_env: set[str] = set()
@@ -237,7 +255,9 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
         profile["confidence"] = "medium"
     else:
         profile["confidence"] = "low"
-    profile["confidence_basis"] = ", ".join(confidence_signals) if confidence_signals else "no signals"
+    profile["confidence_basis"] = (
+        ", ".join(confidence_signals) if confidence_signals else "no signals"
+    )
 
     return profile
 
@@ -335,7 +355,9 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
 
     # Determine the host and port to probe (network-readiness / K8s / container)
     port = 8085
-    probe_host = os.getenv("PANTHEON_TARGET_HOST") or getattr(settings, "target_probe_host", "localhost")
+    probe_host = os.getenv("PANTHEON_TARGET_HOST") or getattr(
+        settings, "target_probe_host", "localhost"
+    )
     try:
         async with async_session_factory() as db:
             res = await db.execute(select(App).where(App.id == app_id))

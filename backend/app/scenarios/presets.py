@@ -37,7 +37,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="auth_brute_force",
         concurrency=50,
         duration=30,
-        expected_signals=["http_429_rate_limited", "account_temporary_lockout", "audit_login_failed"],
+        expected_signals=[
+            "http_429_rate_limited",
+            "account_temporary_lockout",
+            "audit_login_failed",
+        ],
         parameters={
             "rate_per_second": 100,
             "username_pool": ["admin", "root", "test", "demo"],
@@ -127,7 +131,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="jwt_manipulation",
         concurrency=15,
         duration=20,
-        expected_signals=["http_401_token_expired", "http_403_signature_invalid", "auth_bypass_prevented"],
+        expected_signals=[
+            "http_401_token_expired",
+            "http_403_signature_invalid",
+            "auth_bypass_prevented",
+        ],
         parameters={
             "tamper_modes": ["alg_none", "expired_timestamp", "fake_issuer", "tampered_role"],
         },
@@ -146,7 +154,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="idor_enumeration",
         concurrency=20,
         duration=30,
-        expected_signals=["http_403_forbidden", "tenant_boundary_enforced", "unauthorized_access_logged"],
+        expected_signals=[
+            "http_403_forbidden",
+            "tenant_boundary_enforced",
+            "unauthorized_access_logged",
+        ],
         parameters={
             "id_step_range": [1, 50],
             "uuid_tampering": True,
@@ -205,7 +217,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="l7_flood",
         concurrency=250,
         duration=60,
-        expected_signals=["active_connections_stabilized", "http_503_or_queueing", "p99_latency_spiked"],
+        expected_signals=[
+            "active_connections_stabilized",
+            "http_503_or_queueing",
+            "p99_latency_spiked",
+        ],
         parameters={
             "ramp_up_seconds": 15,
             "sustained_seconds": 45,
@@ -225,7 +241,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="chaos_pod_kill",
         concurrency=1,
         duration=60,
-        expected_signals=["pod_crashloop_detected", "replacement_pod_ready", "zero_downtime_failover"],
+        expected_signals=[
+            "pod_crashloop_detected",
+            "replacement_pod_ready",
+            "zero_downtime_failover",
+        ],
         parameters={
             "chaos_type": "PodChaos",
             "action": "pod-kill",
@@ -246,7 +266,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="chaos_network_latency",
         concurrency=5,
         duration=45,
-        expected_signals=["circuit_breaker_opened", "graceful_fallback_returned", "timeout_error_contained"],
+        expected_signals=[
+            "circuit_breaker_opened",
+            "graceful_fallback_returned",
+            "timeout_error_contained",
+        ],
         parameters={
             "chaos_type": "NetworkChaos",
             "delay_ms": 250,
@@ -268,7 +292,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="chaos_stress",
         concurrency=4,
         duration=50,
-        expected_signals=["cpu_throttling_reported", "hpa_scale_event_triggered", "no_host_node_eviction"],
+        expected_signals=[
+            "cpu_throttling_reported",
+            "hpa_scale_event_triggered",
+            "no_host_node_eviction",
+        ],
         parameters={
             "chaos_type": "StressChaos",
             "cpu_workers": 2,
@@ -289,7 +317,11 @@ PRESET_SCENARIOS: list[ScenarioDefinition] = [
         payload_category="multi_stage_sequence",
         concurrency=10,
         duration=60,
-        expected_signals=["recon_detected", "step_1_passed", "step_2_blocked_at_privilege_boundary"],
+        expected_signals=[
+            "recon_detected",
+            "step_1_passed",
+            "step_2_blocked_at_privilege_boundary",
+        ],
         parameters={
             "stages": [
                 {"step": 1, "action": "GET /openapi.json", "expect": 200},
