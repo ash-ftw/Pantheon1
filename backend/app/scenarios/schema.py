@@ -116,6 +116,37 @@ class ScenarioDefinition(BaseModel):
     def normalize_method(cls, v: str) -> str:
         return v.strip().upper()
 
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v_clean = v.strip().lower().replace("-", "_").replace(" ", "_")
+            mapping = {
+                "sqli": ScenarioCategory.SQLI_RESILIENCE,
+                "sql_injection": ScenarioCategory.SQLI_RESILIENCE,
+                "xss": ScenarioCategory.XSS_REFLECTION,
+                "idor": ScenarioCategory.BOLA,
+                "credential_stuffing": ScenarioCategory.CREDENTIAL_GUESSING,
+                "chaos": ScenarioCategory.SERVICE_FAILURE,
+                "latency": ScenarioCategory.NETWORK_PARTITION,
+            }
+            if v_clean in mapping:
+                return mapping[v_clean]
+            for cat in ScenarioCategory:
+                if cat.value == v_clean:
+                    return cat
+        return v
+
+    @field_validator("estimated_impact", mode="before")
+    @classmethod
+    def normalize_impact(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v_clean = v.strip().lower()
+            for imp in EstimatedImpact:
+                if imp.value == v_clean:
+                    return imp
+        return v
+
 
 # ---------------------------------------------------------------------------
 # API Request / Response Models
@@ -131,6 +162,27 @@ class ScenarioCreateRequest(BaseModel):
     definition: ScenarioDefinition
     source: ScenarioSource = ScenarioSource.CUSTOM
     is_preset: bool = False
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v_clean = v.strip().lower().replace("-", "_").replace(" ", "_")
+            mapping = {
+                "sqli": ScenarioCategory.SQLI_RESILIENCE,
+                "sql_injection": ScenarioCategory.SQLI_RESILIENCE,
+                "xss": ScenarioCategory.XSS_REFLECTION,
+                "idor": ScenarioCategory.BOLA,
+                "credential_stuffing": ScenarioCategory.CREDENTIAL_GUESSING,
+                "chaos": ScenarioCategory.SERVICE_FAILURE,
+                "latency": ScenarioCategory.NETWORK_PARTITION,
+            }
+            if v_clean in mapping:
+                return mapping[v_clean]
+            for cat in ScenarioCategory:
+                if cat.value == v_clean:
+                    return cat
+        return v
 
 
 class ScenarioValidateRequest(BaseModel):

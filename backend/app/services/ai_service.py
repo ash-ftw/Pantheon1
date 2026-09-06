@@ -90,7 +90,9 @@ class AIService:
             stream = await client.chat.completions.create(
                 model=self.model,
                 messages=formatted_messages,  # type: ignore[arg-type]
-                temperature=temperature if temperature is not None else settings.nvidia_nim_temperature,
+                temperature=temperature
+                if temperature is not None
+                else settings.nvidia_nim_temperature,
                 top_p=settings.nvidia_nim_top_p,
                 max_tokens=max_tokens or settings.nvidia_nim_max_tokens,
                 extra_body=extra_body if extra_body else None,
@@ -153,7 +155,9 @@ class AIService:
             res = await client.chat.completions.create(
                 model=self.model,
                 messages=formatted_messages,  # type: ignore[arg-type]
-                temperature=temperature if temperature is not None else settings.nvidia_nim_temperature,
+                temperature=temperature
+                if temperature is not None
+                else settings.nvidia_nim_temperature,
                 top_p=settings.nvidia_nim_top_p,
                 max_tokens=max_tokens or settings.nvidia_nim_max_tokens,
                 extra_body=extra_body if extra_body else None,
@@ -192,7 +196,9 @@ class AIService:
             f"```json\n{schema_json}\n```\n\n"
         )
         if context:
-            user_content += f"Target Application Context:\n```json\n{json.dumps(context, indent=2)}\n```\n\n"
+            user_content += (
+                f"Target Application Context:\n```json\n{json.dumps(context, indent=2)}\n```\n\n"
+            )
 
         user_content += "Respond ONLY with the JSON object. Do not include introductory conversational filler outside the JSON."
 
@@ -251,7 +257,9 @@ class AIService:
             except Exception as e:
                 logger.warning("json_substring_parse_failed", error=str(e), snippet=candidate[:200])
 
-        raise ValueError(f"Could not parse valid JSON dictionary from model response: {text[:200]}...")
+        raise ValueError(
+            f"Could not parse valid JSON dictionary from model response: {text[:200]}..."
+        )
 
 
 # Global singleton instance

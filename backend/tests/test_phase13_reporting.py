@@ -19,7 +19,7 @@ Comprehensive unit and integration tests covering:
 
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -63,9 +63,9 @@ def _create_mock_test_run(
             "p95_latency_ms": 78.2,
         },
         logs=[],
-        created_at=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc),
-        started_at=datetime(2026, 9, 6, 12, 0, tzinfo=timezone.utc),
-        completed_at=datetime(2026, 9, 6, 12, 1, tzinfo=timezone.utc),
+        created_at=datetime(2026, 9, 6, 12, 0, tzinfo=UTC),
+        started_at=datetime(2026, 9, 6, 12, 0, tzinfo=UTC),
+        completed_at=datetime(2026, 9, 6, 12, 1, tzinfo=UTC),
     )
 
 
@@ -109,9 +109,7 @@ async def test_before_after_comparison_baseline_and_delta() -> None:
     mock_result_none.scalar_one_or_none.return_value = None
     mock_db.execute.return_value = mock_result_none
 
-    comp_baseline = await service.compute_before_after_comparison(
-        mock_db, current_run, [f1, f2]
-    )
+    comp_baseline = await service.compute_before_after_comparison(mock_db, current_run, [f1, f2])
     assert comp_baseline["posture_delta"] == "initial_run"
     assert comp_baseline["prior_run_id"] is None
     assert comp_baseline["current_findings_count"] == 2
@@ -265,7 +263,13 @@ def test_pdf_and_csv_exports(tmp_path: Path) -> None:
 
     service = ReportingService()
     test_run = _create_mock_test_run(run_id, org_id, app_id)
-    app_obj = App(id=app_id, org_id=org_id, name="Export Target API", source_type="git", source_url="https://github.com/target/api.git")
+    app_obj = App(
+        id=app_id,
+        org_id=org_id,
+        name="Export Target API",
+        source_type="git",
+        source_url="https://github.com/target/api.git",
+    )
 
     f1 = Finding(
         id=uuid.uuid4(),
@@ -280,7 +284,7 @@ def test_pdf_and_csv_exports(tmp_path: Path) -> None:
         description="Internal metrics exposed at /metrics",
         remediation_guidance="Restrict /metrics to internal subnet.",
         status="open",
-        created_at=datetime(2026, 9, 6, 12, 5, tzinfo=timezone.utc),
+        created_at=datetime(2026, 9, 6, 12, 5, tzinfo=UTC),
     )
 
     rec = DefenceRecommendation(
@@ -318,9 +322,12 @@ def test_pdf_and_csv_exports(tmp_path: Path) -> None:
     csv_path = tmp_path / f"{report_id}.csv"
     service.generate_csv([f1], csv_path)
     assert os.path.exists(csv_path)
-    with open(csv_path, "r", encoding="utf-8") as f:
+    with open(csv_path, encoding="utf-8") as f:
         content = f.read()
-        assert "id,severity,category,title,cwe_id,owasp_category,status,remediation_guidance,created_at" in content
+        assert (
+            "id,severity,category,title,cwe_id,owasp_category,status,remediation_guidance,created_at"
+            in content
+        )
         assert "Exposed Prometheus Metrics Without Auth" in content
         assert "CWE-200" in content
 
@@ -383,7 +390,7 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
         csv_path=str(tmp_path / "report.csv"),
         before_after_comparison={"posture_delta": "improved"},
         metrics_summary={"total_requests": 50},
-        created_at=datetime.now(timezone.utc),
+        created_at=datetime.now(UTC),
     )
 
     # Write dummy files to disk for download testing
@@ -404,15 +411,19 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
             with patch.object(
                 reporting_service,
                 "preview_report",
-                new=AsyncMock(return_value={
-                    "test_run_id": str(run_id),
-                    "scenario_name": "Preview Scenario",
-                    "markdown_preview": "# Preview",
-                    "before_after_comparison": {},
-                    "metrics_summary": {},
-                }),
+                new=AsyncMock(
+                    return_value={
+                        "test_run_id": str(run_id),
+                        "scenario_name": "Preview Scenario",
+                        "markdown_preview": "# Preview",
+                        "before_after_comparison": {},
+                        "metrics_summary": {},
+                    }
+                ),
             ):
-                preview_resp = await client.get(f"/api/reports/runs/{run_id}/preview", headers=headers)
+                preview_resp = await client.get(
+                    f"/api/reports/runs/{run_id}/preview", headers=headers
+                )
                 assert preview_resp.status_code == 200
                 assert preview_resp.json()["scenario_name"] == "Preview Scenario"
 
@@ -458,7 +469,9 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
                 "get_export_bytes",
                 new=AsyncMock(return_value=(b"%PDF-1.4 sample", "application/pdf", "report.pdf")),
             ):
-                dl_pdf = await client.get(f"/api/reports/{report_id}/download?format=pdf", headers=headers)
+                dl_pdf = await client.get(
+                    f"/api/reports/{report_id}/download?format=pdf", headers=headers
+                )
                 assert dl_pdf.status_code == 200
                 assert "application/pdf" in dl_pdf.headers["content-type"]
                 assert dl_pdf.content.startswith(b"%PDF")
@@ -469,7 +482,9 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
                 "get_export_bytes",
                 new=AsyncMock(return_value=(b"id,title\n1,Finding", "text/csv", "report.csv")),
             ):
-                dl_csv = await client.get(f"/api/reports/{report_id}/download?format=csv", headers=headers)
+                dl_csv = await client.get(
+                    f"/api/reports/{report_id}/download?format=csv", headers=headers
+                )
                 assert dl_csv.status_code == 200
                 assert "text/csv" in dl_csv.headers["content-type"]
 
@@ -479,7 +494,9 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
                 "get_export_bytes",
                 new=AsyncMock(return_value=(b"# Markdown", "text/markdown", "report.md")),
             ):
-                dl_md = await client.get(f"/api/reports/{report_id}/download?format=md", headers=headers)
+                dl_md = await client.get(
+                    f"/api/reports/{report_id}/download?format=md", headers=headers
+                )
                 assert dl_md.status_code == 200
                 assert "text/markdown" in dl_md.headers["content-type"]
     finally:

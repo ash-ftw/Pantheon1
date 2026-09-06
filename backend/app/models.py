@@ -595,9 +595,7 @@ class Report(Base):
     before_after_comparison: Mapped[dict[str, Any]] = mapped_column(
         JSON, default=dict, nullable=False
     )
-    metrics_summary: Mapped[dict[str, Any]] = mapped_column(
-        JSON, default=dict, nullable=False
-    )
+    metrics_summary: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False, index=True
@@ -607,4 +605,3 @@ class Report(Base):
     org: Mapped["Org"] = relationship("Org")
     test_run: Mapped["TestRun | None"] = relationship("TestRun")
     app: Mapped["App | None"] = relationship("App")
-

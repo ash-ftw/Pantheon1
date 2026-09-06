@@ -7,9 +7,10 @@ and triggering 1-click mitigation application / rollback.
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
@@ -120,6 +121,7 @@ async def explain_recommendation(
         )
 
     from app.models import Finding
+
     f_res = await db.execute(select(Finding).where(Finding.id == rec.finding_id))
     finding = f_res.scalar_one_or_none()
 
@@ -135,6 +137,7 @@ async def explain_recommendation(
     )
 
     from app.services.ai_service import ai_service
+
     try:
         content, reasoning = await ai_service.generate_chat(
             messages=[{"role": "user", "content": prompt}],
@@ -158,4 +161,3 @@ async def explain_recommendation(
             "model": "rule-based-fallback",
             "warning": str(e),
         }
-

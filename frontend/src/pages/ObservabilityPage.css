@@ -176,7 +176,11 @@
 }
 
 .bar-fill.bar-normal {
-  background: linear-gradient(to top, var(--primary), color-mix(in srgb, var(--primary) 80%, white));
+  background: linear-gradient(
+    to top,
+    var(--primary),
+    color-mix(in srgb, var(--primary) 80%, white)
+  );
   box-shadow: 0 0 10px rgba(0, 212, 170, 0.3);
 }
 

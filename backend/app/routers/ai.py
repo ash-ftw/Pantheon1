@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncGenerator
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -26,7 +25,6 @@ from app.models import App, User
 from app.scenarios.schema import (
     AIGenerateScenarioRequest,
     ScenarioDefinition,
-    ScenarioSource,
 )
 from app.services.ai_scenario_service import generate_scenario
 from app.services.ai_service import DEFAULT_SYSTEM_PROMPT, ai_service
@@ -125,7 +123,7 @@ async def stream_ai_scenario(
     )
 
     user_prompt = (
-        f"Generate a security simulation scenario for:\n\"{request.prompt}\"\n\n"
+        f'Generate a security simulation scenario for:\n"{request.prompt}"\n\n'
         f"Category: {request.category.value if request.category else 'auto-detect'}\n"
         f"Target Path: {request.target_path or 'auto-resolve'}\n\n"
         f"Required JSON Schema:\n```json\n{schema_json}\n```\n\n"

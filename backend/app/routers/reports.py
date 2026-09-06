@@ -55,7 +55,7 @@ async def generate_report(
         logger.error("Error generating report: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate report: {str(e)}",
+            detail=f"Failed to generate report: {e!s}",
         )
 
 
@@ -120,7 +120,7 @@ async def preview_report(
         logger.error("Error previewing report: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to preview report: {str(e)}",
+            detail=f"Failed to preview report: {e!s}",
         )
 
 
@@ -149,7 +149,7 @@ async def get_report(
 @router.get("/{report_id}/download")
 async def download_report(
     report_id: uuid.UUID,
-    format: Annotated[str, Query(pattern="^(pdf|csv|md)$")] = "pdf",
+    format_type: Annotated[str, Query(alias="format", pattern="^(pdf|csv|md)$")] = "pdf",
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
 ) -> Response:
@@ -165,7 +165,7 @@ async def download_report(
             db=db,
             report_id=report_id,
             org_id=current_user.org_id,
-            format_type=format,
+            format_type=format_type,
         )
         return Response(
             content=content,
@@ -178,5 +178,5 @@ async def download_report(
         logger.error("Error downloading report: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to download report: {str(e)}",
+            detail=f"Failed to download report: {e!s}",
         )

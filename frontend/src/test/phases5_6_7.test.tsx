@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
@@ -89,6 +89,41 @@ global.fetch = vi.fn((url: string | URL | Request) => {
     } as Response);
   }
 
+  if (urlStr.includes('/api/scenarios/generate')) {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          name: 'AI Generated SQLi Test',
+          description: 'Testing SQL injection vulnerability',
+          category: 'sqli_resilience',
+          method: 'GET',
+          target: { service: 'web', path: '/search', port: 8080, protocol: 'http' },
+          concurrency: 15,
+          duration: 30,
+          expected_signals: ['500 Internal Server Error'],
+          estimated_impact: 'medium',
+          estimated_duration_seconds: 30,
+          source: 'ai',
+          tags: ['ai-generated', 'sqli_resilience'],
+        }),
+    } as Response);
+  }
+
+  if (urlStr.endsWith('/api/scenarios') || urlStr.includes('/api/scenarios?')) {
+    return Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: 'scen-saved-123',
+          name: 'AI Generated SQLi Test',
+          category: 'sqli_resilience',
+          source: 'ai',
+          is_preset: false,
+        }),
+    } as Response);
+  }
+
   return Promise.resolve({
     ok: true,
     json: () => Promise.resolve([]),
@@ -161,6 +196,38 @@ describe('Pantheon Frontend Phase 5 - Phase 7 Verification Tests', () => {
     expect(screen.getByText('AI Scenario Builder')).toBeInTheDocument();
     expect(screen.getByText(/Describe the security simulation/i)).toBeInTheDocument();
     expect(screen.getByText('Generate Scenario')).toBeInTheDocument();
+  });
+
+  it('Phase 6: AI Scenario Builder generates scenario and successfully saves to library', async () => {
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ScenarioBuilderPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const textarea = screen.getByPlaceholderText(/Describe your simulation scenario/i);
+    fireEvent.change(textarea, {
+      target: { value: 'Test SQL injection resilience on search parameters' },
+    });
+
+    const generateBtn = screen.getByText('Generate Scenario');
+    fireEvent.click(generateBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('AI Generated SQLi Test')).toBeInTheDocument();
+    });
+
+    const saveBtn = screen.getByText('Save to Library');
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Scenario saved successfully to your organization's Simulation Library!/i),
+      ).toBeInTheDocument();
+    });
   });
 
   it('Phase 6 & 7: renders Custom Scenario Page with Safety Guard Policies button', async () => {

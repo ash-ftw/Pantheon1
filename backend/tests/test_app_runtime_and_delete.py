@@ -25,7 +25,7 @@ async def setup_app_test_data():
 
         user = User(
             email=f"tester-{unique_id}@pantheon.local",
-            hashed_password="hashed_pw_test",  # noqa: S106
+            hashed_password="hashed_pw_test",
             full_name="Runtime Tester",
             org_id=org.id,
         )

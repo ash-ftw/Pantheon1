@@ -48,14 +48,20 @@
   background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sidebar-logo:hover .sidebar-logo-icon {
   transform: scale(1.05);
-  box-shadow: 0 4px 14px rgba(0, 212, 170, 0.35), 0 0 0 1px rgba(0, 212, 170, 0.5);
+  box-shadow:
+    0 4px 14px rgba(0, 212, 170, 0.35),
+    0 0 0 1px rgba(0, 212, 170, 0.5);
 }
 
 .sidebar-logo-img {

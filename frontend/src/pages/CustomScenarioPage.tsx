@@ -207,10 +207,8 @@ export function CustomScenarioPage() {
 
   // Save custom scenario
   const handleSave = async () => {
-    if (!token) {
-      setError('You must be logged in to save scenarios');
-      return;
-    }
+    const activeToken =
+      token || (typeof window !== 'undefined' ? localStorage.getItem('pantheon_token') : null);
 
     setSaving(true);
     setError(null);
@@ -227,13 +225,17 @@ export function CustomScenarioPage() {
       }
     }
 
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (activeToken) {
+      headers.Authorization = `Bearer ${activeToken}`;
+    }
+
     try {
       const res = await fetch('/api/scenarios', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           name: defToSave.name,
           description: defToSave.description,
@@ -245,10 +247,42 @@ export function CustomScenarioPage() {
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(
-          errData.detail?.message || errData.detail || `Server returned ${res.status}`,
-        );
+        let errorMsg = `Failed to save scenario (HTTP ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData.detail) {
+            if (typeof errData.detail === 'string') {
+              errorMsg = errData.detail;
+            } else if (errData.detail.message) {
+              const details = Array.isArray(errData.detail.errors)
+                ? `: ${errData.detail.errors
+                    .map((e: unknown) =>
+                      typeof e === 'string' ? e : (e as { msg?: string }).msg || JSON.stringify(e),
+                    )
+                    .join(', ')}`
+                : errData.detail.reason
+                  ? `: ${errData.detail.reason}`
+                  : '';
+              errorMsg = `${errData.detail.message}${details}`;
+            } else if (Array.isArray(errData.detail)) {
+              errorMsg = errData.detail
+                .map(
+                  (e: { loc?: string[]; msg?: string }) =>
+                    `${e.loc?.slice(1)?.join('.') || 'field'}: ${e.msg}`,
+                )
+                .join('; ');
+            } else {
+              errorMsg = JSON.stringify(errData.detail);
+            }
+          }
+        } catch {
+          // fallback
+        }
+        if (res.status === 401) {
+          errorMsg =
+            'Authentication required: Please log in via Team Management to save scenarios to your organization library.';
+        }
+        throw new Error(errorMsg);
       }
 
       setSaveSuccess(true);

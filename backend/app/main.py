@@ -17,6 +17,7 @@ from app.config import settings
 from app.logging import get_logger, setup_logging
 from app.middleware import RequestContextMiddleware
 from app.routers import (
+    ai,
     apps,
     attack_graph,
     auth,
@@ -25,13 +26,12 @@ from app.routers import (
     infrastructure,
     observability,
     orgs,
+    reports,
     route_proxy,
     routes,
     safety,
     scenarios,
     test_runs,
-    ai,
-    reports,
 )
 
 logger = get_logger(__name__)

@@ -115,11 +115,12 @@ export function SimulationLibraryPage() {
   // Load scenarios from backend API
   useEffect(() => {
     let isCurrent = true;
-    const fetchUrl = token ? '/api/scenarios' : '/api/scenarios/presets';
+    const activeToken =
+      token || (typeof window !== 'undefined' ? localStorage.getItem('pantheon_token') : null);
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (activeToken) headers.Authorization = `Bearer ${activeToken}`;
 
-    fetch(fetchUrl, { headers })
+    fetch('/api/scenarios', { headers })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();

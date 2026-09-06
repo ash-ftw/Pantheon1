@@ -45,6 +45,133 @@ const PROMPT_SUGGESTIONS = [
   'Cross-service 250ms network latency and 10% packet drop stress test',
 ];
 
+const VALID_CATEGORIES: Record<string, string> = {
+  brute_force: 'brute_force',
+  'brute force': 'brute_force',
+  'brute-force': 'brute_force',
+  credential_guessing: 'credential_guessing',
+  'credential guessing': 'credential_guessing',
+  credential_stuffing: 'credential_guessing',
+  'credential stuffing': 'credential_guessing',
+  sqli_resilience: 'sqli_resilience',
+  sqli: 'sqli_resilience',
+  sql_injection: 'sqli_resilience',
+  'sql injection': 'sqli_resilience',
+  xss_reflection: 'xss_reflection',
+  xss: 'xss_reflection',
+  auth_abuse: 'auth_abuse',
+  'auth abuse': 'auth_abuse',
+  bola: 'bola',
+  idor: 'bola',
+  api_abuse: 'api_abuse',
+  'api abuse': 'api_abuse',
+  'rate limit': 'api_abuse',
+  'rate limiting': 'api_abuse',
+  cache_pressure: 'cache_pressure',
+  'cache pressure': 'cache_pressure',
+  traffic_flood: 'traffic_flood',
+  'traffic flood': 'traffic_flood',
+  service_failure: 'service_failure',
+  'service failure': 'service_failure',
+  chaos: 'service_failure',
+  network_partition: 'network_partition',
+  'network partition': 'network_partition',
+  latency: 'network_partition',
+  resource_exhaustion: 'resource_exhaustion',
+  'resource exhaustion': 'resource_exhaustion',
+  multi_stage_chain: 'multi_stage_chain',
+  'multi stage chain': 'multi_stage_chain',
+  killchain: 'multi_stage_chain',
+};
+
+function normalizeCategory(cat: string | undefined): string {
+  if (!cat) return 'api_abuse';
+  const key = cat.toLowerCase().trim().replace(/[-_]/g, ' ');
+  if (VALID_CATEGORIES[key]) return VALID_CATEGORIES[key];
+  const directKey = cat.toLowerCase().trim();
+  if (VALID_CATEGORIES[directKey]) return VALID_CATEGORIES[directKey];
+  return 'api_abuse';
+}
+
+function normalizeImpact(impact: string | undefined): 'low' | 'medium' | 'high' | 'critical' {
+  if (!impact) return 'medium';
+  const imp = impact.toLowerCase().trim();
+  if (imp === 'low' || imp === 'medium' || imp === 'high' || imp === 'critical') {
+    return imp;
+  }
+  return 'medium';
+}
+
+function normalizeScenario(scenario: ScenarioDefinition): ScenarioDefinition {
+  const normCategory = normalizeCategory(scenario.category);
+  const normMethod = (scenario.method || 'GET').trim().toUpperCase();
+  const normImpact = normalizeImpact(scenario.estimated_impact);
+
+  const rawConcurrency = Number(scenario.concurrency);
+  const concurrency = Number.isFinite(rawConcurrency)
+    ? Math.max(1, Math.min(Math.round(rawConcurrency), 500))
+    : 10;
+
+  const rawDuration = Number(scenario.duration);
+  const duration = Number.isFinite(rawDuration)
+    ? Math.max(5, Math.min(Math.round(rawDuration), 600))
+    : 30;
+
+  const rawEstDuration = Number(scenario.estimated_duration_seconds || duration);
+  const estimatedDuration = Number.isFinite(rawEstDuration)
+    ? Math.max(5, Math.min(Math.round(rawEstDuration), 600))
+    : duration;
+
+  const path = scenario.target?.path
+    ? scenario.target.path.startsWith('/')
+      ? scenario.target.path
+      : `/${scenario.target.path}`
+    : '/';
+  const rawPort = Number(scenario.target?.port);
+  const port =
+    Number.isFinite(rawPort) && rawPort >= 1 && rawPort <= 65535 ? Math.round(rawPort) : 8080;
+
+  let expectedSignals: string[] = [];
+  if (Array.isArray(scenario.expected_signals) && scenario.expected_signals.length > 0) {
+    expectedSignals = scenario.expected_signals.filter(
+      (s) => typeof s === 'string' && s.trim().length > 0,
+    );
+  } else if (typeof scenario.expected_signals === 'string') {
+    expectedSignals = [scenario.expected_signals];
+  }
+  if (expectedSignals.length === 0) {
+    expectedSignals = ['http_200_ok'];
+  }
+
+  return {
+    ...scenario,
+    name: scenario.name?.trim() || 'AI Generated Scenario',
+    description: scenario.description?.trim() || 'AI generated security scenario',
+    category: normCategory,
+    method: normMethod,
+    payload_category: scenario.payload_category || 'ai_generated_test',
+    concurrency,
+    duration,
+    expected_signals: expectedSignals,
+    parameters: scenario.parameters || {},
+    estimated_impact: normImpact,
+    estimated_duration_seconds: estimatedDuration,
+    source: 'ai',
+    tags:
+      Array.isArray(scenario.tags) && scenario.tags.length > 0
+        ? scenario.tags
+        : ['ai-generated', normCategory],
+    target: {
+      service: scenario.target?.service || 'default',
+      path,
+      port,
+      protocol: scenario.target?.protocol || 'http',
+      headers: scenario.target?.headers || {},
+      query_params: scenario.target?.query_params || {},
+    },
+  };
+}
+
 export function ScenarioBuilderPage() {
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token);
@@ -66,8 +193,10 @@ export function ScenarioBuilderPage() {
   // Load deployed apps for contextual generation
   useEffect(() => {
     let isCurrent = true;
+    const activeToken =
+      token || (typeof window !== 'undefined' ? localStorage.getItem('pantheon_token') : null);
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (activeToken) headers.Authorization = `Bearer ${activeToken}`;
 
     fetch('/api/apps', { headers })
       .then((res) => (res.ok ? res.json() : []))
@@ -100,8 +229,10 @@ export function ScenarioBuilderPage() {
     setIsThinking(true);
     setShowReasoning(true);
 
+    const activeToken =
+      token || (typeof window !== 'undefined' ? localStorage.getItem('pantheon_token') : null);
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (activeToken) headers.Authorization = `Bearer ${activeToken}`;
 
     try {
       // 1. Try streaming SSE endpoint from NVIDIA NIM
@@ -153,10 +284,11 @@ export function ScenarioBuilderPage() {
 
         if (fullContent.trim()) {
           const jsonMatch =
-            fullContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || fullContent.match(/\{[\s\S]*\}/);
+            fullContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/) ||
+            fullContent.match(/\{[\s\S]*\}/);
           const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : fullContent;
           const parsed = JSON.parse(jsonStr);
-          setGeneratedScenario(parsed);
+          setGeneratedScenario(normalizeScenario(parsed));
           return;
         }
       }
@@ -178,7 +310,7 @@ export function ScenarioBuilderPage() {
       }
 
       const scenario: ScenarioDefinition = await res.json();
-      setGeneratedScenario(scenario);
+      setGeneratedScenario(normalizeScenario(scenario));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
@@ -187,35 +319,82 @@ export function ScenarioBuilderPage() {
     }
   };
 
-
   // Save generated scenario to org library
   const handleSave = async () => {
-    if (!generatedScenario || !token) return;
+    if (!generatedScenario) {
+      setError('Please generate a scenario before saving.');
+      return;
+    }
     setSaving(true);
     setError(null);
+    setSaveSuccess(false);
+
+    const activeToken =
+      token || (typeof window !== 'undefined' ? localStorage.getItem('pantheon_token') : null);
+    const normalized = normalizeScenario(generatedScenario);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (activeToken) {
+      headers.Authorization = `Bearer ${activeToken}`;
+    }
 
     try {
       const res = await fetch('/api/scenarios', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
-          name: generatedScenario.name,
-          description: generatedScenario.description,
-          category: generatedScenario.category,
-          definition: generatedScenario,
+          name: normalized.name,
+          description: normalized.description,
+          category: normalized.category,
+          definition: normalized,
           source: 'ai',
           is_preset: false,
         }),
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail?.message || errData.detail || 'Failed to save scenario');
+        let errorMsg = `Failed to save scenario (HTTP ${res.status})`;
+        try {
+          const errData = await res.json();
+          if (errData.detail) {
+            if (typeof errData.detail === 'string') {
+              errorMsg = errData.detail;
+            } else if (errData.detail.message) {
+              const details = Array.isArray(errData.detail.errors)
+                ? `: ${errData.detail.errors
+                    .map((e: unknown) =>
+                      typeof e === 'string' ? e : (e as { msg?: string }).msg || JSON.stringify(e),
+                    )
+                    .join(', ')}`
+                : errData.detail.reason
+                  ? `: ${errData.detail.reason}`
+                  : '';
+              errorMsg = `${errData.detail.message}${details}`;
+            } else if (Array.isArray(errData.detail)) {
+              errorMsg = errData.detail
+                .map(
+                  (e: { loc?: string[]; msg?: string }) =>
+                    `${e.loc?.slice(1)?.join('.') || 'field'}: ${e.msg}`,
+                )
+                .join('; ');
+            } else {
+              errorMsg = JSON.stringify(errData.detail);
+            }
+          }
+        } catch {
+          // keep fallback errorMsg
+        }
+
+        if (res.status === 401) {
+          errorMsg =
+            'Authentication required: Please log in via Team Management to save scenarios to your organization library.';
+        }
+        throw new Error(errorMsg);
       }
 
+      setGeneratedScenario(normalized);
       setSaveSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -227,7 +406,15 @@ export function ScenarioBuilderPage() {
   return (
     <div className="page-container animate-fade-in">
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
           <div className="page-title">AI Scenario Builder</div>
           <div
             style={{
@@ -391,9 +578,27 @@ export function ScenarioBuilderPage() {
 
       {/* Save Success Alert */}
       {saveSuccess && (
-        <div className="validation-banner success animate-slide-in">
-          <CheckCircle2 size={16} />
-          <div>Scenario saved successfully to your organization's Simulation Library!</div>
+        <div
+          className="validation-banner success animate-slide-in"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CheckCircle2 size={16} />
+            <div>Scenario saved successfully to your organization's Simulation Library!</div>
+          </div>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: 12, padding: '4px 12px', height: 'auto' }}
+            onClick={() => navigate('/scenarios')}
+          >
+            Open Library →
+          </button>
         </div>
       )}
 
@@ -433,7 +638,9 @@ export function ScenarioBuilderPage() {
                   color: 'var(--foreground)',
                 }}
               >
-                {isThinking ? 'Nemotron 3.5 Reasoning in Progress...' : 'Nemotron 3.5 Thinking Trace'}
+                {isThinking
+                  ? 'Nemotron 3.5 Reasoning in Progress...'
+                  : 'Nemotron 3.5 Thinking Trace'}
               </span>
               <span
                 style={{
@@ -475,12 +682,16 @@ export function ScenarioBuilderPage() {
               }}
             >
               {reasoning || 'Analyzing prompt requirements and target architecture...'}
-              {isThinking && <span className="animate-pulse" style={{ color: 'var(--primary)' }}> ▋</span>}
+              {isThinking && (
+                <span className="animate-pulse" style={{ color: 'var(--primary)' }}>
+                  {' '}
+                  ▋
+                </span>
+              )}
             </div>
           )}
         </div>
       )}
-
 
       {/* Generated Result Preview */}
       {generatedScenario && (
@@ -658,6 +869,16 @@ export function ScenarioBuilderPage() {
                 <Wrench size={14} />
                 Edit in Custom Authoring
               </button>
+              {saveSuccess && (
+                <button
+                  className="btn-secondary"
+                  onClick={() => navigate('/scenarios')}
+                  style={{ borderColor: 'var(--success)' }}
+                >
+                  <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+                  View in Library →
+                </button>
+              )}
               <button className="btn-primary" onClick={handleSave} disabled={saving || saveSuccess}>
                 {saving ? (
                   <>

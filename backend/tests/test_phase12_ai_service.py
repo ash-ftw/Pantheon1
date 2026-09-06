@@ -9,7 +9,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.config import settings
 from app.main import app
-from app.models import Org, User
+from app.models import User
 from app.scenarios.schema import (
     AIGenerateScenarioRequest,
     EstimatedImpact,
@@ -55,7 +55,7 @@ Hope this helps!"""
     }
 
     # 3. Embedded JSON inside thoughts
-    embedded = "I will formulate this response: {\"target\": \"/api/login\", \"method\": \"POST\"} - end of thoughts."
+    embedded = 'I will formulate this response: {"target": "/api/login", "method": "POST"} - end of thoughts.'
     assert AIService._extract_json_dict(embedded) == {"target": "/api/login", "method": "POST"}
 
 
@@ -129,7 +129,9 @@ async def test_generate_structured_with_validation():
     with patch.object(
         service,
         "generate_chat",
-        new=AsyncMock(return_value=(json.dumps(valid_scenario_json), "Reasoned through brute force model")),
+        new=AsyncMock(
+            return_value=(json.dumps(valid_scenario_json), "Reasoned through brute force model")
+        ),
     ):
         model_instance, reasoning = await service.generate_structured(
             prompt="Generate a brute force attack",
@@ -167,14 +169,20 @@ async def test_ai_scenario_service_generation_and_fallback():
         source=ScenarioSource.AI,
     )
 
-    with patch("app.services.ai_scenario_service.ai_service.generate_structured", new=AsyncMock(return_value=(valid_scenario, "Thought about SQL injection vectors"))):
+    with patch(
+        "app.services.ai_scenario_service.ai_service.generate_structured",
+        new=AsyncMock(return_value=(valid_scenario, "Thought about SQL injection vectors")),
+    ):
         result = await generate_scenario(req, org_id)
         assert result.category == ScenarioCategory.SQLI_RESILIENCE
         assert result.source == ScenarioSource.AI
         assert result.concurrency == 12
 
     # 2. Failing AI generation triggers robust rule-based fallback
-    with patch("app.services.ai_scenario_service.ai_service.generate_structured", new=AsyncMock(side_effect=RuntimeError("NVIDIA NIM API timeout"))):
+    with patch(
+        "app.services.ai_scenario_service.ai_service.generate_structured",
+        new=AsyncMock(side_effect=RuntimeError("NVIDIA NIM API timeout")),
+    ):
         fallback_result = await generate_scenario(req, org_id)
         assert fallback_result is not None
         assert fallback_result.category == ScenarioCategory.SQLI_RESILIENCE
@@ -196,6 +204,7 @@ async def test_ai_status_endpoint():
 
     # Mock get_current_user to avoid database hits during unit testing
     from app.services.auth_service import get_current_user
+
     test_user = User(
         id=user_id,
         email="security@pantheon.local",
@@ -222,4 +231,3 @@ async def test_ai_status_endpoint():
             assert data["configured"] is True
     finally:
         app.dependency_overrides.pop(get_current_user, None)
-

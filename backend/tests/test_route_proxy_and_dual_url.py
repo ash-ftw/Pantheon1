@@ -23,7 +23,7 @@ async def auth_client():
 
         user = User(
             email=f"proxy_tester_{suffix}@pantheon.local",
-            hashed_password="hashed_test_password",  # noqa: S106
+            hashed_password="hashed_test_password",
             full_name="Proxy Tester",
             role="owner",
             org_id=org.id,

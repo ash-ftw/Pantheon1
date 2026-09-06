@@ -10,6 +10,7 @@ Tests:
 """
 
 import uuid
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -18,6 +19,7 @@ from app.scenarios.presets import PRESET_SCENARIOS, get_all_presets, get_preset_
 from app.scenarios.schema import (
     AIGenerateScenarioRequest,
     ScenarioCategory,
+    ScenarioCreateRequest,
     ScenarioDefinition,
     ScenarioSource,
     ScenarioTarget,
@@ -223,20 +225,35 @@ def test_ai_scenario_resolve_best_endpoint() -> None:
 @pytest.mark.asyncio
 async def test_generate_scenario_pipeline_strict_validation() -> None:
     """Verify AI scenario generation produces a valid ScenarioDefinition."""
-    req = AIGenerateScenarioRequest(
-        prompt="Test SQL injection resilience on search with 25 concurrent requests for 40 seconds",
+    mock_scenario = ScenarioDefinition(
+        name="AI SQLi Resilience Probe",
+        description="Simulate SQL injection attacks against search endpoint",
         category=ScenarioCategory.SQLI_RESILIENCE,
+        target=ScenarioTarget(path="/api/search"),
+        concurrency=25,
+        duration=40,
+        source=ScenarioSource.AI,
+        expected_signals=["http_500_internal_error"],
     )
-    org_id = uuid.uuid4()
+    with patch(
+        "app.services.ai_scenario_service.ai_service.generate_structured",
+        new_callable=AsyncMock,
+    ) as mock_gen:
+        mock_gen.return_value = (mock_scenario, "Simulating SQL injection attacks")
+        req = AIGenerateScenarioRequest(
+            prompt="Test SQL injection resilience on search with 25 concurrent requests for 40 seconds",
+            category=ScenarioCategory.SQLI_RESILIENCE,
+        )
+        org_id = uuid.uuid4()
 
-    scenario = await generate_scenario(req, org_id)
+        scenario = await generate_scenario(req, org_id)
 
-    assert isinstance(scenario, ScenarioDefinition)
-    assert scenario.category == ScenarioCategory.SQLI_RESILIENCE
-    assert scenario.concurrency == 25
-    assert scenario.duration == 40
-    assert scenario.source == ScenarioSource.AI
-    assert len(scenario.expected_signals) > 0
+        assert isinstance(scenario, ScenarioDefinition)
+        assert scenario.category == ScenarioCategory.SQLI_RESILIENCE
+        assert scenario.concurrency == 25
+        assert scenario.duration == 40
+        assert scenario.source == ScenarioSource.AI
+        assert len(scenario.expected_signals) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -254,3 +271,28 @@ def test_validate_request_model() -> None:
     }
     req = ScenarioValidateRequest(definition=valid_def)
     assert req.definition["name"] == "Form Validated Scenario"
+
+
+def test_schema_normalizes_category_and_impact_variations() -> None:
+    """Verify that common variations and synonyms are normalized into valid enums."""
+    scen = ScenarioDefinition.model_validate(
+        {
+            "name": "Normalized Variation Scenario",
+            "description": "Testing category and impact normalization",
+            "category": "SQL Injection",
+            "estimated_impact": "High",
+            "expected_signals": ["sig_1"],
+        }
+    )
+    assert scen.category == ScenarioCategory.SQLI_RESILIENCE
+    assert scen.estimated_impact.value == "high"
+
+    req = ScenarioCreateRequest.model_validate(
+        {
+            "name": "Created Variation Scenario",
+            "description": "Testing create request normalization",
+            "category": "credential_stuffing",
+            "definition": scen,
+        }
+    )
+    assert req.category == ScenarioCategory.CREDENTIAL_GUESSING

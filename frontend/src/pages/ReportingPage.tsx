@@ -52,7 +52,12 @@ export interface ReportDetail extends ReportSummary {
     prior_run_date?: string | null;
     prior_findings_count?: number;
     current_findings_count?: number;
-    resolved_findings?: Array<{ title: string; severity: string; category: string; cwe_id?: string }>;
+    resolved_findings?: Array<{
+      title: string;
+      severity: string;
+      category: string;
+      cwe_id?: string;
+    }>;
     new_findings?: Array<{ title: string; severity: string; category: string; cwe_id?: string }>;
     posture_delta?: 'improved' | 'degraded' | 'unchanged' | 'initial_run';
     posture_score_delta?: number;
@@ -85,13 +90,28 @@ interface TestRunOption {
   created_at?: string;
 }
 
+interface ReportPreview {
+  test_run_id: string;
+  scenario_name: string;
+  markdown_preview: string;
+  before_after_comparison?: {
+    posture_delta?: string;
+    summary?: string;
+  };
+  metrics_summary?: {
+    total_findings?: number;
+  };
+}
+
 export function ReportingPage() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<ReportDetail | null>(null);
   const [loadingList, setLoadingList] = useState<boolean>(true);
   const [, setLoadingDetail] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'findings' | 'markdown'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'comparison' | 'findings' | 'markdown'>(
+    'overview',
+  );
 
   // Generate Report Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -99,18 +119,88 @@ export function ReportingPage() {
   const [selectedRunId, setSelectedRunId] = useState<string>('');
   const [customTitle, setCustomTitle] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [previewData, setPreviewData] = useState<any | null>(null);
+  const [previewData, setPreviewData] = useState<ReportPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    text: string;
+    type: 'success' | 'error';
+  } | null>(null);
   const [copiedMd, setCopiedMd] = useState<boolean>(false);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  // Sample data fallback
+  const loadSampleReports = useCallback(() => {
+    const sampleList: ReportSummary[] = [
+      {
+        id: 'rep-sample-01',
+        org_id: 'org-demo',
+        test_run_id: 'run-demo-1',
+        app_id: 'app-fintech',
+        title: 'Security Evaluation: SQL Injection & Input Validation',
+        executive_summary:
+          'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
+        created_at: new Date().toISOString(),
+        has_pdf: true,
+        has_csv: true,
+      },
+    ];
+    setReports(sampleList);
+    setSelectedReportId(sampleList[0].id);
+  }, []);
+
+  const loadSampleReportDetail = useCallback((id: string) => {
+    setSelectedReport({
+      id,
+      org_id: 'org-demo',
+      test_run_id: 'run-demo-1',
+      app_id: 'app-fintech',
+      title: 'Security Evaluation: SQL Injection & Input Validation',
+      executive_summary:
+        'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
+      markdown_content: `# Security Evaluation Report: SQL Injection & Input Validation\n\n**Target Application:** Fintech Core API\n**Scenario:** SQL Injection Sweep (\`sqli\`)\n**Status:** \`COMPLETED\`\n\n---\n\n## 1. Executive Summary\nPosture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.\n\n## 2. Before / After Posture Comparison\n- Baseline Risk Score: 12.0\n- Current Risk Score: 3.0 (Delta: +9.0 IMPROVED)\n- Resolved: Blind SQL Injection in /api/items\n\n## 3. Performance & Reliability Metrics\n- Total Requests: 45\n- Failed Requests: 1\n- Error Rate: 2.22%\n- Avg Latency: 32.4ms`,
+      before_after_comparison: {
+        prior_run_id: 'run-baseline-00',
+        prior_run_date: '2026-09-01 10:00 UTC',
+        prior_findings_count: 2,
+        current_findings_count: 1,
+        resolved_findings: [
+          {
+            title: 'Blind SQL Injection in /api/items',
+            severity: 'critical',
+            category: 'Injection',
+            cwe_id: 'CWE-89',
+          },
+        ],
+        new_findings: [],
+        posture_delta: 'improved',
+        posture_score_delta: 9.0,
+        prior_posture_score: 12.0,
+        current_posture_score: 3.0,
+        summary:
+          'Security posture improved. Vulnerability score decreased by 9.0 points (1 finding resolved).',
+      },
+      metrics_summary: {
+        total_requests: 45,
+        failed_requests: 1,
+        error_rate_pct: 2.22,
+        avg_latency_ms: 32.4,
+        p95_latency_ms: 68.0,
+        total_steps: 3,
+        total_findings: 1,
+        severity_counts: { critical: 0, high: 0, medium: 1, low: 0, info: 0 },
+      },
+      created_at: new Date().toISOString(),
+      has_pdf: true,
+      has_csv: true,
+    });
+  }, []);
 
   // 1. Fetch Reports List
   const fetchReports = useCallback(async () => {
@@ -132,26 +222,29 @@ export function ReportingPage() {
     } finally {
       setLoadingList(false);
     }
-  }, [selectedReportId]);
+  }, [selectedReportId, loadSampleReports]);
 
   // 2. Fetch Report Detail
-  const fetchReportDetail = useCallback(async (id: string) => {
-    try {
-      setLoadingDetail(true);
-      const res = await fetch(`/api/reports/${id}`);
-      if (res.ok) {
-        const detail = await res.json();
-        setSelectedReport(detail);
-      } else {
-        // Fallback sample
+  const fetchReportDetail = useCallback(
+    async (id: string) => {
+      try {
+        setLoadingDetail(true);
+        const res = await fetch(`/api/reports/${id}`);
+        if (res.ok) {
+          const detail = await res.json();
+          setSelectedReport(detail);
+        } else {
+          // Fallback sample
+          loadSampleReportDetail(id);
+        }
+      } catch {
         loadSampleReportDetail(id);
+      } finally {
+        setLoadingDetail(false);
       }
-    } catch {
-      loadSampleReportDetail(id);
-    } finally {
-      setLoadingDetail(false);
-    }
-  }, []);
+    },
+    [loadSampleReportDetail],
+  );
 
   // 3. Fetch Test Runs for Generate Dropdown
   const fetchRuns = useCallback(async () => {
@@ -184,65 +277,6 @@ export function ReportingPage() {
       fetchReportDetail(selectedReportId);
     }
   }, [selectedReportId, fetchReportDetail]);
-
-  // Sample data fallback
-  const loadSampleReports = () => {
-    const sampleList: ReportSummary[] = [
-      {
-        id: 'rep-sample-01',
-        org_id: 'org-demo',
-        test_run_id: 'run-demo-1',
-        app_id: 'app-fintech',
-        title: 'Security Evaluation: SQL Injection & Input Validation',
-        executive_summary: 'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
-        created_at: new Date().toISOString(),
-        has_pdf: true,
-        has_csv: true,
-      },
-    ];
-    setReports(sampleList);
-    setSelectedReportId(sampleList[0].id);
-  };
-
-  const loadSampleReportDetail = (id: string) => {
-    setSelectedReport({
-      id,
-      org_id: 'org-demo',
-      test_run_id: 'run-demo-1',
-      app_id: 'app-fintech',
-      title: 'Security Evaluation: SQL Injection & Input Validation',
-      executive_summary: 'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
-      markdown_content: `# Security Evaluation Report: SQL Injection & Input Validation\n\n**Target Application:** Fintech Core API\n**Scenario:** SQL Injection Sweep (\`sqli\`)\n**Status:** \`COMPLETED\`\n\n---\n\n## 1. Executive Summary\nPosture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.\n\n## 2. Before / After Posture Comparison\n- Baseline Risk Score: 12.0\n- Current Risk Score: 3.0 (Delta: +9.0 IMPROVED)\n- Resolved: Blind SQL Injection in /api/items\n\n## 3. Performance & Reliability Metrics\n- Total Requests: 45\n- Failed Requests: 1\n- Error Rate: 2.22%\n- Avg Latency: 32.4ms`,
-      before_after_comparison: {
-        prior_run_id: 'run-baseline-00',
-        prior_run_date: '2026-09-01 10:00 UTC',
-        prior_findings_count: 2,
-        current_findings_count: 1,
-        resolved_findings: [
-          { title: 'Blind SQL Injection in /api/items', severity: 'critical', category: 'Injection', cwe_id: 'CWE-89' },
-        ],
-        new_findings: [],
-        posture_delta: 'improved',
-        posture_score_delta: 9.0,
-        prior_posture_score: 12.0,
-        current_posture_score: 3.0,
-        summary: 'Security posture improved. Vulnerability score decreased by 9.0 points (1 finding resolved).',
-      },
-      metrics_summary: {
-        total_requests: 45,
-        failed_requests: 1,
-        error_rate_pct: 2.22,
-        avg_latency_ms: 32.4,
-        p95_latency_ms: 68.0,
-        total_steps: 3,
-        total_findings: 1,
-        severity_counts: { critical: 0, high: 0, medium: 1, low: 0, info: 0 },
-      },
-      created_at: new Date().toISOString(),
-      has_pdf: true,
-      has_csv: true,
-    });
-  };
 
   // Preview Generation
   const handlePreview = async () => {
@@ -319,9 +353,10 @@ export function ReportingPage() {
 
   // Filtered reports
   const filteredReports = useMemo(() => {
-    return reports.filter((r) =>
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.executive_summary.toLowerCase().includes(searchQuery.toLowerCase())
+    return reports.filter(
+      (r) =>
+        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.executive_summary.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [reports, searchQuery]);
 
@@ -344,7 +379,11 @@ export function ReportingPage() {
       {/* Toast */}
       {toastMessage && (
         <div className={`toast-banner ${toastMessage.type}`}>
-          {toastMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 size={18} />
+          ) : (
+            <AlertTriangle size={18} />
+          )}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -358,8 +397,8 @@ export function ReportingPage() {
             <span className="reporting-badge">PRD Module 12</span>
           </h1>
           <p className="reporting-subtitle">
-            Auditable, exportable security test reports. Markdown is the authoritative single source of truth;
-            PDF and CSV exports are strictly derived from it.
+            Auditable, exportable security test reports. Markdown is the authoritative single source
+            of truth; PDF and CSV exports are strictly derived from it.
           </p>
         </div>
 
@@ -413,7 +452,9 @@ export function ReportingPage() {
           </div>
           <div className="stat-content">
             <span className="stat-label">Latest Audit</span>
-            <span className="stat-value" style={{ fontSize: '1.1rem' }}>{stats.latestAudit}</span>
+            <span className="stat-value" style={{ fontSize: '1.1rem' }}>
+              {stats.latestAudit}
+            </span>
           </div>
         </div>
       </div>
@@ -440,13 +481,28 @@ export function ReportingPage() {
                   color: 'var(--foreground)',
                 }}
               />
-              <Search size={12} style={{ position: 'absolute', left: '0.5rem', top: '0.55rem', color: 'var(--muted-foreground)' }} />
+              <Search
+                size={12}
+                style={{
+                  position: 'absolute',
+                  left: '0.5rem',
+                  top: '0.55rem',
+                  color: 'var(--muted-foreground)',
+                }}
+              />
             </div>
           </div>
 
           <div className="reports-scroll-list">
             {filteredReports.length === 0 ? (
-              <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.85rem' }}>
+              <div
+                style={{
+                  padding: '2rem 1rem',
+                  textAlign: 'center',
+                  color: 'var(--muted-foreground)',
+                  fontSize: '0.85rem',
+                }}
+              >
                 No reports found. Click "Generate Report" to build your first audit document.
               </div>
             ) : (
@@ -480,8 +536,11 @@ export function ReportingPage() {
                 <div className="detail-title-group">
                   <h2>{selectedReport.title}</h2>
                   <div className="detail-meta-text">
-                    Report ID: <code style={{ color: 'var(--primary)' }}>{selectedReport.id.slice(0, 16)}...</code> |
-                    Created: {new Date(selectedReport.created_at).toLocaleString()}
+                    Report ID:{' '}
+                    <code style={{ color: 'var(--primary)' }}>
+                      {selectedReport.id.slice(0, 16)}...
+                    </code>{' '}
+                    | Created: {new Date(selectedReport.created_at).toLocaleString()}
                   </div>
                 </div>
 
@@ -547,8 +606,16 @@ export function ReportingPage() {
                     {/* Executive Summary Card */}
                     <div className="exec-summary-card">
                       <h3>1. Executive Summary</h3>
-                      <p style={{ color: 'var(--secondary-foreground)', fontSize: '0.875rem', lineHeight: '1.5', margin: 0 }}>
-                        {selectedReport.before_after_comparison?.summary || selectedReport.executive_summary}
+                      <p
+                        style={{
+                          color: 'var(--secondary-foreground)',
+                          fontSize: '0.875rem',
+                          lineHeight: '1.5',
+                          margin: 0,
+                        }}
+                      >
+                        {selectedReport.before_after_comparison?.summary ||
+                          selectedReport.executive_summary}
                       </p>
 
                       <div className="severity-pill-row">
@@ -588,31 +655,130 @@ export function ReportingPage() {
                     {/* Reliability Metrics */}
                     <div className="exec-summary-card">
                       <h3>2. Reliability & Execution Telemetry</h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
-                        <div style={{ background: 'var(--card)', padding: '0.85rem', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Total Requests</div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                          gap: '1rem',
+                          marginTop: '0.75rem',
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: 'var(--card)',
+                            padding: '0.85rem',
+                            borderRadius: 'var(--radius)',
+                            border: '1px solid var(--card-border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Total Requests
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.25rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-display)',
+                              marginTop: '0.2rem',
+                            }}
+                          >
                             {selectedReport.metrics_summary?.total_requests || 0}
                           </div>
                         </div>
 
-                        <div style={{ background: 'var(--card)', padding: '0.85rem', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Error Rate</div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                        <div
+                          style={{
+                            background: 'var(--card)',
+                            padding: '0.85rem',
+                            borderRadius: 'var(--radius)',
+                            border: '1px solid var(--card-border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Error Rate
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.25rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-display)',
+                              marginTop: '0.2rem',
+                            }}
+                          >
                             {selectedReport.metrics_summary?.error_rate_pct?.toFixed(2) || '0.00'}%
                           </div>
                         </div>
 
-                        <div style={{ background: 'var(--card)', padding: '0.85rem', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Average Latency</div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                        <div
+                          style={{
+                            background: 'var(--card)',
+                            padding: '0.85rem',
+                            borderRadius: 'var(--radius)',
+                            border: '1px solid var(--card-border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Average Latency
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.25rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-display)',
+                              marginTop: '0.2rem',
+                            }}
+                          >
                             {selectedReport.metrics_summary?.avg_latency_ms?.toFixed(1) || '0.0'} ms
                           </div>
                         </div>
 
-                        <div style={{ background: 'var(--card)', padding: '0.85rem', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>P95 Latency</div>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)', marginTop: '0.2rem' }}>
+                        <div
+                          style={{
+                            background: 'var(--card)',
+                            padding: '0.85rem',
+                            borderRadius: 'var(--radius)',
+                            border: '1px solid var(--card-border)',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            P95 Latency
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.25rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-display)',
+                              marginTop: '0.2rem',
+                            }}
+                          >
                             {selectedReport.metrics_summary?.p95_latency_ms?.toFixed(1) || '0.0'} ms
                           </div>
                         </div>
@@ -632,15 +798,29 @@ export function ReportingPage() {
                           Resolved Findings Since Baseline (
                           {selectedReport.before_after_comparison?.resolved_findings?.length || 0})
                         </div>
-                        {(!selectedReport.before_after_comparison?.resolved_findings ||
-                          selectedReport.before_after_comparison.resolved_findings.length === 0) ? (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
+                        {!selectedReport.before_after_comparison?.resolved_findings ||
+                        selectedReport.before_after_comparison.resolved_findings.length === 0 ? (
+                          <div
+                            style={{
+                              fontSize: '0.8rem',
+                              color: 'var(--muted-foreground)',
+                              fontStyle: 'italic',
+                            }}
+                          >
                             No prior vulnerabilities resolved in this run.
                           </div>
                         ) : (
                           selectedReport.before_after_comparison.resolved_findings.map((f, i) => (
                             <div key={i} className="diff-finding-item resolved">
-                              <span style={{ fontWeight: 600, color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>[{f.severity.toUpperCase()}]</span>
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--primary)',
+                                  fontFamily: 'var(--font-mono)',
+                                }}
+                              >
+                                [{f.severity.toUpperCase()}]
+                              </span>
                               <span>{f.title}</span>
                             </div>
                           ))
@@ -654,15 +834,29 @@ export function ReportingPage() {
                           New / Regressed Findings (
                           {selectedReport.before_after_comparison?.new_findings?.length || 0})
                         </div>
-                        {(!selectedReport.before_after_comparison?.new_findings ||
-                          selectedReport.before_after_comparison.new_findings.length === 0) ? (
-                          <div style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
+                        {!selectedReport.before_after_comparison?.new_findings ||
+                        selectedReport.before_after_comparison.new_findings.length === 0 ? (
+                          <div
+                            style={{
+                              fontSize: '0.8rem',
+                              color: 'var(--muted-foreground)',
+                              fontStyle: 'italic',
+                            }}
+                          >
                             No new vulnerabilities introduced. Clean execution.
                           </div>
                         ) : (
                           selectedReport.before_after_comparison.new_findings.map((f, i) => (
                             <div key={i} className="diff-finding-item new">
-                              <span style={{ fontWeight: 600, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>[{f.severity.toUpperCase()}]</span>
+                              <span
+                                style={{
+                                  fontWeight: 600,
+                                  color: 'var(--danger)',
+                                  fontFamily: 'var(--font-mono)',
+                                }}
+                              >
+                                [{f.severity.toUpperCase()}]
+                              </span>
                               <span>{f.title}</span>
                             </div>
                           ))
@@ -673,41 +867,92 @@ export function ReportingPage() {
                     {/* Posture Delta Card */}
                     <div className="exec-summary-card">
                       <h3>Risk Score Delta & Trajectory</h3>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginTop: '1rem' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2rem',
+                          marginTop: '1rem',
+                        }}
+                      >
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Prior Baseline Score</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Prior Baseline Score
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.5rem',
+                              fontWeight: 700,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-display)',
+                            }}
+                          >
                             {selectedReport.before_after_comparison?.prior_posture_score ?? '0.0'}
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {(selectedReport.before_after_comparison?.posture_score_delta || 0) >= 0 ? (
+                          {(selectedReport.before_after_comparison?.posture_score_delta || 0) >=
+                          0 ? (
                             <ArrowUpRight size={24} className="text-emerald-400" />
                           ) : (
                             <ArrowDownRight size={24} className="text-rose-400" />
                           )}
                           <div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Posture Delta</div>
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--muted-foreground)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              Posture Delta
+                            </div>
                             <div
                               style={{
                                 fontSize: '1.5rem',
                                 fontWeight: 700,
                                 fontFamily: 'var(--font-display)',
-                                color: (selectedReport.before_after_comparison?.posture_score_delta || 0) >= 0
-                                  ? 'var(--primary)'
-                                  : 'var(--danger)',
+                                color:
+                                  (selectedReport.before_after_comparison?.posture_score_delta ||
+                                    0) >= 0
+                                    ? 'var(--primary)'
+                                    : 'var(--danger)',
                               }}
                             >
-                              {(selectedReport.before_after_comparison?.posture_score_delta || 0) > 0 ? '+' : ''}
+                              {(selectedReport.before_after_comparison?.posture_score_delta || 0) >
+                              0
+                                ? '+'
+                                : ''}
                               {selectedReport.before_after_comparison?.posture_score_delta ?? 0}
                             </div>
                           </div>
                         </div>
 
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Current Posture Score</div>
-                          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            Current Posture Score
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '1.5rem',
+                              fontWeight: 700,
+                              color: 'var(--primary)',
+                              fontFamily: 'var(--font-display)',
+                            }}
+                          >
                             {selectedReport.before_after_comparison?.current_posture_score ?? '0.0'}
                           </div>
                         </div>
@@ -720,34 +965,114 @@ export function ReportingPage() {
                 {activeTab === 'findings' && (
                   <div className="exec-summary-card">
                     <h3>Discovered Findings Matrix</h3>
-                    <p style={{ color: 'var(--secondary-foreground)', fontSize: '0.8rem', marginBottom: '1rem' }}>
-                      All findings detected during simulation execution with automated remediation recommendations.
+                    <p
+                      style={{
+                        color: 'var(--secondary-foreground)',
+                        fontSize: '0.8rem',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      All findings detected during simulation execution with automated remediation
+                      recommendations.
                     </p>
                     <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
+                      <table
+                        style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}
+                      >
                         <thead>
-                          <tr style={{ background: 'var(--card)', textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}>
-                            <th style={{ padding: '0.6rem 0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Severity</th>
-                            <th style={{ padding: '0.6rem 0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Title</th>
-                            <th style={{ padding: '0.6rem 0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Category</th>
-                            <th style={{ padding: '0.6rem 0.75rem', color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>Remediation</th>
+                          <tr
+                            style={{
+                              background: 'var(--card)',
+                              textAlign: 'left',
+                              borderBottom: '1px solid var(--card-border)',
+                            }}
+                          >
+                            <th
+                              style={{
+                                padding: '0.6rem 0.75rem',
+                                color: 'var(--muted-foreground)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              Severity
+                            </th>
+                            <th
+                              style={{
+                                padding: '0.6rem 0.75rem',
+                                color: 'var(--muted-foreground)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              Title
+                            </th>
+                            <th
+                              style={{
+                                padding: '0.6rem 0.75rem',
+                                color: 'var(--muted-foreground)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              Category
+                            </th>
+                            <th
+                              style={{
+                                padding: '0.6rem 0.75rem',
+                                color: 'var(--muted-foreground)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              Remediation
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {selectedReport.before_after_comparison?.new_findings?.length ? (
                             selectedReport.before_after_comparison.new_findings.map((f, i) => (
                               <tr key={i} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                                <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600, color: 'var(--danger)', fontFamily: 'var(--font-mono)' }}>
+                                <td
+                                  style={{
+                                    padding: '0.6rem 0.75rem',
+                                    fontWeight: 600,
+                                    color: 'var(--danger)',
+                                    fontFamily: 'var(--font-mono)',
+                                  }}
+                                >
                                   {f.severity.toUpperCase()}
                                 </td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: 'var(--foreground)' }}>{f.title}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: 'var(--secondary-foreground)' }}>{f.category}</td>
-                                <td style={{ padding: '0.6rem 0.75rem', color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>Mitigation Available</td>
+                                <td
+                                  style={{ padding: '0.6rem 0.75rem', color: 'var(--foreground)' }}
+                                >
+                                  {f.title}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: '0.6rem 0.75rem',
+                                    color: 'var(--secondary-foreground)',
+                                  }}
+                                >
+                                  {f.category}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: '0.6rem 0.75rem',
+                                    color: 'var(--primary)',
+                                    fontFamily: 'var(--font-mono)',
+                                  }}
+                                >
+                                  Mitigation Available
+                                </td>
                               </tr>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--muted-foreground)' }}>
+                              <td
+                                colSpan={4}
+                                style={{
+                                  padding: '1.5rem',
+                                  textAlign: 'center',
+                                  color: 'var(--muted-foreground)',
+                                }}
+                              >
                                 No unresolved findings recorded in this report.
                               </td>
                             </tr>
@@ -761,7 +1086,14 @@ export function ReportingPage() {
                 {/* 4. Raw Markdown Tab */}
                 {activeTab === 'markdown' && (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '0.75rem',
+                      }}
+                    >
                       <span style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)' }}>
                         Authoritative Markdown Document (Single Source of Truth)
                       </span>
@@ -770,9 +1102,7 @@ export function ReportingPage() {
                         {copiedMd ? 'Copied!' : 'Copy Markdown'}
                       </button>
                     </div>
-                    <pre className="markdown-view-container">
-                      {selectedReport.markdown_content}
-                    </pre>
+                    <pre className="markdown-view-container">{selectedReport.markdown_content}</pre>
                   </div>
                 )}
               </div>
@@ -825,13 +1155,34 @@ export function ReportingPage() {
 
               {/* Preview Box */}
               {previewData && (
-                <div style={{ background: 'var(--secondary)', padding: '0.85rem', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', fontFamily: 'var(--font-mono)', marginBottom: '0.35rem' }}>
+                <div
+                  style={{
+                    background: 'var(--secondary)',
+                    padding: '0.85rem',
+                    borderRadius: 'var(--radius)',
+                    border: '1px solid var(--card-border)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: 'var(--primary)',
+                      fontFamily: 'var(--font-mono)',
+                      marginBottom: '0.35rem',
+                    }}
+                  >
                     Preview Generated ({previewData.scenario_name})
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--secondary-foreground)' }}>
-                    Total Findings: <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{previewData.metrics_summary?.total_findings || 0}</span> |
-                    Posture Delta: <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{previewData.before_after_comparison?.posture_delta?.toUpperCase()}</span>
+                    Total Findings:{' '}
+                    <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>
+                      {previewData.metrics_summary?.total_findings || 0}
+                    </span>{' '}
+                    | Posture Delta:{' '}
+                    <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                      {previewData.before_after_comparison?.posture_delta?.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               )}

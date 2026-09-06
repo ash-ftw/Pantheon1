@@ -7,24 +7,23 @@ Includes automatic Before/After posture comparison against prior runs on the sam
 
 from __future__ import annotations
 
+import asyncio
 import csv
-import io
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+# Set matplotlib backend to headless Agg before importing pyplot
+import matplotlib
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.config import settings
 from app.logging import get_logger
 from app.models import App, DefenceRecommendation, Finding, Report, TestRun
 
-# Set matplotlib backend to headless Agg before importing pyplot
-import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -35,13 +34,14 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
     HRFlowable,
-    Image as RLImage,
-    KeepTogether,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
+)
+from reportlab.platypus import (
+    Image as RLImage,
 )
 
 logger = get_logger(__name__)
@@ -147,12 +147,8 @@ class ReportingService:
             if f.title not in prior_titles
         ]
 
-        prior_score = sum(
-            SEVERITY_WEIGHTS.get(f.severity.lower(), 1.0) for f in prior_findings
-        )
-        current_score = sum(
-            SEVERITY_WEIGHTS.get(f.severity.lower(), 1.0) for f in current_findings
-        )
+        prior_score = sum(SEVERITY_WEIGHTS.get(f.severity.lower(), 1.0) for f in prior_findings)
+        current_score = sum(SEVERITY_WEIGHTS.get(f.severity.lower(), 1.0) for f in current_findings)
         score_delta = round(prior_score - current_score, 1)
 
         if score_delta > 0:
@@ -167,7 +163,9 @@ class ReportingService:
 
         return {
             "prior_run_id": str(prior_run.id),
-            "prior_run_date": prior_run.created_at.strftime("%Y-%m-%d %H:%M UTC") if prior_run.created_at else None,
+            "prior_run_date": prior_run.created_at.strftime("%Y-%m-%d %H:%M UTC")
+            if prior_run.created_at
+            else None,
             "prior_findings_count": len(prior_findings),
             "current_findings_count": len(current_findings),
             "resolved_findings": resolved,
@@ -200,7 +198,9 @@ class ReportingService:
             bars = ax.barh(y_pos, counts, color=palette, height=0.55, edgecolor="#1e293b")
 
             ax.set_yticks(y_pos)
-            ax.set_yticklabels([lvl.upper() for lvl in levels], color="#94a3b8", fontsize=9, fontweight="bold")
+            ax.set_yticklabels(
+                [lvl.upper() for lvl in levels], color="#94a3b8", fontsize=9, fontweight="bold"
+            )
             ax.invert_yaxis()
             ax.tick_params(axis="x", colors="#94a3b8", labelsize=8)
             ax.spines["top"].set_visible(False)
@@ -210,7 +210,7 @@ class ReportingService:
             ax.xaxis.grid(True, linestyle="--", alpha=0.3, color="#334155")
 
             # Add count labels on ends of bars
-            for bar, count in zip(bars, counts):
+            for bar, count in zip(bars, counts, strict=False):
                 if count > 0:
                     ax.text(
                         bar.get_width() + 0.1,
@@ -223,7 +223,13 @@ class ReportingService:
                         fontweight="bold",
                     )
 
-            plt.title("Findings by Severity Level", color="#f8fafc", fontsize=11, fontweight="bold", pad=12)
+            plt.title(
+                "Findings by Severity Level",
+                color="#f8fafc",
+                fontsize=11,
+                fontweight="bold",
+                pad=12,
+            )
             plt.tight_layout()
 
             chart_path = output_dir / f"{report_id}_severity_chart.png"
@@ -248,7 +254,9 @@ class ReportingService:
     ) -> str:
         """Construct the authoritative Markdown representation of the security report."""
         app_name = app.name if app else "Unknown Application"
-        run_date = test_run.created_at.strftime("%Y-%m-%d %H:%M UTC") if test_run.created_at else "N/A"
+        run_date = (
+            test_run.created_at.strftime("%Y-%m-%d %H:%M UTC") if test_run.created_at else "N/A"
+        )
         duration = ""
         if test_run.started_at and test_run.completed_at:
             delta = test_run.completed_at - test_run.started_at
@@ -267,13 +275,13 @@ class ReportingService:
         # Header & Metadata
         md = f"""# {title}
 
-**Target Application:** {app_name}  
-**Scenario:** {test_run.scenario_name} (`{test_run.scenario_category}`)  
-**Test Run ID:** `{test_run.id}`  
-**Report ID:** `{report_id}`  
-**Execution Timestamp:** {run_date}  
-**Duration:** {duration}  
-**Overall Status:** `{test_run.status.upper()}`  
+**Target Application:** {app_name}
+**Scenario:** {test_run.scenario_name} (`{test_run.scenario_category}`)
+**Test Run ID:** `{test_run.id}`
+**Report ID:** `{report_id}`
+**Execution Timestamp:** {run_date}
+**Duration:** {duration}
+**Overall Status:** `{test_run.status.upper()}`
 
 ---
 
@@ -282,14 +290,14 @@ class ReportingService:
 This report documents the security posture and resilience evaluation conducted by **Pantheon Security Platform** on **{app_name}**. The simulation assessed resistance against targeted attack scenarios and chaos conditions.
 
 ### Severity Breakdown
-- **CRITICAL:** {sev_counts['critical']}
-- **HIGH:** {sev_counts['high']}
-- **MEDIUM:** {sev_counts['medium']}
-- **LOW:** {sev_counts['low']}
-- **INFO:** {sev_counts['info']}
+- **CRITICAL:** {sev_counts["critical"]}
+- **HIGH:** {sev_counts["high"]}
+- **MEDIUM:** {sev_counts["medium"]}
+- **LOW:** {sev_counts["low"]}
+- **INFO:** {sev_counts["info"]}
 - **Total Findings:** {len(findings)}
 
-**Posture Assessment:** {comparison.get('summary', 'Evaluation complete.')}
+**Posture Assessment:** {comparison.get("summary", "Evaluation complete.")}
 
 ---
 
@@ -297,10 +305,10 @@ This report documents the security posture and resilience evaluation conducted b
 
 | Metric | Prior Baseline | Current Run | Delta |
 | :--- | :--- | :--- | :--- |
-| **Run Reference** | `{comparison.get('prior_run_id') or 'N/A'}` | `{test_run.id}` | — |
-| **Execution Date** | {comparison.get('prior_run_date') or 'N/A'} | {run_date} | — |
-| **Total Findings** | {comparison.get('prior_findings_count', 0)} | {len(findings)} | {len(findings) - comparison.get('prior_findings_count', 0):+d} |
-| **Risk Score** | {comparison.get('prior_posture_score', 0.0)} | {comparison.get('current_posture_score', 0.0)} | {comparison.get('posture_score_delta', 0.0):+.1f} ({comparison.get('posture_delta', 'baseline').upper()}) |
+| **Run Reference** | `{comparison.get("prior_run_id") or "N/A"}` | `{test_run.id}` | — |
+| **Execution Date** | {comparison.get("prior_run_date") or "N/A"} | {run_date} | — |
+| **Total Findings** | {comparison.get("prior_findings_count", 0)} | {len(findings)} | {len(findings) - comparison.get("prior_findings_count", 0):+d} |
+| **Risk Score** | {comparison.get("prior_posture_score", 0.0)} | {comparison.get("current_posture_score", 0.0)} | {comparison.get("posture_score_delta", 0.0):+.1f} ({comparison.get("posture_delta", "baseline").upper()}) |
 
 """
         # Resolved & New Findings Subsections
@@ -324,11 +332,11 @@ This report documents the security posture and resilience evaluation conducted b
 
 | Metric | Measured Value |
 | :--- | :--- |
-| **Total HTTP Requests** | {metrics.get('total_requests', 0)} |
-| **Failed Requests** | {metrics.get('failed_requests', 0)} |
-| **Error Rate** | {metrics.get('error_rate_pct', 0.0):.2f}% |
-| **Avg Latency** | {metrics.get('avg_latency_ms', 0.0):.2f} ms |
-| **P95 Latency** | {metrics.get('p95_latency_ms', 0.0):.2f} ms |
+| **Total HTTP Requests** | {metrics.get("total_requests", 0)} |
+| **Failed Requests** | {metrics.get("failed_requests", 0)} |
+| **Error Rate** | {metrics.get("error_rate_pct", 0.0):.2f}% |
+| **Avg Latency** | {metrics.get("avg_latency_ms", 0.0):.2f} ms |
+| **P95 Latency** | {metrics.get("p95_latency_ms", 0.0):.2f} ms |
 | **Total Execution Steps** | {test_run.total_steps} |
 
 ---
@@ -369,7 +377,9 @@ This report documents the security posture and resilience evaluation conducted b
             md += "| :--- | :--- | :--- | :--- | :--- |\n"
             for r in recommendations:
                 mech = "1-Click Auto" if r.mechanically_applicable else "Code Guidance"
-                md += f"| {r.title} | {r.category} | {r.mitigation_type} | {mech} | `{r.status}` |\n"
+                md += (
+                    f"| {r.title} | {r.category} | {r.mitigation_type} | {mech} | `{r.status}` |\n"
+                )
             md += "\n"
 
         md += f"""---
@@ -378,7 +388,7 @@ This report documents the security posture and resilience evaluation conducted b
 
 - **Generated by:** Pantheon Security & Chaos Platform v1.0
 - **Organization ID:** `{test_run.org_id}`
-- **Report Generation Time:** {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")}
+- **Report Generation Time:** {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}
 - **Verification Hash:** `{uuid.uuid5(uuid.NAMESPACE_DNS, str(report_id))}`
 """
         return md
@@ -502,7 +512,9 @@ This report documents the security posture and resilience evaluation conducted b
 
         # 1. Header Banner
         app_name = app.name if app else "Unknown Application"
-        run_date = test_run.created_at.strftime("%Y-%m-%d %H:%M UTC") if test_run.created_at else "N/A"
+        run_date = (
+            test_run.created_at.strftime("%Y-%m-%d %H:%M UTC") if test_run.created_at else "N/A"
+        )
 
         story.append(Paragraph(title, title_style))
         story.append(
@@ -511,7 +523,9 @@ This report documents the security posture and resilience evaluation conducted b
                 subtitle_style,
             )
         )
-        story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0284c7"), spaceAfter=10))
+        story.append(
+            HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0284c7"), spaceAfter=10)
+        )
 
         # 2. Executive Summary Box
         story.append(Paragraph("1. Executive Summary", h2_style))
@@ -547,17 +561,19 @@ This report documents the security posture and resilience evaluation conducted b
         ]
         t_sev = Table(sev_data, colWidths=[80, 80, 80, 80, 80, 80])
         t_sev.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#dc2626")),
-                ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#ea580c")),
-                ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#ca8a04")),
-                ("BACKGROUND", (3, 0), (3, 0), colors.HexColor("#2563eb")),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+                    ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#dc2626")),
+                    ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#ea580c")),
+                    ("BACKGROUND", (2, 0), (2, 0), colors.HexColor("#ca8a04")),
+                    ("BACKGROUND", (3, 0), (3, 0), colors.HexColor("#2563eb")),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]
+            )
         )
         story.append(t_sev)
         story.append(Spacer(1, 8))
@@ -597,7 +613,10 @@ This report documents the security posture and resilience evaluation conducted b
                 Paragraph("Total Findings", table_cell_style),
                 Paragraph(str(comparison.get("prior_findings_count", 0)), table_cell_style),
                 Paragraph(str(len(findings)), table_cell_style),
-                Paragraph(f"{len(findings) - comparison.get('prior_findings_count', 0):+d}", table_cell_style),
+                Paragraph(
+                    f"{len(findings) - comparison.get('prior_findings_count', 0):+d}",
+                    table_cell_style,
+                ),
             ],
             [
                 Paragraph("Risk Score", table_cell_style),
@@ -608,13 +627,20 @@ This report documents the security posture and resilience evaluation conducted b
         ]
         t_comp = Table(comp_data, colWidths=[130, 120, 120, 130])
         t_comp.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#f8fafc"), colors.white]),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.HexColor("#f8fafc"), colors.white],
+                    ),
+                ]
+            )
         )
         story.append(t_comp)
         story.append(Spacer(1, 10))
@@ -649,12 +675,14 @@ This report documents the security posture and resilience evaluation conducted b
         ]
         t_perf = Table(perf_data, colWidths=[120, 130, 120, 130])
         t_perf.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ]
+            )
         )
         story.append(t_perf)
         story.append(Spacer(1, 10))
@@ -662,7 +690,9 @@ This report documents the security posture and resilience evaluation conducted b
         # 5. Security Findings Table
         story.append(Paragraph("4. Security Findings Matrix", h2_style))
         if not findings:
-            story.append(Paragraph("<i>No security findings identified during simulation.</i>", body_style))
+            story.append(
+                Paragraph("<i>No security findings identified during simulation.</i>", body_style)
+            )
         else:
             findings_data = [
                 [
@@ -676,22 +706,34 @@ This report documents the security posture and resilience evaluation conducted b
             for idx, f in enumerate(findings, start=1):
                 cwe_str = f"{f.cwe_id or ''} {f.owasp_category or ''}".strip() or "—"
                 sev_color = SEVERITY_COLORS.get(f.severity.lower(), "#4b5563")
-                findings_data.append([
-                    Paragraph(str(idx), table_cell_style),
-                    Paragraph(f"<font color='{sev_color}'><b>{f.severity.upper()}</b></font>", table_cell_style),
-                    Paragraph(f.category, table_cell_style),
-                    Paragraph(f.title, table_cell_style),
-                    Paragraph(cwe_str, table_cell_style),
-                ])
+                findings_data.append(
+                    [
+                        Paragraph(str(idx), table_cell_style),
+                        Paragraph(
+                            f"<font color='{sev_color}'><b>{f.severity.upper()}</b></font>",
+                            table_cell_style,
+                        ),
+                        Paragraph(f.category, table_cell_style),
+                        Paragraph(f.title, table_cell_style),
+                        Paragraph(cwe_str, table_cell_style),
+                    ]
+                )
             t_findings = Table(findings_data, colWidths=[24, 70, 96, 210, 100])
             t_findings.setStyle(
-                TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                    ("TOPPADDING", (0, 0), (-1, -1), 4),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#f8fafc"), colors.white]),
-                ])
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0f172a")),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                        ("TOPPADDING", (0, 0), (-1, -1), 4),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                        (
+                            "ROWBACKGROUNDS",
+                            (0, 1),
+                            (-1, -1),
+                            [colors.HexColor("#f8fafc"), colors.white],
+                        ),
+                    ]
+                )
             )
             story.append(t_findings)
 
@@ -711,29 +753,40 @@ This report documents the security posture and resilience evaluation conducted b
                 ]
             ]
             for r in recommendations:
-                recs_data.append([
-                    Paragraph(r.title, table_cell_style),
-                    Paragraph(r.category, table_cell_style),
-                    Paragraph(r.mitigation_type, table_cell_style),
-                    Paragraph(r.status.upper(), table_cell_style),
-                ])
+                recs_data.append(
+                    [
+                        Paragraph(r.title, table_cell_style),
+                        Paragraph(r.category, table_cell_style),
+                        Paragraph(r.mitigation_type, table_cell_style),
+                        Paragraph(r.status.upper(), table_cell_style),
+                    ]
+                )
             t_recs = Table(recs_data, colWidths=[200, 110, 100, 90])
             t_recs.setStyle(
-                TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                    ("TOPPADDING", (0, 0), (-1, -1), 3),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#f8fafc"), colors.white]),
-                ])
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                        (
+                            "ROWBACKGROUNDS",
+                            (0, 1),
+                            (-1, -1),
+                            [colors.HexColor("#f8fafc"), colors.white],
+                        ),
+                    ]
+                )
             )
             story.append(t_recs)
 
         story.append(Spacer(1, 12))
-        story.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#94a3b8"), spaceAfter=6))
+        story.append(
+            HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#94a3b8"), spaceAfter=6)
+        )
         story.append(
             Paragraph(
-                f"<font color='#64748b'>Pantheon Security Platform v1.0 • Generated on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} • Org: {test_run.org_id}</font>",
+                f"<font color='#64748b'>Pantheon Security Platform v1.0 • Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')} • Org: {test_run.org_id}</font>",
                 body_style,
             )
         )
@@ -817,8 +870,7 @@ This report documents the security posture and resilience evaluation conducted b
 
         # Save Markdown file
         md_file_path = org_dir / f"{report_id}.md"
-        with open(md_file_path, "w", encoding="utf-8") as f:
-            f.write(markdown_content)
+        await asyncio.to_thread(md_file_path.write_text, markdown_content, encoding="utf-8")
 
         # 7. CSV Export
         csv_file_path = org_dir / f"{report_id}.csv"
@@ -970,19 +1022,27 @@ This report documents the security posture and resilience evaluation conducted b
             raise ValueError(f"Report {report_id} not found")
 
         format_clean = format_type.lower().strip()
-        safe_title = "".join(c for c in report.title if c.isalnum() or c in ("-", "_")).rstrip() or "report"
+        safe_title = (
+            "".join(c for c in report.title if c.isalnum() or c in ("-", "_")).rstrip() or "report"
+        )
+
+        def _read_export_bytes(file_path: str | None, missing_msg: str) -> bytes:
+            if not file_path or not os.path.exists(file_path):
+                raise ValueError(missing_msg)
+            with open(file_path, "rb") as f:
+                return f.read()
 
         if format_clean == "pdf":
-            if report.pdf_path and os.path.exists(report.pdf_path):
-                with open(report.pdf_path, "rb") as f:
-                    return f.read(), "application/pdf", f"{safe_title}.pdf"
-            raise ValueError("PDF file not found for this report")
+            file_bytes = await asyncio.to_thread(
+                _read_export_bytes, report.pdf_path, "PDF file not found for this report"
+            )
+            return file_bytes, "application/pdf", f"{safe_title}.pdf"
 
         elif format_clean == "csv":
-            if report.csv_path and os.path.exists(report.csv_path):
-                with open(report.csv_path, "rb") as f:
-                    return f.read(), "text/csv", f"{safe_title}.csv"
-            raise ValueError("CSV file not found for this report")
+            file_bytes = await asyncio.to_thread(
+                _read_export_bytes, report.csv_path, "CSV file not found for this report"
+            )
+            return file_bytes, "text/csv", f"{safe_title}.csv"
 
         elif format_clean in ["md", "markdown"]:
             return report.markdown_content.encode("utf-8"), "text/markdown", f"{safe_title}.md"

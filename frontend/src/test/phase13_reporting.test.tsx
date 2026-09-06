@@ -10,7 +10,8 @@ const mockReports = [
     test_run_id: 'run-101',
     app_id: 'app-1',
     title: 'Financial Core Security Evaluation Report',
-    executive_summary: 'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
+    executive_summary:
+      'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
     created_at: '2026-09-06T12:00:00Z',
     has_pdf: true,
     has_csv: true,
@@ -23,7 +24,8 @@ const mockReportDetail = {
   test_run_id: 'run-101',
   app_id: 'app-1',
   title: 'Financial Core Security Evaluation Report',
-  executive_summary: 'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
+  executive_summary:
+    'Posture improved by 9.0 points. 1 critical vulnerability resolved from previous baseline.',
   markdown_content: '# Financial Core Security Evaluation Report\n\nAll checks passed.',
   pdf_path: '/data/reports/report-101.pdf',
   csv_path: '/data/reports/report-101.csv',
@@ -33,10 +35,19 @@ const mockReportDetail = {
     prior_findings_count: 2,
     current_findings_count: 1,
     resolved_findings: [
-      { title: 'Blind SQL Injection in /api/items', severity: 'critical', category: 'Injection', cwe_id: 'CWE-89' },
+      {
+        title: 'Blind SQL Injection in /api/items',
+        severity: 'critical',
+        category: 'Injection',
+        cwe_id: 'CWE-89',
+      },
     ],
     new_findings: [
-      { title: 'Missing Security Header X-Frame-Options', severity: 'low', category: 'Misconfiguration' },
+      {
+        title: 'Missing Security Header X-Frame-Options',
+        severity: 'low',
+        category: 'Misconfiguration',
+      },
     ],
     posture_delta: 'improved',
     posture_score_delta: 9.0,
@@ -124,7 +135,7 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
     render(
       <MemoryRouter>
         <ReportingPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText('Security & Resilience Reports')).toBeInTheDocument();
@@ -138,11 +149,13 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
     render(
       <MemoryRouter>
         <ReportingPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByText('Financial Core Security Evaluation Report').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText('Financial Core Security Evaluation Report').length,
+      ).toBeGreaterThan(0);
     });
 
     // Wait for detail view to load
@@ -150,7 +163,9 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
       expect(screen.getByText('1. Executive Summary')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Security posture improved significantly against baseline.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Security posture improved significantly against baseline.'),
+    ).toBeInTheDocument();
 
     // Export download action buttons
     expect(screen.getByTitle('Download Vector PDF Export')).toBeInTheDocument();
@@ -162,7 +177,7 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
     render(
       <MemoryRouter>
         <ReportingPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     await waitFor(() => {
@@ -182,7 +197,9 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
 
     // Switch to Raw Markdown
     fireEvent.click(screen.getByText('Raw Markdown'));
-    expect(screen.getByText('Authoritative Markdown Document (Single Source of Truth)')).toBeInTheDocument();
+    expect(
+      screen.getByText('Authoritative Markdown Document (Single Source of Truth)'),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Copy Markdown/i)).toBeInTheDocument();
   });
 
@@ -190,7 +207,7 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
     render(
       <MemoryRouter>
         <ReportingPage />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const generateBtn = screen.getByRole('button', { name: /Generate Report/i });
@@ -221,7 +238,7 @@ describe('Phase 13 — Reporting Engine UI (PRD Module 12)', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/reports/generate',
-        expect.objectContaining({ method: 'POST' })
+        expect.objectContaining({ method: 'POST' }),
       );
     });
   });

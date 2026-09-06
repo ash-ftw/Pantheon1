@@ -390,4 +390,3 @@ class ReportSummaryRead(BaseModel):
     created_at: datetime
     has_pdf: bool = False
     has_csv: bool = False
-

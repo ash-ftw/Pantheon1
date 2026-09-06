@@ -60,7 +60,7 @@ async def generate_scenario(
         "api_abuse, cache_pressure, traffic_flood, service_failure, db_failure, network_partition, resource_exhaustion."
     )
     prompt = (
-        f"Generate a security simulation scenario for the user prompt:\n\"{request.prompt}\"\n"
+        f'Generate a security simulation scenario for the user prompt:\n"{request.prompt}"\n'
         f"Target Category: {request.category.value if request.category else 'auto-detect'}\n"
         f"Target Path: {request.target_path or 'auto-resolve from endpoints'}"
     )
@@ -90,7 +90,6 @@ async def generate_scenario(
             default=validated.duration,
         )
         validated.duration = max(5, min(extracted_duration, 600))
-
 
         logger.info(
             "ai_scenario_generated_via_nvidia_nim",

@@ -81,7 +81,6 @@ class Settings(BaseSettings):
     nvidia_nim_enable_thinking: bool = True
     nvidia_nim_reasoning_budget: int = 2048
 
-
     @property
     def is_development(self) -> bool:
         return self.app_env == Environment.DEVELOPMENT

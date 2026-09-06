@@ -50,3 +50,7 @@ pantheon_miniodata/
 # Logs
 *.log
 logs/
+
+# Generated local data & exports
+backend/data/
+data/
