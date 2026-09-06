@@ -340,9 +340,9 @@
 }
 
 .badge-probing {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(0, 212, 170, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(0, 212, 170, 0.3);
 }
 
 .badge-safe {
@@ -519,8 +519,8 @@
 }
 
 .status-dot-probing {
-  background: #38bdf8;
-  box-shadow: 0 0 6px #38bdf8;
+  background: var(--primary);
+  box-shadow: 0 0 6px var(--primary);
   animation: blink-fast 1s infinite alternate;
 }
 
@@ -604,8 +604,8 @@
 }
 
 .hud-pulse-light.idle {
-  background: #38bdf8;
-  box-shadow: 0 0 6px #38bdf8;
+  background: var(--secondary-foreground);
+  box-shadow: 0 0 6px var(--secondary-foreground);
 }
 
 .hud-title {

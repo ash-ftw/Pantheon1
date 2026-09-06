@@ -22,16 +22,19 @@ from app.scenarios.schema import (
     ScenarioDefinition,
     ScenarioSource,
 )
+from app.services.ai_service import ai_service
 
 logger = get_logger(__name__)
 
 
-async def generate_scenario(request: AIGenerateScenarioRequest, org_id: UUID) -> ScenarioDefinition:
+async def generate_scenario(
+    request: AIGenerateScenarioRequest, org_id: UUID | None = None
+) -> ScenarioDefinition:
     """Generate and strictly validate a scenario from user prompt and target context."""
     app_context: dict[str, Any] = {}
 
     # 1. Fetch app context if app_id provided
-    if request.app_id:
+    if request.app_id and org_id:
         try:
             async with async_session_factory() as db:
                 res = await db.execute(
@@ -49,19 +52,70 @@ async def generate_scenario(request: AIGenerateScenarioRequest, org_id: UUID) ->
         except Exception as e:
             logger.warning("ai_scenario_app_context_lookup_failed", error=str(e))
 
-    # 2. Generate scenario definition
+    # 2. First attempt generation via NVIDIA NIM (Nemotron 3.5 Lightning)
+    system_prompt = (
+        "You are Pantheon's AI Scenario Architect. Formulate realistic, safe attack simulation scenarios "
+        "matching the requested goal and target profile. Adhere strictly to the ScenarioDefinition schema. "
+        "Permitted payload categories include: brute_force, sql_injection, xss, auth_abuse, bola, "
+        "api_abuse, cache_pressure, traffic_flood, service_failure, db_failure, network_partition, resource_exhaustion."
+    )
+    prompt = (
+        f"Generate a security simulation scenario for the user prompt:\n\"{request.prompt}\"\n"
+        f"Target Category: {request.category.value if request.category else 'auto-detect'}\n"
+        f"Target Path: {request.target_path or 'auto-resolve from endpoints'}"
+    )
+
+    try:
+        validated, reasoning = await ai_service.generate_structured(
+            prompt=prompt,
+            schema_class=ScenarioDefinition,
+            system_prompt=system_prompt,
+            context=app_context,
+            enable_thinking=True,
+        )
+        validated.source = ScenarioSource.AI
+
+        # Ensure explicit user prompt constraints are preserved
+        prompt_lower = request.prompt.lower()
+        extracted_concurrency = _extract_int_param(
+            prompt_lower,
+            r"(\d+)\s*(?:concurrent|workers|threads|users)",
+            default=validated.concurrency,
+        )
+        validated.concurrency = max(1, min(extracted_concurrency, 500))
+
+        extracted_duration = _extract_int_param(
+            prompt_lower,
+            r"(\d+)\s*(?:seconds|sec|s\b)",
+            default=validated.duration,
+        )
+        validated.duration = max(5, min(extracted_duration, 600))
+
+
+        logger.info(
+            "ai_scenario_generated_via_nvidia_nim",
+            scenario_name=validated.name,
+            reasoning_length=len(reasoning),
+        )
+        return validated
+
+    except Exception as e:
+        logger.warning(
+            "ai_scenario_nim_generation_failed_falling_back",
+            error=str(e),
+            prompt=request.prompt,
+        )
+
+    # 3. Fallback: Deterministic rule-based offline generator
     raw_dict = _generate_scenario_definition_dict(request, app_context)
 
-    # 3. RE-VALIDATION GATE: strictly validate against shared Pydantic schema
-    # PRD Module 8 requirement: raw LLM output is never trusted directly.
+    # 4. RE-VALIDATION GATE: strictly validate against shared Pydantic schema
     try:
         validated = ScenarioDefinition.model_validate(raw_dict)
-        # Ensure source is labeled AI
         validated.source = ScenarioSource.AI
         return validated
     except Exception as e:
         logger.error("ai_scenario_validation_failed", error=str(e), raw_dict=raw_dict)
-        # Fallback to normalized safe model
         fallback = _build_safe_fallback(request, app_context)
         return ScenarioDefinition.model_validate(fallback)
 

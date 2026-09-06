@@ -299,13 +299,13 @@
 .route-internal-url-text {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #38bdf8;
+  color: var(--primary);
   word-break: break-all;
   user-select: all;
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(0, 212, 170, 0.08);
   padding: 6px 8px;
   border-radius: var(--radius);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(0, 212, 170, 0.25);
 }
 
 .route-card-meta {

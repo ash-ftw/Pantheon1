@@ -454,19 +454,19 @@
 }
 
 .level-info {
-  color: #38bdf8;
+  color: var(--secondary-foreground);
 }
 .level-step {
-  color: #00d4aa;
+  color: var(--primary);
 }
 .level-alert {
-  color: #ef4444;
+  color: var(--danger);
 }
 .level-success {
-  color: #34d399;
+  color: var(--primary);
 }
 .level-warning {
-  color: #fbbf24;
+  color: var(--accent);
 }
 
 .log-msg {

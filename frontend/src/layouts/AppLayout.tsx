@@ -22,7 +22,7 @@ import {
   Users,
   Wrench,
 } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { Link, NavLink, Outlet } from 'react-router';
 
 import './AppLayout.css';
 
@@ -72,10 +72,12 @@ export function AppLayout() {
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">P</div>
+        <Link to="/" className="sidebar-logo">
+          <div className="sidebar-logo-icon">
+            <img src="/logo.svg" alt="Pantheon Logo" className="sidebar-logo-img" />
+          </div>
           <span className="sidebar-logo-text font-display">Pantheon</span>
-        </div>
+        </Link>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => (

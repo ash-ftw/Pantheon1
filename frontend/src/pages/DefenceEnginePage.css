@@ -357,11 +357,11 @@
 .resource-code {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: #38bdf8;
-  background: rgba(15, 25, 35, 0.8);
+  color: var(--primary);
+  background: var(--secondary);
   padding: 3px 6px;
   border-radius: 3px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(0, 212, 170, 0.25);
 }
 
 .type-tag {
@@ -604,7 +604,7 @@
 .drawer-target-code {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: #38bdf8;
+  color: var(--primary);
 }
 
 .drawer-close {

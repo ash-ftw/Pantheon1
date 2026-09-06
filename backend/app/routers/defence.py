@@ -100,3 +100,62 @@ async def revert_mitigation(
             detail=result.message,
         )
     return result
+
+
+@router.post("/recommendations/{recommendation_id}/explain")
+async def explain_recommendation(
+    recommendation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> dict[str, Any]:
+    """AI Assistant (Phase 12 / FR-9.2) - Contextual Defence Recommendation Explanation.
+
+    Uses NVIDIA NIM Nemotron to generate deep cybersecurity rationale, root cause analysis,
+    and tailored mitigation instructions for this specific finding.
+    """
+    rec = await defence_engine_service.get_recommendation(db, recommendation_id)
+    if not rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Defence recommendation {recommendation_id} not found",
+        )
+
+    from app.models import Finding
+    f_res = await db.execute(select(Finding).where(Finding.id == rec.finding_id))
+    finding = f_res.scalar_one_or_none()
+
+    prompt = (
+        f"Explain the technical risk and concrete remediation for this security finding:\n\n"
+        f"Title: {rec.title}\n"
+        f"Category: {rec.category}\n"
+        f"Mitigation Type: {rec.mitigation_type}\n"
+        f"Finding Severity: {finding.severity if finding else 'Unknown'}\n"
+        f"Finding Details: {finding.details if finding else 'N/A'}\n"
+        f"Current Code Guidance:\n{rec.code_guidance}\n\n"
+        f"Provide a clear, professional breakdown: 1. Attack Mechanics, 2. Architectural Impact, 3. Immediate Actionable Fix."
+    )
+
+    from app.services.ai_service import ai_service
+    try:
+        content, reasoning = await ai_service.generate_chat(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            enable_thinking=True,
+        )
+        return {
+            "recommendation_id": str(recommendation_id),
+            "title": rec.title,
+            "explanation": content,
+            "reasoning": reasoning,
+            "model": ai_service.model,
+        }
+    except Exception as e:
+        # Fallback to catalog guidance
+        return {
+            "recommendation_id": str(recommendation_id),
+            "title": rec.title,
+            "explanation": rec.code_guidance,
+            "reasoning": None,
+            "model": "rule-based-fallback",
+            "warning": str(e),
+        }
+

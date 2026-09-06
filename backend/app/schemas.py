@@ -342,3 +342,52 @@ class GrafanaConfigRead(BaseModel):
     prometheus_url: str
     loki_url: str
     status: str
+
+
+# --- Phase 13: Reporting Schemas ---
+class ReportCreateRequest(BaseModel):
+    test_run_id: uuid.UUID
+    title: str | None = None
+
+
+class BeforeAfterComparisonRead(BaseModel):
+    prior_run_id: str | None = None
+    prior_run_date: str | None = None
+    prior_findings_count: int = 0
+    current_findings_count: int = 0
+    resolved_findings: list[dict[str, Any]] = Field(default_factory=list)
+    new_findings: list[dict[str, Any]] = Field(default_factory=list)
+    posture_delta: str = "initial_run"  # improved | degraded | unchanged | initial_run
+    posture_score_delta: float = 0.0
+
+
+class ReportRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    test_run_id: uuid.UUID | None = None
+    app_id: uuid.UUID | None = None
+    title: str
+    executive_summary: str
+    markdown_content: str
+    pdf_path: str | None = None
+    csv_path: str | None = None
+    before_after_comparison: dict[str, Any] = Field(default_factory=dict)
+    metrics_summary: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
+
+class ReportSummaryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    test_run_id: uuid.UUID | None = None
+    app_id: uuid.UUID | None = None
+    title: str
+    executive_summary: str
+    created_at: datetime
+    has_pdf: bool = False
+    has_csv: bool = False
+

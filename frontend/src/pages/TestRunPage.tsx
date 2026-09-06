@@ -569,7 +569,7 @@ export function TestRunPage() {
 
         <div className="test-run-stat-card">
           <div className="test-run-stat-label">Completed Runs</div>
-          <div className="test-run-stat-value" style={{ color: '#38bdf8' }}>
+          <div className="test-run-stat-value" style={{ color: 'var(--foreground)' }}>
             {completedRunsCount}
           </div>
         </div>

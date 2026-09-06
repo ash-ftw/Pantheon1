@@ -4,7 +4,7 @@
  * implementation in the relevant phase.
  */
 
-import { BarChart3, Box, type LucideProps, Network } from 'lucide-react';
+import { BarChart3, Box, type LucideProps } from 'lucide-react';
 
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 
@@ -82,12 +82,7 @@ export { ObservabilityPage } from './ObservabilityPage';
 export { DefenceEnginePage } from './DefenceEnginePage';
 
 // PRD Module 15 — Reporting (Phase 13)
-export const ReportingPage = makePlaceholder(
-  'Reporting',
-  'Phase 13',
-  'Generate PDF/Markdown reports per run or across app history.',
-  Network,
-);
+export { ReportingPage } from './ReportingPage';
 
 // PRD Module 16 — Org & Team Management (Phase 2)
 export { TeamManagementPage } from './TeamManagementPage';

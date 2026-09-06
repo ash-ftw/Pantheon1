@@ -461,7 +461,7 @@ export function RouteBrokerPage() {
 
         <div className="route-stat-card">
           <div className="route-stat-label">Emergency SLA</div>
-          <div className="route-stat-value" style={{ color: '#38bdf8' }}>
+          <div className="route-stat-value" style={{ color: 'var(--primary)' }}>
             &lt; 5.0s
           </div>
         </div>
@@ -610,7 +610,7 @@ export function RouteBrokerPage() {
                     <div className="route-tech-details-content">
                       <div className="route-internal-url-box">
                         <div className="route-internal-header">
-                          <span className="route-stat-label" style={{ color: '#38bdf8' }}>
+                          <span className="route-stat-label" style={{ color: 'var(--primary)' }}>
                             Internal Attacker URL (K8s Isolated)
                           </span>
                           <button

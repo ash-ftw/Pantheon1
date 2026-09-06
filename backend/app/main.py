@@ -30,6 +30,8 @@ from app.routers import (
     safety,
     scenarios,
     test_runs,
+    ai,
+    reports,
 )
 
 logger = get_logger(__name__)
@@ -97,6 +99,8 @@ app.include_router(test_runs.router)
 app.include_router(attack_graph.router)
 app.include_router(defence.router)
 app.include_router(observability.router)
+app.include_router(ai.router)
+app.include_router(reports.router)
 
 
 @app.get("/health", tags=["system"])

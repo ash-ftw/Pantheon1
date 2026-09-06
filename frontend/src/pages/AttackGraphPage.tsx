@@ -121,7 +121,7 @@ function AttackNodeComponent({ data }: NodeProps<AttackNodeType>) {
       case 'attacker':
         return <Flame size={15} color="#00d4aa" />;
       case 'route':
-        return <Network size={15} color="#38bdf8" />;
+        return <Network size={15} color="#00d4aa" />;
       case 'database':
         return <Database size={15} color="#ef4444" />;
       case 'service':
@@ -202,7 +202,7 @@ function AttackEdgeComponent(props: EdgeProps<AttackEdgeType>) {
     strokeColor = '#f59e0b';
     strokeDasharray = '6 4';
   } else if (status === 'probing') {
-    strokeColor = '#38bdf8';
+    strokeColor = '#00d4aa';
     strokeDasharray = '4 4';
   }
 
@@ -642,7 +642,7 @@ export function AttackGraphPage() {
 
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Execution Depth</div>
-          <div className="attack-graph-stat-val" style={{ color: '#38bdf8' }}>
+          <div className="attack-graph-stat-val" style={{ color: 'var(--primary)' }}>
             Step {currentStep} / {maxStep}
           </div>
         </div>

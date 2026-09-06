@@ -558,3 +558,53 @@ class DefenceRecommendation(Base):
     finding: Mapped["Finding"] = relationship("Finding", back_populates="recommendations")
     test_run: Mapped["TestRun"] = relationship("TestRun", back_populates="recommendations")
     app: Mapped["App"] = relationship("App")
+
+
+class Report(Base):
+    """Report — PRD Module 12 (Phase 13).
+
+    Auditable, exportable security test reports. Authoritative Markdown document
+    compiled from test run results and baseline comparisons, with derived PDF and CSV exports.
+    """
+
+    __tablename__ = "reports"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    test_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("test_runs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    app_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("apps.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    executive_summary: Mapped[str] = mapped_column(String, nullable=False)
+    markdown_content: Mapped[str] = mapped_column(String, nullable=False)
+    pdf_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    csv_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    before_after_comparison: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
+    metrics_summary: Mapped[dict[str, Any]] = mapped_column(
+        JSON, default=dict, nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+
+    # Relationships
+    org: Mapped["Org"] = relationship("Org")
+    test_run: Mapped["TestRun | None"] = relationship("TestRun")
+    app: Mapped["App | None"] = relationship("App")
+

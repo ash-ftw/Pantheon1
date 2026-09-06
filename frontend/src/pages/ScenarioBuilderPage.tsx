@@ -59,6 +59,9 @@ export function ScenarioBuilderPage() {
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [reasoning, setReasoning] = useState<string>('');
+  const [isThinking, setIsThinking] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(true);
 
   // Load deployed apps for contextual generation
   useEffect(() => {
@@ -87,17 +90,78 @@ export function ScenarioBuilderPage() {
   const selectedApp = apps.find((a) => a.id === selectedAppId);
   const discoveredEndpoints = selectedApp?.discovered_endpoints?.endpoints || [];
 
-  // Generate scenario via backend AI service
+  // Generate scenario via backend AI service with streaming reasoning
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setGenerating(true);
     setError(null);
     setSaveSuccess(false);
+    setReasoning('');
+    setIsThinking(true);
+    setShowReasoning(true);
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
 
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers.Authorization = `Bearer ${token}`;
+      // 1. Try streaming SSE endpoint from NVIDIA NIM
+      const response = await fetch('/api/ai/scenario/stream', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          prompt,
+          app_id: selectedAppId || null,
+          target_path: selectedEndpoint || null,
+        }),
+      });
 
+      if (response.ok && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullReasoning = '';
+        let fullContent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const chunk = JSON.parse(line.slice(6));
+                if (chunk.type === 'reasoning' && chunk.delta) {
+                  fullReasoning += chunk.delta;
+                  setReasoning(fullReasoning);
+                } else if (chunk.type === 'content' && chunk.delta) {
+                  fullContent += chunk.delta;
+                } else if (chunk.type === 'done') {
+                  if (chunk.reasoning) setReasoning(chunk.reasoning);
+                  if (chunk.content) fullContent = chunk.content;
+                }
+              } catch {
+                // ignore SSE parse errors
+              }
+            }
+          }
+        }
+
+        setIsThinking(false);
+
+        if (fullContent.trim()) {
+          const jsonMatch =
+            fullContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || fullContent.match(/\{[\s\S]*\}/);
+          const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : fullContent;
+          const parsed = JSON.parse(jsonStr);
+          setGeneratedScenario(parsed);
+          return;
+        }
+      }
+
+      // 2. Fallback to standard scenario generation endpoint
       const res = await fetch('/api/scenarios/generate', {
         method: 'POST',
         headers,
@@ -119,8 +183,10 @@ export function ScenarioBuilderPage() {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
       setGenerating(false);
+      setIsThinking(false);
     }
   };
+
 
   // Save generated scenario to org library
   const handleSave = async () => {
@@ -161,7 +227,26 @@ export function ScenarioBuilderPage() {
   return (
     <div className="page-container animate-fade-in">
       <div className="page-header">
-        <div className="page-title">AI Scenario Builder</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <div className="page-title">AI Scenario Builder</div>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--primary)',
+              backgroundColor: 'rgba(0, 212, 170, 0.08)',
+              padding: '4px 10px',
+              borderRadius: 4,
+              border: '1px solid rgba(0, 212, 170, 0.3)',
+            }}
+          >
+            <Sparkles size={13} />
+            <span>NVIDIA NIM • nemotron-3.5-lightning-30b-a3b</span>
+          </div>
+        </div>
         <div className="page-subtitle">
           Describe the security simulation or chaos resilience test you want to execute in plain
           English. Pantheon parses your prompt, links Phase 5 discovered endpoints, and strictly
@@ -311,6 +396,91 @@ export function ScenarioBuilderPage() {
           <div>Scenario saved successfully to your organization's Simulation Library!</div>
         </div>
       )}
+
+      {/* Live Thinking / Reasoning Trace Widget */}
+      {(isThinking || reasoning) && (
+        <div
+          className="card animate-fade-in"
+          style={{
+            marginBottom: 20,
+            border: '1px solid rgba(0, 212, 170, 0.25)',
+            backgroundColor: '#0a0e14',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: showReasoning ? '1px solid var(--card-border)' : 'none',
+              cursor: 'pointer',
+            }}
+            onClick={() => setShowReasoning(!showReasoning)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isThinking ? (
+                <Loader2 size={14} className="animate-spin text-primary" />
+              ) : (
+                <CheckCircle2 size={14} style={{ color: 'var(--primary)' }} />
+              )}
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 13,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  color: 'var(--foreground)',
+                }}
+              >
+                {isThinking ? 'Nemotron 3.5 Reasoning in Progress...' : 'Nemotron 3.5 Thinking Trace'}
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--muted-foreground)',
+                  backgroundColor: 'rgba(255,255,255,0.06)',
+                  padding: '1px 6px',
+                  borderRadius: 3,
+                }}
+              >
+                {reasoning.length} chars
+              </span>
+            </div>
+            <button
+              className="btn-secondary"
+              style={{ fontSize: 11, padding: '2px 8px', height: 'auto' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowReasoning(!showReasoning);
+              }}
+            >
+              {showReasoning ? 'Collapse' : 'Expand'}
+            </button>
+          </div>
+
+          {showReasoning && (
+            <div
+              style={{
+                padding: '12px 16px',
+                maxHeight: 240,
+                overflowY: 'auto',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 12,
+                lineHeight: 1.6,
+                color: '#94a3b8',
+                whiteSpace: 'pre-wrap',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+              }}
+            >
+              {reasoning || 'Analyzing prompt requirements and target architecture...'}
+              {isThinking && <span className="animate-pulse" style={{ color: 'var(--primary)' }}> ▋</span>}
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* Generated Result Preview */}
       {generatedScenario && (
