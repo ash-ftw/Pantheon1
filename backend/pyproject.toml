@@ -27,6 +27,8 @@ dependencies = [
     "docker>=7.0.0",
     "prometheus-client>=0.20.0",
     "openai>=1.50.0",
+    "matplotlib>=3.8.0",
+    "reportlab>=4.0.0",
 ]
 
 
