@@ -8,16 +8,13 @@ export function Chapter02Platform() {
         <div>
           <div className="chapter-eyebrow">02 // PLATFORM IDENTITY</div>
 
-          <h2 className="platform-headline">
-            BUILT TO BE ATTACKED.
-          </h2>
+          <h2 className="platform-headline">BUILT TO BE ATTACKED.</h2>
 
           <p className="platform-subtext">
-            Pantheon is not a scanner that runs checks against offline definitions.
-            It is a living adversarial engine that spins up disposable, hardened
-            attacker pods inside dedicated micro-sandboxes. We probe, exploit, and
-            map your staging architecture in real time—with automated circuit breakers
-            to protect downstream clusters.
+            Pantheon is not a scanner that runs checks against offline definitions. It is a living
+            adversarial engine that spins up disposable, hardened attacker pods inside dedicated
+            micro-sandboxes. We probe, exploit, and map your staging architecture in real time—with
+            automated circuit breakers to protect downstream clusters.
           </p>
 
           {/* 4-Cell Mono Metadata Grid (Reskinned from Mina) */}
@@ -50,15 +47,35 @@ export function Chapter02Platform() {
 
         {/* Right Column: Platform Telemetry Card */}
         <div className="platform-visual-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <span className="font-mono text-xs" style={{ color: '#00d4aa', letterSpacing: '0.15em' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}
+          >
+            <span
+              className="font-mono text-xs"
+              style={{ color: '#00d4aa', letterSpacing: '0.15em' }}
+            >
               RUNTIME ENVIRONMENT STATUS
             </span>
             <span className="badge badge-success font-mono">ENFORCED</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#07090d', border: '1px solid #1a2332', borderRadius: 2 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                background: '#07090d',
+                border: '1px solid #1a2332',
+                borderRadius: 2,
+              }}
+            >
               <Server size={18} color="#00d4aa" />
               <div style={{ flex: 1 }}>
                 <div className="font-mono text-xs" style={{ color: '#f1f5f9' }}>
@@ -71,7 +88,17 @@ export function Chapter02Platform() {
               <ShieldCheck size={16} color="#10b981" />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#07090d', border: '1px solid #1a2332', borderRadius: 2 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                background: '#07090d',
+                border: '1px solid #1a2332',
+                borderRadius: 2,
+              }}
+            >
               <Cpu size={18} color="#ff6b35" />
               <div style={{ flex: 1 }}>
                 <div className="font-mono text-xs" style={{ color: '#f1f5f9' }}>
@@ -86,7 +113,17 @@ export function Chapter02Platform() {
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#07090d', border: '1px solid #1a2332', borderRadius: 2 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                background: '#07090d',
+                border: '1px solid #1a2332',
+                borderRadius: 2,
+              }}
+            >
               <Network size={18} color="#3b82f6" />
               <div style={{ flex: 1 }}>
                 <div className="font-mono text-xs" style={{ color: '#f1f5f9' }}>
@@ -100,7 +137,16 @@ export function Chapter02Platform() {
             </div>
           </div>
 
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #1a2332', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              marginTop: 20,
+              paddingTop: 16,
+              borderTop: '1px solid #1a2332',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <span className="font-mono text-xs" style={{ color: '#4b5a6e' }}>
               TELEMETRY HASH: 0x9f4a...e12d
             </span>

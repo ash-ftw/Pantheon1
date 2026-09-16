@@ -29,7 +29,7 @@ export function PreLoader({ onEnter }: PreLoaderProps) {
         // Incremental ticks
         const next = prev + Math.floor(Math.random() * 10) + 12;
         const bounded = next > 100 ? 100 : next;
-        
+
         // Cycle status messages based on quartile
         if (bounded < 25) setStatusIndex(0);
         else if (bounded < 55) setStatusIndex(1);

@@ -105,4 +105,3 @@ describe('Theme System & Palette Integration', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('matte-mono');
   });
 });
-

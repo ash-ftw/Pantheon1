@@ -642,4 +642,3 @@ class Notification(Base):
     # Relationships
     org: Mapped["Org"] = relationship("Org")
     user: Mapped["User | None"] = relationship("User")
-

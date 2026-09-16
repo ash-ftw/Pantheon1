@@ -131,7 +131,7 @@ export function Chapter05Scenarios() {
 
           // Data packets
           for (let p = 0; p < 3; p++) {
-            const x = 40 + (((t * 90 + p * 140 + l * 60) % (width - 80)));
+            const x = 40 + ((t * 90 + p * 140 + l * 60) % (width - 80));
             ctx.beginPath();
             ctx.arc(x, y, 4.5, 0, Math.PI * 2);
             ctx.fillStyle = '#ff6b35';
@@ -210,8 +210,12 @@ export function Chapter05Scenarios() {
           <h2 className="platform-headline" style={{ textAlign: 'center' }}>
             THE THREE ATTACK HORIZONS
           </h2>
-          <p className="platform-subtext" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
-            Modern threats don’t stop at the perimeter. We validate all three layers of your operational stack.
+          <p
+            className="platform-subtext"
+            style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}
+          >
+            Modern threats don’t stop at the perimeter. We validate all three layers of your
+            operational stack.
           </p>
         </div>
 
@@ -227,23 +231,34 @@ export function Chapter05Scenarios() {
                   onClick={() => setSelectedEnvId(env.id)}
                   data-testid={`env-tab-${env.id}`}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <div className="env-tagline">{env.title}</div>
-                    <span className="badge badge-accent font-mono text-xs">
-                      {env.arc}
-                    </span>
+                    <span className="badge badge-accent font-mono text-xs">{env.arc}</span>
                   </div>
 
                   <div className="env-subtitle">“{env.subtitle}”</div>
                   <p className="env-desc">{env.description}</p>
 
                   {isActive && (
-                    <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div
+                      style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
                       {env.scenarios.map((scen, idx) => (
                         <div
                           key={idx}
                           className="font-mono text-xs"
-                          style={{ color: '#00d4aa', display: 'flex', alignItems: 'center', gap: 6 }}
+                          style={{
+                            color: '#00d4aa',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
                         >
                           <span style={{ color: '#ff6b35' }}>›</span> {scen}
                         </div>
@@ -257,19 +272,24 @@ export function Chapter05Scenarios() {
 
           {/* Right Column: Full-Bleed Abstract 3D Render Canvas */}
           <div className="env-canvas-display">
-            <div style={{ position: 'absolute', top: 16, left: 16, right: 16, display: 'flex', justifyContent: 'space-between', zIndex: 10 }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                right: 16,
+                display: 'flex',
+                justifyContent: 'space-between',
+                zIndex: 10,
+              }}
+            >
               <span className="font-mono text-xs" style={{ color: '#ff6b35' }}>
                 VECTOR RENDER // {currentEnv.title.toUpperCase()}
               </span>
-              <span className="badge badge-primary font-mono text-xs">
-                SIMULATION LIVE
-              </span>
+              <span className="badge badge-primary font-mono text-xs">SIMULATION LIVE</span>
             </div>
 
-            <canvas
-              ref={canvasRef}
-              style={{ width: '100%', height: '100%', display: 'block' }}
-            />
+            <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
           </div>
         </div>
       </div>

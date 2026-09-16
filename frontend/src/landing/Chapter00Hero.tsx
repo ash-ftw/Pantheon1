@@ -29,21 +29,51 @@ export function Chapter00Hero({ onScrollNext }: Chapter00HeroProps) {
 
     // 3D wireframe polyhedron vertices (icosahedron-like)
     const vertices = [
-      [-1, 1, 0], [1, 1, 0], [-1, -1, 0], [1, -1, 0],
-      [0, -1, 1], [0, 1, 1], [0, -1, -1], [0, 1, -1],
-      [1, 0, -1], [1, 0, 1], [-1, 0, -1], [-1, 0, 1],
+      [-1, 1, 0],
+      [1, 1, 0],
+      [-1, -1, 0],
+      [1, -1, 0],
+      [0, -1, 1],
+      [0, 1, 1],
+      [0, -1, -1],
+      [0, 1, -1],
+      [1, 0, -1],
+      [1, 0, 1],
+      [-1, 0, -1],
+      [-1, 0, 1],
     ];
 
     const edges: [number, number][] = [
-      [0, 1], [0, 5], [0, 7], [0, 10], [0, 11],
-      [1, 5], [1, 7], [1, 8], [1, 9],
-      [2, 3], [2, 4], [2, 6], [2, 10], [2, 11],
-      [3, 4], [3, 6], [3, 8], [3, 9],
-      [4, 5], [4, 9], [4, 11],
-      [5, 9], [5, 11],
-      [6, 7], [6, 8], [6, 10],
-      [7, 8], [7, 10],
-      [8, 9], [10, 11],
+      [0, 1],
+      [0, 5],
+      [0, 7],
+      [0, 10],
+      [0, 11],
+      [1, 5],
+      [1, 7],
+      [1, 8],
+      [1, 9],
+      [2, 3],
+      [2, 4],
+      [2, 6],
+      [2, 10],
+      [2, 11],
+      [3, 4],
+      [3, 6],
+      [3, 8],
+      [3, 9],
+      [4, 5],
+      [4, 9],
+      [4, 11],
+      [5, 9],
+      [5, 11],
+      [6, 7],
+      [6, 8],
+      [6, 10],
+      [7, 8],
+      [7, 10],
+      [8, 9],
+      [10, 11],
     ];
 
     let angleX = 0;
@@ -89,9 +119,12 @@ export function Chapter00Hero({ onScrollNext }: Chapter00HeroProps) {
       angleZ += 0.003;
       waveOffset += 0.03;
 
-      const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
-      const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
-      const cosZ = Math.cos(angleZ), sinZ = Math.sin(angleZ);
+      const cosX = Math.cos(angleX),
+        sinX = Math.sin(angleX);
+      const cosY = Math.cos(angleY),
+        sinY = Math.sin(angleY);
+      const cosZ = Math.cos(angleZ),
+        sinZ = Math.sin(angleZ);
 
       const projected = vertices.map(([x, y, z]) => {
         // Rotate Y
@@ -162,14 +195,14 @@ export function Chapter00Hero({ onScrollNext }: Chapter00HeroProps) {
         </div>
 
         <h1 className="hero-headline">
-          BUILT TO PROVE RESILIENCE.<br />
+          BUILT TO PROVE RESILIENCE.
+          <br />
           <span>BREACH THE SURFACE FIRST.</span>
         </h1>
 
         <p className="hero-subhead">
-          Pantheon spins up ephemeral, tenant-isolated attacker workloads against your
-          staging and preview infrastructure. Real exploit chains, zero synthetic mocks,
-          zero credential leaks.
+          Pantheon spins up ephemeral, tenant-isolated attacker workloads against your staging and
+          preview infrastructure. Real exploit chains, zero synthetic mocks, zero credential leaks.
         </p>
 
         <div className="hero-cta-group">
@@ -178,11 +211,7 @@ export function Chapter00Hero({ onScrollNext }: Chapter00HeroProps) {
             LAUNCH TEST RUN
           </Link>
 
-          <button
-            type="button"
-            className="hero-btn-secondary"
-            onClick={onScrollNext}
-          >
+          <button type="button" className="hero-btn-secondary" onClick={onScrollNext}>
             EXPLORE THE ENGINE
             <ChevronRight size={13} style={{ display: 'inline', marginLeft: 4 }} />
           </button>
@@ -200,7 +229,10 @@ export function Chapter00Hero({ onScrollNext }: Chapter00HeroProps) {
       </div>
 
       {/* Looping mono ticker band just below hero */}
-      <div className="ticker-band-container" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}>
+      <div
+        className="ticker-band-container"
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
+      >
         <div className="ticker-band-track">
           {[...Array(4)].map((_, i) => (
             <span key={i} className="ticker-item">

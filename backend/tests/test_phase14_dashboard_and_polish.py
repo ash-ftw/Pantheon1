@@ -22,7 +22,6 @@ from app.models import (
     DefenceRecommendation,
     Finding,
     Notification,
-    Org,
     TestRun,
     User,
 )
@@ -240,7 +239,9 @@ async def test_dashboard_and_notifications_endpoints():
             "applied_mitigations": 2,
             "mitigation_rate_pct": 66.7,
         },
-        "findings_timeline": [{"date": "Sep 15", "critical": 1, "high": 2, "medium": 2, "low": 0, "total": 5}],
+        "findings_timeline": [
+            {"date": "Sep 15", "critical": 1, "high": 2, "medium": 2, "low": 0, "total": 5}
+        ],
         "recent_test_runs": [],
         "cluster_status": {"status": "ready", "network_policy": "default-deny-active"},
         "recent_activity": [],
@@ -261,7 +262,9 @@ async def test_dashboard_and_notifications_endpoints():
             assert len(catalog) == 4
 
             # 2. GET /api/dashboard/stats
-            with patch.object(dashboard_service, "get_dashboard_stats", new=AsyncMock(return_value=dummy_stats)):
+            with patch.object(
+                dashboard_service, "get_dashboard_stats", new=AsyncMock(return_value=dummy_stats)
+            ):
                 resp = await client.get("/api/dashboard/stats")
                 assert resp.status_code == 200
                 data = resp.json()
@@ -291,19 +294,27 @@ async def test_dashboard_and_notifications_endpoints():
                 created_at=datetime.now(UTC),
             )
 
-            with patch.object(notification_service, "list_notifications", new=AsyncMock(return_value=[dummy_notif])):
+            with patch.object(
+                notification_service,
+                "list_notifications",
+                new=AsyncMock(return_value=[dummy_notif]),
+            ):
                 resp = await client.get("/api/notifications")
                 assert resp.status_code == 200
                 notifs = resp.json()
                 assert len(notifs) == 1
                 assert notifs[0]["title"] == "Test Alert"
 
-            with patch.object(notification_service, "get_unread_count", new=AsyncMock(return_value=1)):
+            with patch.object(
+                notification_service, "get_unread_count", new=AsyncMock(return_value=1)
+            ):
                 resp = await client.get("/api/notifications/unread-count")
                 assert resp.status_code == 200
                 assert resp.json()["unread_count"] == 1
 
-            with patch.object(notification_service, "mark_all_as_read", new=AsyncMock(return_value=1)):
+            with patch.object(
+                notification_service, "mark_all_as_read", new=AsyncMock(return_value=1)
+            ):
                 resp = await client.post("/api/notifications/read-all")
                 assert resp.status_code == 200
                 assert resp.json()["marked_count"] == 1

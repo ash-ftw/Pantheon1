@@ -90,8 +90,10 @@ export function Chapter06Trust() {
 
       // Crosshairs
       ctx.beginPath();
-      ctx.moveTo(center, 10); ctx.lineTo(center, size - 10);
-      ctx.moveTo(10, center); ctx.lineTo(size - 10, center);
+      ctx.moveTo(center, 10);
+      ctx.lineTo(center, size - 10);
+      ctx.moveTo(10, center);
+      ctx.lineTo(size - 10, center);
       ctx.strokeStyle = 'rgba(0, 212, 170, 0.15)';
       ctx.stroke();
 
@@ -163,9 +165,12 @@ export function Chapter06Trust() {
           <h2 className="platform-headline" style={{ textAlign: 'center' }}>
             TESTED UNDER REAL ADVERSARIAL SIGNAL
           </h2>
-          <p className="platform-subtext" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
-            Over 1.8M attack payloads detonated across 420+ enterprise staging clusters.
-            Proof in execution, not paper promises.
+          <p
+            className="platform-subtext"
+            style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}
+          >
+            Over 1.8M attack payloads detonated across 420+ enterprise staging clusters. Proof in
+            execution, not paper promises.
           </p>
         </div>
 
@@ -173,22 +178,37 @@ export function Chapter06Trust() {
           {/* Left Column: Radar Scanner & Live Replay Scrubber */}
           <div>
             <div className="radar-sweep-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  alignItems: 'center',
+                }}
+              >
                 <span className="font-mono text-xs" style={{ color: '#00d4aa' }}>
                   ACTIVE SCANNER // 360° BEAM
                 </span>
-                <span className="badge badge-success font-mono text-xs">
-                  SWEEPING
-                </span>
+                <span className="badge badge-success font-mono text-xs">SWEEPING</span>
               </div>
 
               <div className="radar-canvas-box">
-                <canvas ref={radarCanvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+                <canvas
+                  ref={radarCanvasRef}
+                  style={{ width: '100%', height: '100%', display: 'block' }}
+                />
               </div>
 
               {/* Interactive Attack-Graph Replay Widget */}
               <div className="replay-scrubber-widget">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
                   <span className="font-mono text-xs" style={{ color: '#f1f5f9' }}>
                     ATTACK REPLAY // RUN #812-PROD-MOCK
                   </span>
@@ -237,7 +257,10 @@ export function Chapter06Trust() {
                   <span style={{ color: '#10b981' }}>-84% REDUCED</span>
                 </div>
                 <div className="posture-bar-track">
-                  <div className="posture-bar-fill" style={{ width: '16%', background: '#10b981' }} />
+                  <div
+                    className="posture-bar-fill"
+                    style={{ width: '16%', background: '#10b981' }}
+                  />
                 </div>
               </div>
 
@@ -247,7 +270,10 @@ export function Chapter06Trust() {
                   <span style={{ color: '#00d4aa' }}>12 MINUTES</span>
                 </div>
                 <div className="posture-bar-track">
-                  <div className="posture-bar-fill" style={{ width: '92%', background: '#00d4aa' }} />
+                  <div
+                    className="posture-bar-fill"
+                    style={{ width: '92%', background: '#00d4aa' }}
+                  />
                 </div>
               </div>
             </div>
@@ -257,7 +283,10 @@ export function Chapter06Trust() {
           <div className="findings-widget-card">
             <div className="findings-widget-header">
               <div>
-                <div className="font-display text-sm font-bold uppercase" style={{ color: '#f8fafc', letterSpacing: '0.06em' }}>
+                <div
+                  className="font-display text-sm font-bold uppercase"
+                  style={{ color: '#f8fafc', letterSpacing: '0.06em' }}
+                >
                   ARCHIVE // REAL FINDINGS MATRIX
                 </div>
                 <div className="font-mono text-xs" style={{ color: '#4b5a6e', fontSize: 10 }}>
@@ -267,7 +296,10 @@ export function Chapter06Trust() {
 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <div style={{ position: 'relative' }}>
-                  <Search size={12} style={{ position: 'absolute', left: 8, top: 9, color: '#4b5a6e' }} />
+                  <Search
+                    size={12}
+                    style={{ position: 'absolute', left: 8, top: 9, color: '#4b5a6e' }}
+                  />
                   <input
                     type="text"
                     placeholder="Search findings..."
@@ -311,17 +343,15 @@ export function Chapter06Trust() {
                       finding.severity === 'CRITICAL'
                         ? 'badge-danger'
                         : finding.severity === 'HIGH'
-                        ? 'badge-accent'
-                        : finding.severity === 'MEDIUM'
-                        ? 'badge-warning'
-                        : 'badge-info';
+                          ? 'badge-accent'
+                          : finding.severity === 'MEDIUM'
+                            ? 'badge-warning'
+                            : 'badge-info';
 
                     return (
                       <tr key={finding.id}>
                         <td>
-                          <span className={`badge ${badgeClass}`}>
-                            {finding.severity}
-                          </span>
+                          <span className={`badge ${badgeClass}`}>{finding.severity}</span>
                         </td>
                         <td>
                           <div style={{ fontWeight: 600, color: '#f1f5f9' }}>{finding.cve}</div>
@@ -333,7 +363,10 @@ export function Chapter06Trust() {
                           </span>
                         </td>
                         <td>
-                          <span className="font-mono text-xs" style={{ color: '#cbd5e1', fontSize: 11 }}>
+                          <span
+                            className="font-mono text-xs"
+                            style={{ color: '#cbd5e1', fontSize: 11 }}
+                          >
                             {finding.blastRadius}
                           </span>
                         </td>
@@ -342,7 +375,10 @@ export function Chapter06Trust() {
                   })}
                   {filteredFindings.length === 0 && (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', padding: '24px 0', color: '#4b5a6e' }}>
+                      <td
+                        colSpan={4}
+                        style={{ textAlign: 'center', padding: '24px 0', color: '#4b5a6e' }}
+                      >
                         No matching findings in this view.
                       </td>
                     </tr>
@@ -351,7 +387,14 @@ export function Chapter06Trust() {
               </table>
             </div>
 
-            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{
+                marginTop: 16,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <span className="font-mono text-xs" style={{ color: '#4b5a6e', fontSize: 10 }}>
                 EXPORT FORMATS: SARIF · DEFECTDOJO · GITHUB SECURITY ADVISORY
               </span>

@@ -204,7 +204,11 @@ export function DashboardPage() {
 
   const severityBarData = stats
     ? [
-        { name: 'Critical', count: stats.findings_by_severity.critical, color: SEVERITY_COLORS.critical },
+        {
+          name: 'Critical',
+          count: stats.findings_by_severity.critical,
+          color: SEVERITY_COLORS.critical,
+        },
         { name: 'High', count: stats.findings_by_severity.high, color: SEVERITY_COLORS.high },
         { name: 'Medium', count: stats.findings_by_severity.medium, color: SEVERITY_COLORS.medium },
         { name: 'Low', count: stats.findings_by_severity.low, color: SEVERITY_COLORS.low },
@@ -242,7 +246,8 @@ export function DashboardPage() {
           </div>
           <h1 className="dashboard-title font-display">Cyber Range Executive Dashboard</h1>
           <p className="dashboard-subtitle">
-            Continuous threat simulation, vulnerability trajectory analytics, and automated defensive mitigation.
+            Continuous threat simulation, vulnerability trajectory analytics, and automated
+            defensive mitigation.
           </p>
         </div>
 
@@ -304,7 +309,9 @@ export function DashboardPage() {
           </div>
           <div className="kpi-body">
             <div className="score-display">
-              <span className={`score-number font-display ${scoreColor(stats?.resilience_score || 0)}`}>
+              <span
+                className={`score-number font-display ${scoreColor(stats?.resilience_score || 0)}`}
+              >
                 {stats ? stats.resilience_score.toFixed(1) : '--'}
               </span>
               <span className="score-max font-mono">/ 100</span>
@@ -320,7 +327,9 @@ export function DashboardPage() {
           </div>
           <div className="kpi-footer font-mono">
             <span className="kpi-subtext">{scoreBadge(stats?.resilience_score || 0)}</span>
-            <span className="badge badge-primary">{stats?.mitigation_stats.mitigation_rate_pct}% Fixed</span>
+            <span className="badge badge-primary">
+              {stats?.mitigation_stats.mitigation_rate_pct}% Fixed
+            </span>
           </div>
         </div>
 
@@ -333,11 +342,12 @@ export function DashboardPage() {
             </div>
           </div>
           <div className="kpi-body">
-            <div className="kpi-metric-number font-display">
-              {stats ? stats.total_apps : '--'}
-            </div>
+            <div className="kpi-metric-number font-display">{stats ? stats.total_apps : '--'}</div>
             <div className="kpi-metric-sub font-mono">
-              <span className="text-success font-semibold">{stats?.active_deployments || 0} active</span> running in tenant namespace
+              <span className="text-success font-semibold">
+                {stats?.active_deployments || 0} active
+              </span>{' '}
+              running in tenant namespace
             </div>
           </div>
           <div className="kpi-footer font-mono">
@@ -391,9 +401,13 @@ export function DashboardPage() {
               {stats ? stats.total_findings : '--'}
             </div>
             <div className="kpi-metric-sub font-mono">
-              <span className="text-danger font-semibold">{stats?.findings_by_severity.critical || 0} Critical</span>
+              <span className="text-danger font-semibold">
+                {stats?.findings_by_severity.critical || 0} Critical
+              </span>
               <span className="mx-1.5 text-muted">·</span>
-              <span className="text-accent font-semibold">{stats?.findings_by_severity.high || 0} High</span>
+              <span className="text-accent font-semibold">
+                {stats?.findings_by_severity.high || 0} High
+              </span>
             </div>
           </div>
           <div className="kpi-footer font-mono">
@@ -425,30 +439,65 @@ export function DashboardPage() {
           <div className="chart-wrapper">
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart
-                data={stats?.findings_timeline && stats.findings_timeline.length > 0 ? stats.findings_timeline : [
-                  { date: 'Initial', critical: 2, high: 3, medium: 4, low: 1, total: 10 },
-                  { date: 'Iter 1', critical: 1, high: 2, medium: 3, low: 1, total: 7 },
-                  { date: 'Iter 2', critical: 0, high: 1, medium: 2, low: 0, total: 3 },
-                ]}
+                data={
+                  stats?.findings_timeline && stats.findings_timeline.length > 0
+                    ? stats.findings_timeline
+                    : [
+                        { date: 'Initial', critical: 2, high: 3, medium: 4, low: 1, total: 10 },
+                        { date: 'Iter 1', critical: 1, high: 2, medium: 3, low: 1, total: 7 },
+                        { date: 'Iter 2', critical: 0, high: 1, medium: 2, low: 0, total: 3 },
+                      ]
+                }
                 margin={{ top: 10, right: 20, left: -20, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorCritical" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={isMatte ? '#ffffff' : '#ef4444'} stopOpacity={isMatte ? 0.35 : 0.6} />
-                    <stop offset="95%" stopColor={isMatte ? '#ffffff' : '#ef4444'} stopOpacity={0.0} />
+                    <stop
+                      offset="5%"
+                      stopColor={isMatte ? '#ffffff' : '#ef4444'}
+                      stopOpacity={isMatte ? 0.35 : 0.6}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isMatte ? '#ffffff' : '#ef4444'}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                   <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={isMatte ? '#eaeaea' : '#ff6b35'} stopOpacity={isMatte ? 0.25 : 0.4} />
-                    <stop offset="95%" stopColor={isMatte ? '#eaeaea' : '#ff6b35'} stopOpacity={0.0} />
+                    <stop
+                      offset="5%"
+                      stopColor={isMatte ? '#eaeaea' : '#ff6b35'}
+                      stopOpacity={isMatte ? 0.25 : 0.4}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isMatte ? '#eaeaea' : '#ff6b35'}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                   <linearGradient id="colorMedium" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={isMatte ? '#c8c8c8' : '#f59e0b'} stopOpacity={isMatte ? 0.2 : 0.3} />
-                    <stop offset="95%" stopColor={isMatte ? '#c8c8c8' : '#f59e0b'} stopOpacity={0.0} />
+                    <stop
+                      offset="5%"
+                      stopColor={isMatte ? '#c8c8c8' : '#f59e0b'}
+                      stopOpacity={isMatte ? 0.2 : 0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={isMatte ? '#c8c8c8' : '#f59e0b'}
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isMatte ? '#232323' : '#1a2332'} />
-                <XAxis dataKey="date" stroke={isMatte ? '#8a8a93' : '#4b5a6e'} tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }} />
-                <YAxis stroke={isMatte ? '#8a8a93' : '#4b5a6e'} tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }} />
+                <XAxis
+                  dataKey="date"
+                  stroke={isMatte ? '#8a8a93' : '#4b5a6e'}
+                  tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }}
+                />
+                <YAxis
+                  stroke={isMatte ? '#8a8a93' : '#4b5a6e'}
+                  tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: isMatte ? '#141416' : '#0d1117',
@@ -511,10 +560,20 @@ export function DashboardPage() {
                 margin={{ top: 10, right: 20, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke={isMatte ? '#232323' : '#1a2332'} />
-                <XAxis dataKey="name" stroke={isMatte ? '#8a8a93' : '#4b5a6e'} tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }} />
-                <YAxis stroke={isMatte ? '#8a8a93' : '#4b5a6e'} tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }} allowDecimals={false} />
+                <XAxis
+                  dataKey="name"
+                  stroke={isMatte ? '#8a8a93' : '#4b5a6e'}
+                  tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }}
+                />
+                <YAxis
+                  stroke={isMatte ? '#8a8a93' : '#4b5a6e'}
+                  tick={{ fontSize: 11, fill: isMatte ? '#c8c8c8' : '#94a3b8' }}
+                  allowDecimals={false}
+                />
                 <Tooltip
-                  cursor={{ fill: isMatte ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.03)' }}
+                  cursor={{
+                    fill: isMatte ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.03)',
+                  }}
                   contentStyle={{
                     backgroundColor: isMatte ? '#141416' : '#0d1117',
                     borderColor: isMatte ? '#232323' : '#1a2332',
@@ -544,7 +603,8 @@ export function DashboardPage() {
               <h2 className="section-title font-display">Explore Known-Vulnerable Demo Apps</h2>
             </div>
             <p className="section-sub">
-              Explore attack simulations and defensive mitigations immediately while your custom tenant cluster provisions (PRD §6.1).
+              Explore attack simulations and defensive mitigations immediately while your custom
+              tenant cluster provisions (PRD §6.1).
             </p>
           </div>
         </div>
@@ -658,8 +718,8 @@ export function DashboardPage() {
                             r.status === 'completed'
                               ? 'badge-success'
                               : r.status === 'running'
-                              ? 'badge-primary'
-                              : 'badge-warning'
+                                ? 'badge-primary'
+                                : 'badge-warning'
                           } font-mono text-xs`}
                         >
                           {r.status.toUpperCase()}
@@ -698,7 +758,8 @@ export function DashboardPage() {
                 ) : (
                   <tr>
                     <td colSpan={6} className="table-empty font-mono">
-                      No simulation runs recorded yet. Launch a preset scenario above to test target resilience.
+                      No simulation runs recorded yet. Launch a preset scenario above to test target
+                      resilience.
                     </td>
                   </tr>
                 )}
@@ -712,7 +773,9 @@ export function DashboardPage() {
           <div className="card-header-row">
             <div>
               <h3 className="card-title font-display">Append-Only Audit Feed</h3>
-              <span className="card-subtitle font-mono">Cryptographic platform actions (FR-11.1)</span>
+              <span className="card-subtitle font-mono">
+                Cryptographic platform actions (FR-11.1)
+              </span>
             </div>
             <Link to="/team" className="kpi-link font-mono">
               <span>Full audit log</span>
@@ -746,9 +809,7 @@ export function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="table-empty font-mono">
-                No recent audit log activity logged yet.
-              </div>
+              <div className="table-empty font-mono">No recent audit log activity logged yet.</div>
             )}
           </div>
         </div>

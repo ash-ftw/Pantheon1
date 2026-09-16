@@ -938,7 +938,11 @@ export function TestRunPage() {
 
               {/* Simulation Guard Pre-check Indicator */}
               <div className="modal-safety-notice">
-                <Shield size={20} color={isMatte ? '#ffffff' : '#00d4aa'} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <Shield
+                  size={20}
+                  color={isMatte ? '#ffffff' : '#00d4aa'}
+                  style={{ flexShrink: 0, marginTop: '2px' }}
+                />
                 <span>
                   <strong>Simulation Guard Pre-Check:</strong> Target will be dynamically validated
                   against Safety Policies (PRD §7.6) and destination-locked before execution.

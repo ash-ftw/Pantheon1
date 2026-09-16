@@ -40,4 +40,3 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
 };
 
 export const ThemeSettingsButton = ThemeSwitcher;
-

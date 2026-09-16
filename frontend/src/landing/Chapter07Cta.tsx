@@ -20,12 +20,11 @@ export function Chapter07Cta() {
           07 // THE SAFE BREACH
         </div>
 
-        <h2 className="cta-center-line">
-          Ready to see what actually breaks?
-        </h2>
+        <h2 className="cta-center-line">Ready to see what actually breaks?</h2>
 
         <p className="platform-subtext" style={{ margin: 0, textAlign: 'center' }}>
-          Deploy an ephemeral, tenant-isolated sandbox in 10 minutes. Run real attack graphs with zero synthetic mocks.
+          Deploy an ephemeral, tenant-isolated sandbox in 10 minutes. Run real attack graphs with
+          zero synthetic mocks.
         </p>
 
         <Link

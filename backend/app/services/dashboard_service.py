@@ -7,10 +7,10 @@ and manages the preset known-vulnerable demo app catalog.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.logging import get_logger
@@ -113,9 +113,7 @@ DEMO_APP_CATALOG: list[dict[str, Any]] = [
 class DashboardService:
     """Service for computing org-level KPIs and managing the demo catalog."""
 
-    async def get_dashboard_stats(
-        self, session: AsyncSession, org_id: uuid.UUID
-    ) -> dict[str, Any]:
+    async def get_dashboard_stats(self, session: AsyncSession, org_id: uuid.UUID) -> dict[str, Any]:
         """Aggregate high-level security metrics, posture trends, and activity for an org."""
         # 1. Total Apps & Active Deployments
         apps_res = await session.execute(
@@ -191,50 +189,60 @@ class DashboardService:
         timeline: list[dict[str, Any]] = []
         sorted_runs = sorted(test_runs, key=lambda r: r.created_at)
         if not sorted_runs and total_findings > 0:
-            timeline.append({
-                "date": datetime.now(UTC).strftime("%b %d"),
-                "critical": severity_counts["critical"],
-                "high": severity_counts["high"],
-                "medium": severity_counts["medium"],
-                "low": severity_counts["low"],
-                "total": total_findings,
-            })
+            timeline.append(
+                {
+                    "date": datetime.now(UTC).strftime("%b %d"),
+                    "critical": severity_counts["critical"],
+                    "high": severity_counts["high"],
+                    "medium": severity_counts["medium"],
+                    "low": severity_counts["low"],
+                    "total": total_findings,
+                }
+            )
         else:
             for r in sorted_runs[-10:]:  # Last 10 runs
                 run_findings = [f for f in findings if f.test_run_id == r.id]
                 c = sum(1 for f in run_findings if (f.severity or "").lower() == "critical")
                 h = sum(1 for f in run_findings if (f.severity or "").lower() == "high")
                 m = sum(1 for f in run_findings if (f.severity or "").lower() == "medium")
-                l = sum(1 for f in run_findings if (f.severity or "").lower() in ("low", "info"))
+                low_cnt = sum(
+                    1 for f in run_findings if (f.severity or "").lower() in ("low", "info")
+                )
                 date_str = r.created_at.strftime("%b %d %H:%M")
-                timeline.append({
-                    "date": date_str,
-                    "run_id": str(r.id),
-                    "scenario": r.scenario_name,
-                    "critical": c,
-                    "high": h,
-                    "medium": m,
-                    "low": l,
-                    "total": len(run_findings),
-                })
+                timeline.append(
+                    {
+                        "date": date_str,
+                        "run_id": str(r.id),
+                        "scenario": r.scenario_name,
+                        "critical": c,
+                        "high": h,
+                        "medium": m,
+                        "low": low_cnt,
+                        "total": len(run_findings),
+                    }
+                )
 
         # 7. Recent Test Runs (last 5)
         recent_runs: list[dict[str, Any]] = []
         for r in test_runs[:5]:
             r_findings = [f for f in findings if f.test_run_id == r.id]
-            recent_runs.append({
-                "id": str(r.id),
-                "app_id": str(r.app_id),
-                "app_name": app_name_map.get(r.app_id, "Target Application"),
-                "scenario_name": r.scenario_name,
-                "scenario_category": r.scenario_category,
-                "status": r.status,
-                "findings_count": len(r_findings),
-                "critical_count": sum(1 for f in r_findings if (f.severity or "").lower() == "critical"),
-                "total_steps": r.total_steps,
-                "current_step": r.current_step,
-                "created_at": r.created_at.isoformat(),
-            })
+            recent_runs.append(
+                {
+                    "id": str(r.id),
+                    "app_id": str(r.app_id),
+                    "app_name": app_name_map.get(r.app_id, "Target Application"),
+                    "scenario_name": r.scenario_name,
+                    "scenario_category": r.scenario_category,
+                    "status": r.status,
+                    "findings_count": len(r_findings),
+                    "critical_count": sum(
+                        1 for f in r_findings if (f.severity or "").lower() == "critical"
+                    ),
+                    "total_steps": r.total_steps,
+                    "current_step": r.current_step,
+                    "created_at": r.created_at.isoformat(),
+                }
+            )
 
         # 8. Cluster Status
         cluster_status = {

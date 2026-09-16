@@ -445,4 +445,3 @@ class NotificationCreate(BaseModel):
     type: str = "info"
     category: str = "general"
     link: str | None = None
-

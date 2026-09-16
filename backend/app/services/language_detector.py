@@ -6,11 +6,18 @@ stub with real detection.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from app.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+class FrameworkMarker(TypedDict):
+    marker: str
+    content_check: str | None
+    framework: str
+
 
 # File extension → language mapping (sorted by priority / commonality)
 EXTENSION_MAP: dict[str, str] = {
@@ -40,7 +47,7 @@ EXTENSION_MAP: dict[str, str] = {
 }
 
 # Framework marker files and their corresponding framework names
-FRAMEWORK_MARKERS: list[dict[str, str]] = [
+FRAMEWORK_MARKERS: list[FrameworkMarker] = [
     # Python
     {"marker": "requirements.txt", "content_check": "fastapi", "framework": "FastAPI"},
     {"marker": "requirements.txt", "content_check": "django", "framework": "Django"},

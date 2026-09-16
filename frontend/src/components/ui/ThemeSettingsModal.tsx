@@ -32,7 +32,10 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({ isOpen, 
               <Settings size={18} />
             </div>
             <div>
-              <h2 id="theme-settings-title" className="font-display font-bold text-base tracking-wide uppercase">
+              <h2
+                id="theme-settings-title"
+                className="font-display font-bold text-base tracking-wide uppercase"
+              >
                 Appearance & Theme Settings
               </h2>
               <p className="text-xs text-[var(--secondary-foreground)]">
@@ -81,12 +84,26 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({ isOpen, 
 
             {/* Swatches */}
             <div className="pt-2 border-t border-white/5 space-y-1.5">
-              <div className="text-[9px] font-mono text-[var(--muted-foreground)] uppercase">Palette Spec:</div>
+              <div className="text-[9px] font-mono text-[var(--muted-foreground)] uppercase">
+                Palette Spec:
+              </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#07090d]" title="Canvas (#07090d)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#0d1117]" title="Card (#0d1117)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#00d4aa]" title="Cyan Accent (#00d4aa)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#ff6b35]" title="Orange Accent (#ff6b35)" />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#07090d]"
+                  title="Canvas (#07090d)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#0d1117]"
+                  title="Card (#0d1117)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#00d4aa]"
+                  title="Cyan Accent (#00d4aa)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#ff6b35]"
+                  title="Orange Accent (#ff6b35)"
+                />
               </div>
             </div>
           </div>
@@ -114,19 +131,37 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({ isOpen, 
                 )}
               </div>
               <p className="text-[11px] text-[var(--secondary-foreground)] leading-relaxed">
-                Zero neon colors. Minimal monochrome palette with dark charcoal outlines and pure white accents.
+                Zero neon colors. Minimal monochrome palette with dark charcoal outlines and pure
+                white accents.
               </p>
             </div>
 
             {/* Swatches */}
             <div className="pt-2 border-t border-white/5 space-y-1.5">
-              <div className="text-[9px] font-mono text-[var(--muted-foreground)] uppercase">Palette Spec:</div>
+              <div className="text-[9px] font-mono text-[var(--muted-foreground)] uppercase">
+                Palette Spec:
+              </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#0f0f10]" title="Matte Black (#0F0F10)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#232323]" title="Charcoal (#232323)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#c8c8c8]" title="Silver (#C8C8C8)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#eaeaea]" title="Light Gray (#EAEAEA)" />
-                <span className="w-5 h-5 rounded border border-white/10 bg-[#ffffff]" title="Pure White (#FFFFFF)" />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#0f0f10]"
+                  title="Matte Black (#0F0F10)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#232323]"
+                  title="Charcoal (#232323)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#c8c8c8]"
+                  title="Silver (#C8C8C8)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#eaeaea]"
+                  title="Light Gray (#EAEAEA)"
+                />
+                <span
+                  className="w-5 h-5 rounded border border-white/10 bg-[#ffffff]"
+                  title="Pure White (#FFFFFF)"
+                />
               </div>
             </div>
           </div>
@@ -151,11 +186,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({ isOpen, 
 
         {/* Footer */}
         <div className="flex items-center justify-end pt-2 border-t border-[var(--card-border)]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn-primary text-xs py-2 px-5"
-          >
+          <button type="button" onClick={onClose} className="btn-primary text-xs py-2 px-5">
             Done
           </button>
         </div>

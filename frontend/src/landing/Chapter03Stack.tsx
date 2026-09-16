@@ -108,7 +108,7 @@ export function Chapter03Stack() {
           requestAnimationFrame(animate);
         }
       },
-      { threshold: 0.25 }
+      { threshold: 0.25 },
     );
 
     observer.observe(el);
@@ -123,8 +123,12 @@ export function Chapter03Stack() {
           <h2 className="platform-headline" style={{ textAlign: 'center', marginBottom: 12 }}>
             THE METRICS OF ADVERSARIAL CERTAINTY
           </h2>
-          <p className="platform-subtext" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px auto' }}>
-            We quantify what traditional static scanners gloss over: the velocity, isolation, and blast radius of real attacks.
+          <p
+            className="platform-subtext"
+            style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 40px auto' }}
+          >
+            We quantify what traditional static scanners gloss over: the velocity, isolation, and
+            blast radius of real attacks.
           </p>
         </div>
 
@@ -132,9 +136,7 @@ export function Chapter03Stack() {
           {STATS_DATA.map((item) => {
             const rawVal = counts[item.id] ?? 0;
             const displayVal =
-              item.decimals > 0
-                ? rawVal.toFixed(item.decimals)
-                : rawVal.toString();
+              item.decimals > 0 ? rawVal.toFixed(item.decimals) : rawVal.toString();
 
             return (
               <div key={item.id} className="stat-box-card">

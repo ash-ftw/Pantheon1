@@ -120,7 +120,7 @@ export function Chapter04Engine() {
 
         // Glowing packets traversing
         for (let i = 0; i < 5; i++) {
-          const packetX = 40 + (((t * 120 + i * 80) % (width - 80)));
+          const packetX = 40 + ((t * 120 + i * 80) % (width - 80));
           ctx.beginPath();
           ctx.arc(packetX, cy, 5, 0, Math.PI * 2);
           ctx.fillStyle = '#ff6b35';
@@ -147,11 +147,16 @@ export function Chapter04Engine() {
         ctx.strokeStyle = 'rgba(0, 212, 170, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(nodes[0].x, nodes[0].y); ctx.lineTo(nodes[1].x, nodes[1].y);
-        ctx.moveTo(nodes[0].x, nodes[0].y); ctx.lineTo(nodes[2].x, nodes[2].y);
-        ctx.moveTo(nodes[1].x, nodes[1].y); ctx.lineTo(nodes[3].x, nodes[3].y);
-        ctx.moveTo(nodes[2].x, nodes[2].y); ctx.lineTo(nodes[3].x, nodes[3].y);
-        ctx.moveTo(nodes[3].x, nodes[3].y); ctx.lineTo(nodes[4].x, nodes[4].y);
+        ctx.moveTo(nodes[0].x, nodes[0].y);
+        ctx.lineTo(nodes[1].x, nodes[1].y);
+        ctx.moveTo(nodes[0].x, nodes[0].y);
+        ctx.lineTo(nodes[2].x, nodes[2].y);
+        ctx.moveTo(nodes[1].x, nodes[1].y);
+        ctx.lineTo(nodes[3].x, nodes[3].y);
+        ctx.moveTo(nodes[2].x, nodes[2].y);
+        ctx.lineTo(nodes[3].x, nodes[3].y);
+        ctx.moveTo(nodes[3].x, nodes[3].y);
+        ctx.lineTo(nodes[4].x, nodes[4].y);
         ctx.stroke();
 
         // Pulsing hop packet
@@ -210,9 +215,12 @@ export function Chapter04Engine() {
           <h2 className="platform-headline" style={{ textAlign: 'center' }}>
             FOUR MOVEMENTS OF ADVERSARIAL VALIDATION
           </h2>
-          <p className="platform-subtext" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
-            From zero-knowledge recon to automated code fixes, each simulation walks
-            the full attacker lifecycle.
+          <p
+            className="platform-subtext"
+            style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}
+          >
+            From zero-knowledge recon to automated code fixes, each simulation walks the full
+            attacker lifecycle.
           </p>
         </div>
 
@@ -233,9 +241,7 @@ export function Chapter04Engine() {
                       <span className="phase-glyph-icon">{phase.numeral}</span>
                       <span>{phase.title}</span>
                     </div>
-                    <span className="badge badge-primary font-mono text-xs">
-                      {phase.badge}
-                    </span>
+                    <span className="badge badge-primary font-mono text-xs">{phase.badge}</span>
                   </div>
 
                   <div className="phase-tagline">“{phase.tagline}”</div>
@@ -248,13 +254,18 @@ export function Chapter04Engine() {
 
           {/* Canvas Morph Visualizer */}
           <div className="engine-canvas-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 12,
+              }}
+            >
               <span className="font-mono text-xs" style={{ color: '#00d4aa' }}>
                 VISUALIZER // {activePhase.title.toUpperCase()}
               </span>
-              <span className="badge badge-info font-mono text-xs">
-                SCRUBBER SYNCED
-              </span>
+              <span className="badge badge-info font-mono text-xs">SCRUBBER SYNCED</span>
             </div>
 
             <canvas

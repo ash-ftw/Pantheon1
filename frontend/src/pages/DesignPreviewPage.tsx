@@ -92,8 +92,8 @@ export const DesignPreviewPage: React.FC = () => {
         </div>
 
         <p className="text-xs text-[var(--secondary-foreground)] leading-relaxed max-w-3xl">
-          Our color palette is minimal, timeless and sophisticated. It reflects our brand personality
-          and ensures consistency across all applications.
+          Our color palette is minimal, timeless and sophisticated. It reflects our brand
+          personality and ensures consistency across all applications.
         </p>
 
         {/* 5-Color Grid from Brand Identity Spec */}
@@ -218,7 +218,9 @@ export const DesignPreviewPage: React.FC = () => {
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--background)] border border-white/10" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--background</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Canvas surface</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">
+              Canvas surface
+            </div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--sidebar)] border border-white/10" />
@@ -233,7 +235,9 @@ export const DesignPreviewPage: React.FC = () => {
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--card-border)] border border-white/10" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--card-border</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Dividers / lines</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">
+              Dividers / lines
+            </div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--primary)] border border-[var(--card-border)] shadow-sm" />
@@ -243,12 +247,16 @@ export const DesignPreviewPage: React.FC = () => {
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--accent)] border border-[var(--card-border)] shadow-sm" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--accent</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Secondary highlight</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">
+              Secondary highlight
+            </div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
             <div className="h-8 rounded mb-2 bg-[var(--danger)] border border-[var(--card-border)] shadow-sm" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--danger</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Critical alert</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">
+              Critical alert
+            </div>
           </div>
         </div>
       </section>

@@ -51,9 +51,7 @@ export function LandingPage() {
   return (
     <div className="landing-root" data-testid="pantheon-landing-page">
       {/* Pre-Loader Screen */}
-      {showPreloader && (
-        <PreLoader onEnter={() => setShowPreloader(false)} />
-      )}
+      {showPreloader && <PreLoader onEnter={() => setShowPreloader(false)} />}
 
       {/* Subtle Background Grid & Glow Overlay */}
       <div className="landing-grid-bg" />
@@ -81,10 +79,7 @@ export function LandingPage() {
       </header>
 
       {/* Persistent Chapter Index (Side Nav) */}
-      <ChapterNav
-        activeChapterId={activeChapterId}
-        onSelectChapter={scrollToChapter}
-      />
+      <ChapterNav activeChapterId={activeChapterId} onSelectChapter={scrollToChapter} />
 
       {/* Main Narrative Chapters */}
       <main>

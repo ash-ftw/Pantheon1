@@ -137,8 +137,10 @@ export function NotificationBell() {
         return <Users size={14} className="notif-cat-icon text-warning" />;
       default:
         if (type === 'error') return <XCircle size={14} className="notif-cat-icon text-danger" />;
-        if (type === 'warning') return <AlertTriangle size={14} className="notif-cat-icon text-warning" />;
-        if (type === 'success') return <CheckCircle2 size={14} className="notif-cat-icon text-success" />;
+        if (type === 'warning')
+          return <AlertTriangle size={14} className="notif-cat-icon text-warning" />;
+        if (type === 'success')
+          return <CheckCircle2 size={14} className="notif-cat-icon text-success" />;
         return <Info size={14} className="notif-cat-icon text-info" />;
     }
   };
@@ -203,9 +205,7 @@ export function NotificationBell() {
                   className={`notification-item ${!item.read ? 'unread' : 'read'}`}
                   onClick={() => handleItemClick(item)}
                 >
-                  <div className="notif-icon-col">
-                    {getCategoryIcon(item.category, item.type)}
-                  </div>
+                  <div className="notif-icon-col">{getCategoryIcon(item.category, item.type)}</div>
                   <div className="notif-content-col">
                     <div className="notif-item-header">
                       <span className="notif-item-title font-display">{item.title}</span>

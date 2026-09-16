@@ -258,7 +258,9 @@
 
 [data-theme='matte-mono'] .sidebar-logo:hover .sidebar-logo-icon,
 .theme-matte-mono .sidebar-logo:hover .sidebar-logo-icon {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 0 1px #333336;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.6),
+    0 0 0 1px #333336;
 }
 
 /* ---- Global Pure Monochrome Utility Overrides for Matte Studio ---- */
@@ -997,5 +999,3 @@ a:hover {
   border-color: #38383c !important;
   color: #ffffff !important;
 }
-
-

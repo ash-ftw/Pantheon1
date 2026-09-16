@@ -286,8 +286,12 @@ async def accept_invitation(
 
 @router.get("/audit-log", response_model=list[AuditLogRead])
 async def get_audit_log(
-    action: str | None = Query(None, description="Filter by audit action type (e.g. auth.login, route.created)"),
-    resource_type: str | None = Query(None, description="Filter by resource type (e.g. app, route, simulation)"),
+    action: str | None = Query(
+        None, description="Filter by audit action type (e.g. auth.login, route.created)"
+    ),
+    resource_type: str | None = Query(
+        None, description="Filter by resource type (e.g. app, route, simulation)"
+    ),
     user_id: uuid.UUID | None = Query(None, description="Filter by acting user ID"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -310,4 +314,3 @@ async def get_audit_log(
     query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)
     result = await db.execute(query)
     return list(result.scalars().all())
-

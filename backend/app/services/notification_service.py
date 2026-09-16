@@ -7,7 +7,6 @@ safety violation warnings, and team collaboration events.
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +26,7 @@ class NotificationService:
         org_id: uuid.UUID,
         title: str,
         message: str,
-        type: str = "info",
+        type: str = "info",  # noqa: A002
         category: str = "general",
         user_id: uuid.UUID | None = None,
         link: str | None = None,
@@ -69,7 +68,9 @@ class NotificationService:
         if unread_only:
             query = query.where(Notification.read.is_(False))
         if user_id:
-            query = query.where((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+            query = query.where(
+                (Notification.user_id == user_id) | (Notification.user_id.is_(None))
+            )
 
         query = query.order_by(Notification.created_at.desc()).limit(limit)
         result = await session.execute(query)
@@ -105,7 +106,7 @@ class NotificationService:
 
         result = await session.execute(stmt)
         await session.flush()
-        return result.rowcount or 0
+        return int(getattr(result, "rowcount", 0) or 0)
 
     async def get_unread_count(
         self, session: AsyncSession, org_id: uuid.UUID, user_id: uuid.UUID | None = None
@@ -115,7 +116,9 @@ class NotificationService:
             Notification.org_id == org_id, Notification.read.is_(False)
         )
         if user_id:
-            query = query.where((Notification.user_id == user_id) | (Notification.user_id.is_(None)))
+            query = query.where(
+                (Notification.user_id == user_id) | (Notification.user_id.is_(None))
+            )
         result = await session.execute(query)
         return result.scalar() or 0
 

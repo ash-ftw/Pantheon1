@@ -558,7 +558,8 @@ export const TeamManagementPage: React.FC = () => {
                 Append-Only Security Audit Log (FR-11.2)
               </CardTitle>
               <CardDescription>
-                Cryptographic immutable log of all tenant mutations, simulation starts, routes, and mitigations
+                Cryptographic immutable log of all tenant mutations, simulation starts, routes, and
+                mitigations
               </CardDescription>
             </div>
 
@@ -616,7 +617,11 @@ export const TeamManagementPage: React.FC = () => {
               filteredAuditLogs.slice(0, 20).map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="font-mono text-xs text-[var(--muted-foreground)]">
-                    {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    {new Date(log.created_at).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-xs font-bold text-[var(--primary)]">
@@ -683,13 +688,17 @@ export const TeamManagementPage: React.FC = () => {
               {selectedAuditLog.resource_id && (
                 <div className="col-span-2">
                   <span className="text-[var(--muted-foreground)]">Resource ID:</span>{' '}
-                  <span className="text-[var(--secondary-foreground)]">{selectedAuditLog.resource_id}</span>
+                  <span className="text-[var(--secondary-foreground)]">
+                    {selectedAuditLog.resource_id}
+                  </span>
                 </div>
               )}
             </div>
 
             <div>
-              <span className="text-[var(--muted-foreground)] block mb-1">Payload Details (JSON):</span>
+              <span className="text-[var(--muted-foreground)] block mb-1">
+                Payload Details (JSON):
+              </span>
               <pre className="bg-[#050709] border border-[var(--card-border)] rounded p-3 text-[11px] text-[var(--foreground)] overflow-x-auto max-h-60">
                 {JSON.stringify(selectedAuditLog.details, null, 2)}
               </pre>

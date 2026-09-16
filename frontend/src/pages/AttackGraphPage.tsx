@@ -633,7 +633,10 @@ export function AttackGraphPage() {
 
         <div className="attack-graph-stat-card danger">
           <div className="attack-graph-stat-label">Compromised Targets</div>
-          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#c8c8c8' : 'var(--danger)' }}>
+          <div
+            className="attack-graph-stat-val"
+            style={{ color: isMatte ? '#c8c8c8' : 'var(--danger)' }}
+          >
             {compromisedCount}
           </div>
         </div>
@@ -647,7 +650,10 @@ export function AttackGraphPage() {
 
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Execution Depth</div>
-          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#ffffff' : 'var(--primary)' }}>
+          <div
+            className="attack-graph-stat-val"
+            style={{ color: isMatte ? '#ffffff' : 'var(--primary)' }}
+          >
             Step {currentStep} / {maxStep}
           </div>
         </div>

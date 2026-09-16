@@ -169,9 +169,9 @@ export function Chapter01Manifesto() {
 
           <blockquote className="manifesto-pull-quote">
             “The average enterprise detects an unauthorized intrusion{' '}
-            <span className="highlight">204 days</span> after the perimeter has broken.
-            Security is not proven by what you configure. It is proven only by what an
-            adversary fails to execute.”
+            <span className="highlight">204 days</span> after the perimeter has broken. Security is
+            not proven by what you configure. It is proven only by what an adversary fails to
+            execute.”
           </blockquote>
 
           <div className="manifesto-mono-subline">
@@ -180,9 +180,9 @@ export function Chapter01Manifesto() {
 
           <div className="manifesto-ciso-card">
             <p className="ciso-quote">
-              “Traditional compliance tools audit your static configs. Pantheon tests what
-              actually breaks when a real adversary lands in your staging cluster.
-              It changed how our engineering teams prioritize remediation.”
+              “Traditional compliance tools audit your static configs. Pantheon tests what actually
+              breaks when a real adversary lands in your staging cluster. It changed how our
+              engineering teams prioritize remediation.”
             </p>
             <div className="ciso-author">
               — VP OF INFRASTRUCTURE & CLOUD SECURITY, GLOBAL FINTECH
