@@ -1,0 +1,38 @@
+# Death Star MTL
+newmtl Material.001
+Ns 60.0
+Ka 1.0 1.0 1.0
+Kd 0.85 0.85 0.85
+Ks 0.2 0.2 0.2
+Ke 0.0 0.0 0.0
+d 1.0
+illum 2
+map_Kd death_star_color.png
+map_Ke death_star_emission.png
+
+newmtl Material.002
+Ns 100.0
+Ka 1.0 1.0 1.0
+Kd 0.8 0.8 0.8
+Ks 0.3 0.3 0.3
+Ke 0.0 0.0 0.0
+d 1.0
+illum 2
+map_Kd superlaser_bump.png
+map_Bump superlaser_bump.png
+
+newmtl Material.003
+Ns 30.0
+Ka 0.2 0.2 0.2
+Kd 0.25 0.25 0.25
+Ks 0.1 0.1 0.1
+d 1.0
+illum 2
+
+newmtl Material.004
+Ns 30.0
+Ka 0.3 0.3 0.3
+Kd 0.35 0.35 0.35
+Ks 0.1 0.1 0.1
+d 1.0
+illum 2

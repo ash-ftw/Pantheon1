@@ -82,8 +82,5 @@ export { ReportingPage } from './ReportingPage';
 // PRD Module 16 — Org & Team Management (Phase 2)
 export { TeamManagementPage } from './TeamManagementPage';
 
-// Phase 1 — Design System Foundation Preview Page
-export { DesignPreviewPage } from './DesignPreviewPage';
-
 // Scroll-Driven Narrative Landing Page
 export { LandingPage } from '../landing';

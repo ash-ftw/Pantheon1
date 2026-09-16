@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
-import { DesignPreviewPage } from '../pages/DesignPreviewPage';
 import { InfrastructureViewPage } from '../pages/InfrastructureViewPage';
 import { TeamManagementPage } from '../pages/TeamManagementPage';
 import { AppOnboardingPage } from '../pages/AppOnboardingPage';
@@ -32,18 +31,6 @@ describe('Pantheon Frontend Phase 0 - Phase 4 Verification Tests', () => {
     expect(screen.getAllByText('Dashboard').length).toBeGreaterThan(0);
     expect(screen.getByText('Phase 14')).toBeInTheDocument();
     expect(screen.getAllByText('Org-level overview').length).toBeGreaterThan(0);
-  });
-
-  it('Phase 1: renders Design System Foundation Preview page', () => {
-    render(
-      <MemoryRouter>
-        <DesignPreviewPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('Design System Foundation')).toBeInTheDocument();
-    expect(screen.getByText('Phase 1 Preview')).toBeInTheDocument();
-    expect(screen.getByText('Button Primitives')).toBeInTheDocument();
   });
 
   it('Phase 2: renders Team Management Page', () => {

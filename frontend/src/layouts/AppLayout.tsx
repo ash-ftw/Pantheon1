@@ -16,7 +16,6 @@ import {
   Play,
   Route,
   Search,
-  Settings,
   Shield,
   ShieldAlert,
   Sparkles,
@@ -37,7 +36,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   // Core
   { to: '/dashboard', label: 'Dashboard', icon: <BarChart3 size={16} />, section: 'Overview' },
-  { to: '/design-preview', label: 'Design System', icon: <Sparkles size={16} /> },
 
   // Deploy
   { to: '/apps', label: 'App Onboarding', icon: <Box size={16} />, section: 'Deploy' },
@@ -67,7 +65,6 @@ const navItems: NavItem[] = [
 
   // Admin
   { to: '/team', label: 'Team', icon: <Users size={16} />, section: 'Admin' },
-  { to: '/design-preview', label: 'Theme & Style', icon: <Settings size={16} /> },
 ];
 
 import { NotificationBell } from '../components/notifications/NotificationBell';

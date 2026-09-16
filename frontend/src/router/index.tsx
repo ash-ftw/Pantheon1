@@ -14,7 +14,6 @@ import {
   CustomScenarioPage,
   DashboardPage,
   DefenceEnginePage,
-  DesignPreviewPage,
   EndpointDiscoveryPage,
   InfrastructurePage,
   LandingPage,
@@ -45,9 +44,6 @@ export const router = createBrowserRouter([
     children: [
       // Module 1 — Dashboard (Phase 14)
       { path: 'dashboard', element: <DashboardPage /> },
-
-      // Phase 1 — Design Preview Route
-      { path: 'design-preview', element: <DesignPreviewPage /> },
 
       // Module 2 — App Onboarding (Phase 4)
       { path: 'apps', element: <AppOnboardingPage /> },
