@@ -16,6 +16,7 @@ import {
   Play,
   Route,
   Search,
+  Settings,
   Shield,
   ShieldAlert,
   Sparkles,
@@ -35,7 +36,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   // Core
-  { to: '/', label: 'Dashboard', icon: <BarChart3 size={16} />, section: 'Overview' },
+  { to: '/dashboard', label: 'Dashboard', icon: <BarChart3 size={16} />, section: 'Overview' },
   { to: '/design-preview', label: 'Design System', icon: <Sparkles size={16} /> },
 
   // Deploy
@@ -66,13 +67,17 @@ const navItems: NavItem[] = [
 
   // Admin
   { to: '/team', label: 'Team', icon: <Users size={16} />, section: 'Admin' },
+  { to: '/design-preview', label: 'Theme & Style', icon: <Settings size={16} /> },
 ];
+
+import { NotificationBell } from '../components/notifications/NotificationBell';
+import { ThemeSwitcher } from '../components/ui/ThemeSwitcher';
 
 export function AppLayout() {
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <Link to="/" className="sidebar-logo">
+        <Link to="/dashboard" className="sidebar-logo">
           <div className="sidebar-logo-icon">
             <img src="/logo.svg" alt="Pantheon Logo" className="sidebar-logo-img" />
           </div>
@@ -85,7 +90,7 @@ export function AppLayout() {
               {item.section && <div className="sidebar-section">{item.section}</div>}
               <NavLink
                 to={item.to}
-                end={item.to === '/'}
+                end={item.to === '/dashboard'}
                 className={({ isActive }) =>
                   `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`
                 }
@@ -98,13 +103,36 @@ export function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <span className="badge badge-primary">Phase 4 (Ingestion)</span>
+          <span className="badge badge-primary font-mono text-xs">v1.0 · All Modules Active</span>
         </div>
       </aside>
 
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <div className="main-wrapper">
+        <header className="top-navbar">
+          <div className="top-navbar-left">
+            <div className="cluster-status-indicator">
+              <span className="status-dot online" />
+              <span className="status-text font-mono">
+                Tenant Cluster: <strong>Isolated</strong> · Default-Deny Active
+              </span>
+            </div>
+          </div>
+
+          <div className="top-navbar-right">
+            <ThemeSwitcher />
+            <NotificationBell />
+            <div className="user-profile-badge font-mono">
+              <span className="user-role-tag">ADMIN</span>
+              <span className="user-email-text">admin@pantheon.cyber</span>
+            </div>
+          </div>
+        </header>
+
+        <main className="main-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
+

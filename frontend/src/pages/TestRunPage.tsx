@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import { useThemeStore } from '../stores/themeStore';
 import './TestRunPage.css';
 
 /* ------------------------------------------------------------------ */
@@ -99,6 +100,7 @@ const API_BASE = '/api';
 
 export function TestRunPage() {
   const token = useAuthStore((s) => s.token);
+  const isMatte = useThemeStore((s) => s.theme === 'matte-mono');
 
   // Data states
   const [testRuns, setTestRuns] = useState<TestRunRecord[]>([]);
@@ -623,7 +625,7 @@ export function TestRunPage() {
             <div className="progress-labels">
               <span>
                 Step {activeRun.current_step} of {activeRun.total_steps}:{' '}
-                <strong style={{ color: '#00d4aa' }}>
+                <strong style={{ color: 'var(--foreground)' }}>
                   {activeRun.current_step_name || 'In progress'}
                 </strong>
               </span>
@@ -648,19 +650,19 @@ export function TestRunPage() {
               <div className="metric-pill-label">Requests Sent</div>
             </div>
             <div className="metric-pill">
-              <div className="metric-pill-val" style={{ color: '#10b981' }}>
+              <div className="metric-pill-val" style={{ color: isMatte ? '#ffffff' : '#10b981' }}>
                 {activeRun.metrics?.successful_requests || 0}
               </div>
               <div className="metric-pill-label">Successful (&lt;400)</div>
             </div>
             <div className="metric-pill">
-              <div className="metric-pill-val" style={{ color: '#f59e0b' }}>
+              <div className="metric-pill-val" style={{ color: isMatte ? '#c8c8c8' : '#f59e0b' }}>
                 {activeRun.metrics?.blocked_requests || 0}
               </div>
               <div className="metric-pill-label">Defended / Blocked</div>
             </div>
             <div className="metric-pill">
-              <div className="metric-pill-val" style={{ color: '#3b82f6' }}>
+              <div className="metric-pill-val" style={{ color: isMatte ? '#eaeaea' : '#3b82f6' }}>
                 {activeRun.metrics?.avg_latency_ms || 0} ms
               </div>
               <div className="metric-pill-label">Avg Latency</div>
@@ -670,7 +672,7 @@ export function TestRunPage() {
               <div className="metric-pill-label">Target RPS</div>
             </div>
             <div className="metric-pill">
-              <div className="metric-pill-val" style={{ color: '#ef4444' }}>
+              <div className="metric-pill-val" style={{ color: isMatte ? '#ffffff' : '#ef4444' }}>
                 {activeRun.findings?.length || 0}
               </div>
               <div className="metric-pill-label">Findings</div>
@@ -869,7 +871,7 @@ export function TestRunPage() {
           >
             <div className="modal-header">
               <div className="flex items-center gap-2">
-                <Flame size={20} color="#00d4aa" />
+                <Flame size={20} color={isMatte ? '#ffffff' : '#00d4aa'} />
                 <h2 className="modal-title font-display">Launch Attack Simulation</h2>
               </div>
               <button
@@ -936,7 +938,7 @@ export function TestRunPage() {
 
               {/* Simulation Guard Pre-check Indicator */}
               <div className="modal-safety-notice">
-                <Shield size={20} color="#00d4aa" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <Shield size={20} color={isMatte ? '#ffffff' : '#00d4aa'} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span>
                   <strong>Simulation Guard Pre-Check:</strong> Target will be dynamically validated
                   against Safety Policies (PRD §7.6) and destination-locked before execution.

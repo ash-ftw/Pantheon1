@@ -131,7 +131,7 @@ async def explain_recommendation(
         f"Category: {rec.category}\n"
         f"Mitigation Type: {rec.mitigation_type}\n"
         f"Finding Severity: {finding.severity if finding else 'Unknown'}\n"
-        f"Finding Details: {finding.details if finding else 'N/A'}\n"
+        f"Finding Details: {finding.description if finding else 'N/A'}\n"
         f"Current Code Guidance:\n{rec.code_guidance}\n\n"
         f"Provide a clear, professional breakdown: 1. Attack Mechanics, 2. Architectural Impact, 3. Immediate Actionable Fix."
     )

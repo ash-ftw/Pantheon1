@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import { useThemeStore } from '../stores/themeStore';
 import './AttackGraphPage.css';
 
 /* ------------------------------------------------------------------ */
@@ -115,19 +116,20 @@ const API_BASE = '/api';
 
 function AttackNodeComponent({ data }: NodeProps<AttackNodeType>) {
   const { label, nodeType, status, stepDiscovered, isCurrentStep, metadata } = data;
+  const isMatte = useThemeStore((s) => s.theme === 'matte-mono');
 
   const getNodeIcon = () => {
     switch (nodeType.toLowerCase()) {
       case 'attacker':
-        return <Flame size={15} color="#00d4aa" />;
+        return <Flame size={15} color={isMatte ? '#ffffff' : '#00d4aa'} />;
       case 'route':
-        return <Network size={15} color="#00d4aa" />;
+        return <Network size={15} color={isMatte ? '#c8c8c8' : '#00d4aa'} />;
       case 'database':
-        return <Database size={15} color="#ef4444" />;
+        return <Database size={15} color={isMatte ? '#eaeaea' : '#ef4444'} />;
       case 'service':
-        return <Server size={15} color="#fbbf24" />;
+        return <Server size={15} color={isMatte ? '#a8a8b0' : '#fbbf24'} />;
       default:
-        return <Globe size={15} color="#94a3b8" />;
+        return <Globe size={15} color={isMatte ? '#8a8a93' : '#94a3b8'} />;
     }
   };
 
@@ -178,6 +180,7 @@ function AttackNodeComponent({ data }: NodeProps<AttackNodeType>) {
 
 function AttackEdgeComponent(props: EdgeProps<AttackEdgeType>) {
   const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data } = props;
+  const isMatte = useThemeStore((s) => s.theme === 'matte-mono');
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -192,17 +195,17 @@ function AttackEdgeComponent(props: EdgeProps<AttackEdgeType>) {
   const label = data?.label;
   const isCurrentStep = data?.isCurrentStep ?? false;
 
-  let strokeColor = '#00d4aa';
+  let strokeColor = isMatte ? '#ffffff' : '#00d4aa';
   let strokeDasharray = 'none';
 
   if (status === 'compromised') {
-    strokeColor = '#ef4444';
+    strokeColor = isMatte ? '#8a8a93' : '#ef4444';
     strokeDasharray = '6 4';
   } else if (status === 'blocked') {
-    strokeColor = '#f59e0b';
+    strokeColor = isMatte ? '#6e6e73' : '#f59e0b';
     strokeDasharray = '6 4';
   } else if (status === 'probing') {
-    strokeColor = '#00d4aa';
+    strokeColor = isMatte ? '#c8c8c8' : '#00d4aa';
     strokeDasharray = '4 4';
   }
 
@@ -231,13 +234,13 @@ function AttackEdgeComponent(props: EdgeProps<AttackEdgeType>) {
           <div
             className={`attack-edge-label ${status} ${isCurrentStep ? 'current-step' : ''}`}
             style={{
-              background: '#090d14',
-              border: `1px solid ${strokeColor}`,
+              background: isMatte ? '#141416' : '#090d14',
+              border: `1px solid ${isMatte ? '#2e2e32' : strokeColor}`,
               borderRadius: '3px',
               padding: '2px 8px',
               fontSize: '10px',
               fontFamily: 'var(--font-mono)',
-              color: '#e2e8f0',
+              color: isMatte ? '#eaeaea' : '#e2e8f0',
               textAlign: 'center',
               textOverflow: 'ellipsis',
               overflow: 'hidden',
@@ -278,6 +281,7 @@ function AttackFlowCanvas({
   isRunning: boolean;
 }) {
   const { fitView } = useReactFlow();
+  const isMatte = useThemeStore((s) => s.theme === 'matte-mono');
 
   return (
     <div className="attack-flow-canvas-container">
@@ -314,7 +318,7 @@ function AttackFlowCanvas({
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#141e2e" gap={24} size={1.5} />
+        <Background color={isMatte ? '#232323' : '#141e2e'} gap={24} size={1.5} />
         <Controls />
       </ReactFlow>
     </div>
@@ -327,6 +331,7 @@ function AttackFlowCanvas({
 
 export function AttackGraphPage() {
   const token = useAuthStore((s) => s.token);
+  const isMatte = useThemeStore((s) => s.theme === 'matte-mono');
 
   // Runs and selection state
   const [runs, setRuns] = useState<TestRunSummary[]>([]);
@@ -621,28 +626,28 @@ export function AttackGraphPage() {
 
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Active Attack Paths</div>
-          <div className="attack-graph-stat-val" style={{ color: '#00d4aa' }}>
+          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#ffffff' : '#00d4aa' }}>
             {displayEdges.length} / {rawEdges.length}
           </div>
         </div>
 
         <div className="attack-graph-stat-card danger">
           <div className="attack-graph-stat-label">Compromised Targets</div>
-          <div className="attack-graph-stat-val" style={{ color: 'var(--danger)' }}>
+          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#c8c8c8' : 'var(--danger)' }}>
             {compromisedCount}
           </div>
         </div>
 
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Defended / Blocked</div>
-          <div className="attack-graph-stat-val" style={{ color: '#f59e0b' }}>
+          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#a8a8b0' : '#f59e0b' }}>
             {blockedCount}
           </div>
         </div>
 
         <div className="attack-graph-stat-card">
           <div className="attack-graph-stat-label">Execution Depth</div>
-          <div className="attack-graph-stat-val" style={{ color: 'var(--primary)' }}>
+          <div className="attack-graph-stat-val" style={{ color: isMatte ? '#ffffff' : 'var(--primary)' }}>
             Step {currentStep} / {maxStep}
           </div>
         </div>
@@ -779,7 +784,7 @@ export function AttackGraphPage() {
           <aside className="node-inspector-sidebar" id="node-inspector">
             <div className="node-inspector-header">
               <div className="flex items-center gap-2">
-                <Shield size={16} color="#00d4aa" />
+                <Shield size={16} color={isMatte ? '#ffffff' : '#00d4aa'} />
                 <span className="node-inspector-title">Forensic Node Inspector</span>
               </div>
               <button

@@ -388,8 +388,8 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
-                backgroundColor: '#00d4aa',
-                boxShadow: '0 0 10px #00d4aa',
+                backgroundColor: 'var(--primary)',
+                boxShadow: '0 0 10px var(--primary)',
               }}
             />
             <span style={{ fontWeight: 700, fontSize: 16, color: '#ffffff' }}>
@@ -444,7 +444,7 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '8px',
               padding: '6px 10px',
-              color: '#00d4aa',
+              color: 'var(--primary)',
               fontSize: '12px',
               fontFamily: 'monospace',
             }}
@@ -468,7 +468,7 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '8px',
               padding: '6px 14px',
-              color: '#00d4aa',
+              color: 'var(--primary)',
               fontSize: '13px',
               fontFamily: 'monospace',
             }}

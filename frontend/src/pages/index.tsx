@@ -4,7 +4,7 @@
  * implementation in the relevant phase.
  */
 
-import { BarChart3, Box, type LucideProps } from 'lucide-react';
+import { Box, type LucideProps } from 'lucide-react';
 
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 
@@ -30,12 +30,7 @@ function makePlaceholder(
 }
 
 // PRD Module 1 — Dashboard (Phase 14)
-export const DashboardPage = makePlaceholder(
-  'Dashboard',
-  'Phase 14',
-  'Org-level overview: test run history, findings trends, improvement over time.',
-  BarChart3,
-);
+export { DashboardPage } from './DashboardPage';
 
 // PRD Module 2 — App Onboarding (Phase 4)
 export { AppOnboardingPage } from './AppOnboardingPage';
@@ -89,3 +84,7 @@ export { TeamManagementPage } from './TeamManagementPage';
 
 // Phase 1 — Design System Foundation Preview Page
 export { DesignPreviewPage } from './DesignPreviewPage';
+
+// Scroll-Driven Narrative Landing Page
+export { LandingPage } from '../landing';
+

@@ -35,9 +35,12 @@ import {
   TableHeader,
   TableRow,
   Textarea,
+  ThemeSwitcher,
 } from '../components/ui';
+import { useThemeStore } from '../stores/themeStore';
 
 export const DesignPreviewPage: React.FC = () => {
+  const { theme } = useThemeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [btnLoading, setBtnLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -51,66 +54,201 @@ export const DesignPreviewPage: React.FC = () => {
   return (
     <div className="page-container animate-fade-in space-y-8">
       {/* Page Header */}
-      <div className="page-header border-b border-[var(--card-border)] pb-6 flex items-center justify-between">
+      <div className="page-header border-b border-[var(--card-border)] pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="page-title">Design System Foundation</h1>
             <Badge variant="primary">Phase 1 Preview</Badge>
+            <Badge variant="accent">
+              {theme === 'matte-mono' ? 'Matte Studio' : 'Cyber Obsidian'}
+            </Badge>
           </div>
           <p className="page-subtitle">
-            Token specs, shared primitives, typography hierarchy, and severity color mappings.
+            Token specs, brand identity guidelines, shared primitives, and dark theme variations.
           </p>
         </div>
-        <Button
-          variant="primary"
-          iconLeft={<Sparkles size={14} />}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Test Interactive Modal
-        </Button>
+        <div className="flex items-center gap-3">
+          <ThemeSwitcher />
+          <Button
+            variant="primary"
+            iconLeft={<Sparkles size={14} />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Test Interactive Modal
+          </Button>
+        </div>
       </div>
 
-      {/* 1. Color Tokens Specimen */}
+      {/* 1. Brand Identity Guidelines Palette (Minimal & Sophisticated) */}
       <section className="space-y-4">
-        <h2 className="font-display font-semibold text-sm uppercase tracking-wider text-[var(--foreground)] flex items-center gap-2">
-          <Layers size={16} className="text-[var(--primary)]" />
-          Color Palette & Tokens
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-semibold text-sm uppercase tracking-wider text-[var(--foreground)] flex items-center gap-2">
+            <Layers size={16} className="text-[var(--primary)]" />
+            Brand Identity Guidelines — Monochrome Color Palette
+          </h2>
+          <span className="font-mono text-[10px] text-[var(--muted-foreground)]">
+            PACKAGING DESIGN STUDIO · CREATIVE WISE
+          </span>
+        </div>
+
+        <p className="text-xs text-[var(--secondary-foreground)] leading-relaxed max-w-3xl">
+          Our color palette is minimal, timeless and sophisticated. It reflects our brand personality
+          and ensures consistency across all applications.
+        </p>
+
+        {/* 5-Color Grid from Brand Identity Spec */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          {/* Matte Black */}
+          <div className="p-4 rounded border border-[var(--card-border)] bg-[var(--card)] flex flex-col justify-between">
+            <div>
+              <div
+                className="h-16 rounded mb-3 border border-white/10 shadow-inner"
+                style={{ backgroundColor: '#0F0F10' }}
+              />
+              <div className="font-display font-bold text-sm tracking-wider text-[var(--foreground)]">
+                MATTE BLACK
+              </div>
+              <div className="font-mono text-xs text-[var(--secondary-foreground)] mt-0.5">
+                #0F0F10
+              </div>
+            </div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] space-y-0.5 pt-3 border-t border-[var(--card-border)] mt-3">
+              <div>RGB 15 15 16</div>
+              <div>CMYK 60 60 60 100</div>
+              <div className="text-[var(--foreground)]">PANTONE Black 6 C</div>
+            </div>
+          </div>
+
+          {/* Charcoal */}
+          <div className="p-4 rounded border border-[var(--card-border)] bg-[var(--card)] flex flex-col justify-between">
+            <div>
+              <div
+                className="h-16 rounded mb-3 border border-white/10 shadow-inner"
+                style={{ backgroundColor: '#232323' }}
+              />
+              <div className="font-display font-bold text-sm tracking-wider text-[var(--foreground)]">
+                CHARCOAL
+              </div>
+              <div className="font-mono text-xs text-[var(--secondary-foreground)] mt-0.5">
+                #232323
+              </div>
+            </div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] space-y-0.5 pt-3 border-t border-[var(--card-border)] mt-3">
+              <div>RGB 35 35 35</div>
+              <div>CMYK 0 0 0 85</div>
+              <div className="text-[var(--foreground)]">PANTONE 432 C</div>
+            </div>
+          </div>
+
+          {/* Silver */}
+          <div className="p-4 rounded border border-[var(--card-border)] bg-[var(--card)] flex flex-col justify-between">
+            <div>
+              <div
+                className="h-16 rounded mb-3 border border-black/20 shadow-inner"
+                style={{ backgroundColor: '#C8C8C8' }}
+              />
+              <div className="font-display font-bold text-sm tracking-wider text-[var(--foreground)]">
+                SILVER
+              </div>
+              <div className="font-mono text-xs text-[var(--secondary-foreground)] mt-0.5">
+                #C8C8C8
+              </div>
+            </div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] space-y-0.5 pt-3 border-t border-[var(--card-border)] mt-3">
+              <div>RGB 200 200 200</div>
+              <div>CMYK 0 0 0 20</div>
+              <div className="text-[var(--foreground)]">PANTONE 877 C</div>
+            </div>
+          </div>
+
+          {/* Light Gray */}
+          <div className="p-4 rounded border border-[var(--card-border)] bg-[var(--card)] flex flex-col justify-between">
+            <div>
+              <div
+                className="h-16 rounded mb-3 border border-black/20 shadow-inner"
+                style={{ backgroundColor: '#EAEAEA' }}
+              />
+              <div className="font-display font-bold text-sm tracking-wider text-[var(--foreground)]">
+                LIGHT GRAY
+              </div>
+              <div className="font-mono text-xs text-[var(--secondary-foreground)] mt-0.5">
+                #EAEAEA
+              </div>
+            </div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] space-y-0.5 pt-3 border-t border-[var(--card-border)] mt-3">
+              <div>RGB 234 234 234</div>
+              <div>CMYK 0 0 0 8</div>
+              <div className="text-[var(--muted-foreground)] opacity-50">—</div>
+            </div>
+          </div>
+
+          {/* Pure White */}
+          <div className="p-4 rounded border border-[var(--card-border)] bg-[var(--card)] flex flex-col justify-between">
+            <div>
+              <div
+                className="h-16 rounded mb-3 border border-black/20 shadow-inner"
+                style={{ backgroundColor: '#FFFFFF' }}
+              />
+              <div className="font-display font-bold text-sm tracking-wider text-[var(--foreground)]">
+                PURE WHITE
+              </div>
+              <div className="font-mono text-xs text-[var(--secondary-foreground)] mt-0.5">
+                #FFFFFF
+              </div>
+            </div>
+            <div className="font-mono text-[10px] text-[var(--muted-foreground)] space-y-0.5 pt-3 border-t border-[var(--card-border)] mt-3">
+              <div>RGB 255 255 255</div>
+              <div>CMYK 0 0 0 0</div>
+              <div className="text-[var(--muted-foreground)] opacity-50">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Active Theme Live Tokens */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-semibold text-sm uppercase tracking-wider text-[var(--foreground)] flex items-center gap-2">
+            <Layers size={16} className="text-[var(--primary)]" />
+            Active Theme Tokens (Dynamically Reacts to Theme Toggle)
+          </h2>
+          <ThemeSwitcher variant="compact" />
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--background)]">
-            <div className="h-8 rounded mb-2 bg-[#07090d] border border-white/10" />
+          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
+            <div className="h-8 rounded mb-2 bg-[var(--background)] border border-white/10" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--background</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#07090d</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Canvas surface</div>
           </div>
-          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--sidebar)]">
-            <div className="h-8 rounded mb-2 bg-[#050709] border border-white/10" />
+          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
+            <div className="h-8 rounded mb-2 bg-[var(--sidebar)] border border-white/10" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--sidebar</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#050709</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Nav sidebar</div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
-            <div className="h-8 rounded mb-2 bg-[#0d1117] border border-white/10" />
+            <div className="h-8 rounded mb-2 bg-[var(--card)] border border-[var(--card-border)]" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--card</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#0d1117</div>
-          </div>
-          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--secondary)]">
-            <div className="h-8 rounded mb-2 bg-[#0f1923] border border-white/10" />
-            <div className="font-mono text-[10px] text-[var(--foreground)]">--secondary</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#0f1923</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Elevated card</div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
-            <div className="h-8 rounded mb-2 bg-[var(--primary)]" />
+            <div className="h-8 rounded mb-2 bg-[var(--card-border)] border border-white/10" />
+            <div className="font-mono text-[10px] text-[var(--foreground)]">--card-border</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Dividers / lines</div>
+          </div>
+          <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
+            <div className="h-8 rounded mb-2 bg-[var(--primary)] border border-[var(--card-border)] shadow-sm" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--primary</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#00d4aa</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Key action</div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
-            <div className="h-8 rounded mb-2 bg-[var(--accent)]" />
+            <div className="h-8 rounded mb-2 bg-[var(--accent)] border border-[var(--card-border)] shadow-sm" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--accent</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#ff6b35</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Secondary highlight</div>
           </div>
           <div className="p-3 rounded border border-[var(--card-border)] bg-[var(--card)]">
-            <div className="h-8 rounded mb-2 bg-[var(--danger)]" />
+            <div className="h-8 rounded mb-2 bg-[var(--danger)] border border-[var(--card-border)] shadow-sm" />
             <div className="font-mono text-[10px] text-[var(--foreground)]">--danger</div>
-            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">#ef4444</div>
+            <div className="font-mono text-[9px] text-[var(--muted-foreground)]">Critical alert</div>
           </div>
         </div>
       </section>

@@ -718,3 +718,67 @@
   gap: 10px;
   margin-top: 4px;
 }
+
+/* ============================================================
+   TestRunPage Matte Studio Pure Monochrome Overrides
+   Only black, white, and grey tones. Zero vibrant colors.
+   ============================================================ */
+[data-theme='matte-mono'] .active-run-card,
+.theme-matte-mono .active-run-card {
+  background: #141416 !important;
+  border: 1px solid #232323 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme='matte-mono'] .progress-bar-fill,
+.theme-matte-mono .progress-bar-fill {
+  background: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .metric-pill-val,
+.theme-matte-mono .metric-pill-val {
+  color: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .dot-red,
+.theme-matte-mono .dot-red {
+  background: #55555c !important;
+}
+
+[data-theme='matte-mono'] .dot-yellow,
+.theme-matte-mono .dot-yellow {
+  background: #888890 !important;
+}
+
+[data-theme='matte-mono'] .dot-green,
+.theme-matte-mono .dot-green {
+  background: #bbbbbe !important;
+}
+
+[data-theme='matte-mono'] .modal-card,
+.theme-matte-mono .modal-card {
+  background-color: #141416 !important;
+  border-color: #232323 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9) !important;
+}
+
+[data-theme='matte-mono'] .modal-header,
+.theme-matte-mono .modal-header {
+  background: #0f0f10 !important;
+  border-bottom: 1px solid #232323 !important;
+}
+
+[data-theme='matte-mono'] .modal-safety-notice,
+.theme-matte-mono .modal-safety-notice {
+  background: #1a1a1c !important;
+  border-color: #28282b !important;
+  color: #eaeaea !important;
+}
+
+[data-theme='matte-mono'] .modal-body select:focus,
+[data-theme='matte-mono'] .modal-body input:focus,
+.theme-matte-mono .modal-body select:focus,
+.theme-matte-mono .modal-body input:focus {
+  border-color: #38383c !important;
+  box-shadow: 0 0 0 2px #232323 !important;
+}

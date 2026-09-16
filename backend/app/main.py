@@ -22,8 +22,10 @@ from app.routers import (
     attack_graph,
     auth,
     defence,
+    dashboard,
     discovery,
     infrastructure,
+    notifications,
     observability,
     orgs,
     reports,
@@ -101,6 +103,8 @@ app.include_router(defence.router)
 app.include_router(observability.router)
 app.include_router(ai.router)
 app.include_router(reports.router)
+app.include_router(dashboard.router)
+app.include_router(notifications.router)
 
 
 @app.get("/health", tags=["system"])

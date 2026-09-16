@@ -17,6 +17,7 @@ import {
   DesignPreviewPage,
   EndpointDiscoveryPage,
   InfrastructurePage,
+  LandingPage,
   ObservabilityPage,
   ReportingPage,
   RouteBrokerPage,
@@ -28,15 +29,25 @@ import {
 } from '../pages';
 
 export const router = createBrowserRouter([
+  // Scroll-Driven Narrative Landing Page
   {
     path: '/',
+    element: <LandingPage />,
+  },
+  {
+    path: '/landing',
+    element: <LandingPage />,
+  },
+
+  // Operational Platform App
+  {
     element: <AppLayout />,
     children: [
+      // Module 1 — Dashboard (Phase 14)
+      { path: 'dashboard', element: <DashboardPage /> },
+
       // Phase 1 — Design Preview Route
       { path: 'design-preview', element: <DesignPreviewPage /> },
-
-      // Module 1 — Dashboard (Phase 14)
-      { index: true, element: <DashboardPage /> },
 
       // Module 2 — App Onboarding (Phase 4)
       { path: 'apps', element: <AppOnboardingPage /> },

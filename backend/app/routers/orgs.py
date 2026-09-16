@@ -2,7 +2,7 @@ import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -286,17 +286,28 @@ async def accept_invitation(
 
 @router.get("/audit-log", response_model=list[AuditLogRead])
 async def get_audit_log(
+    action: str | None = Query(None, description="Filter by audit action type (e.g. auth.login, route.created)"),
+    resource_type: str | None = Query(None, description="Filter by resource type (e.g. app, route, simulation)"),
+    user_id: uuid.UUID | None = Query(None, description="Filter by acting user ID"),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> list[AuditLog]:
-    """Get append-only security audit log entries for current org — PRD §7.1."""
+    """Get append-only security audit log entries for current org — PRD §7.1 / FR-11.2."""
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
 
-    result = await db.execute(
-        select(AuditLog)
-        .where(AuditLog.org_id == current_user.org_id)
-        .order_by(AuditLog.created_at.desc())
-        .limit(100)
-    )
+    query = select(AuditLog).where(AuditLog.org_id == current_user.org_id)
+
+    if action:
+        query = query.where(AuditLog.action == action)
+    if resource_type:
+        query = query.where(AuditLog.resource_type == resource_type)
+    if user_id:
+        query = query.where(AuditLog.user_id == user_id)
+
+    query = query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(query)
     return list(result.scalars().all())
+

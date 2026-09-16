@@ -605,3 +605,41 @@ class Report(Base):
     org: Mapped["Org"] = relationship("Org")
     test_run: Mapped["TestRun | None"] = relationship("TestRun")
     app: Mapped["App | None"] = relationship("App")
+
+
+class Notification(Base):
+    """Notification record — PRD Module 1 (Phase 14).
+
+    Alerts and status notifications for build completion, test run completion,
+    security threshold alerts, and team events.
+    """
+
+    __tablename__ = "notifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    org_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[str] = mapped_column(String, nullable=False)
+    type: Mapped[str] = mapped_column(
+        String(50), default="info", nullable=False
+    )  # info, success, warning, error
+    category: Mapped[str] = mapped_column(
+        String(50), default="general", nullable=False
+    )  # build, test_run, invitation, defence, safety
+    read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    link: Mapped[str | None] = mapped_column(String(512), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False, index=True
+    )
+
+    # Relationships
+    org: Mapped["Org"] = relationship("Org")
+    user: Mapped["User | None"] = relationship("User")
+

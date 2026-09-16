@@ -9,3 +9,5 @@ export * from './Select';
 export * from './SeverityBadge';
 export * from './Table';
 export * from './Textarea';
+export * from './ThemeSwitcher';
+export * from './ThemeSettingsModal';

@@ -390,3 +390,59 @@ class ReportSummaryRead(BaseModel):
     created_at: datetime
     has_pdf: bool = False
     has_csv: bool = False
+
+
+# --- Phase 14: Dashboard, Demo Apps & Notifications Schemas (PRD Module 1) ---
+class DashboardStatsRead(BaseModel):
+    total_apps: int
+    active_deployments: int
+    total_test_runs: int
+    completed_test_runs: int
+    active_test_runs: int
+    total_findings: int
+    findings_by_severity: dict[str, int]
+    open_findings_count: int
+    resolved_findings_count: int
+    resilience_score: float
+    mitigation_stats: dict[str, Any]
+    findings_timeline: list[dict[str, Any]]
+    recent_test_runs: list[dict[str, Any]]
+    cluster_status: dict[str, Any]
+    recent_activity: list[dict[str, Any]]
+
+
+class DemoAppRead(BaseModel):
+    id: str
+    name: str
+    description: str
+    category: str
+    vulnerabilities: list[str]
+    architecture: str
+    git_url: str
+    estimated_deploy_time: str
+    tags: list[str]
+    highlights: list[str] = Field(default_factory=list)
+
+
+class NotificationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    user_id: uuid.UUID | None = None
+    title: str
+    message: str
+    type: str
+    category: str
+    read: bool
+    link: str | None = None
+    created_at: datetime
+
+
+class NotificationCreate(BaseModel):
+    title: str
+    message: str
+    type: str = "info"
+    category: str = "general"
+    link: str | None = None
+
