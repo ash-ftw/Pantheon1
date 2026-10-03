@@ -82,5 +82,8 @@ export { ReportingPage } from './ReportingPage';
 // PRD Module 16 — Org & Team Management (Phase 2)
 export { TeamManagementPage } from './TeamManagementPage';
 
+// Authentication & Registration Page
+export { AuthPage } from './AuthPage';
+
 // Scroll-Driven Narrative Landing Page
 export { LandingPage } from '../landing';

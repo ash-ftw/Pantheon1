@@ -84,7 +84,7 @@ async def update_member_role(
     db: AsyncSession = Depends(get_db_session),
 ) -> OrgMemberRead:
     """Update team member role (Admin role required)."""
-    if current_user.role != "admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
 
     if not current_user.org_id:
@@ -135,7 +135,7 @@ async def remove_member(
     db: AsyncSession = Depends(get_db_session),
 ) -> None:
     """Remove member from org (Admin role required)."""
-    if current_user.role != "admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")
@@ -174,7 +174,7 @@ async def invite_member(
     db: AsyncSession = Depends(get_db_session),
 ) -> Invitation:
     """Invite teammate by email — PRD §7.1."""
-    if current_user.role != "admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     if not current_user.org_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No org found")

@@ -25,6 +25,7 @@ import {
   TargetAnalysisPage,
   TeamManagementPage,
   TestRunPage,
+  AuthPage,
 } from '../pages';
 
 export const router = createBrowserRouter([
@@ -36,6 +37,16 @@ export const router = createBrowserRouter([
   {
     path: '/landing',
     element: <LandingPage />,
+  },
+
+  // Standalone Auth & Registration Pages
+  {
+    path: '/login',
+    element: <AuthPage />,
+  },
+  {
+    path: '/register',
+    element: <AuthPage initialMode="register" />,
   },
 
   // Operational Platform App

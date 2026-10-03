@@ -2,6 +2,7 @@ import { motion, useScroll, useSpring } from "motion/react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight, CheckCircle2, ExternalLink, Shield } from "lucide-react";
+import { useAuthStore } from "../stores/authStore";
 import { SceneMount } from "./three/SceneMount";
 import { Reveal } from "./Reveal";
 import "./LandingPage.css";
@@ -503,11 +504,19 @@ export function LandingPage() {
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [email, setEmail] = useState("");
 
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
   const handleAccessRequest = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
       setEmailSubmitted(true);
     }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('pantheon_token');
+    logout();
   };
 
   return (
@@ -548,17 +557,32 @@ export function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <div className="hidden lg:flex landing-status-pill">
-              <span className="landing-status-dot" />
-              <span>PLATFORM STATUS: OPERATIONAL</span>
-            </div>
-            <Link
-              to="/dashboard"
-              className="btn-enter-console"
-              data-testid="enter-console-btn"
-            >
-              Enter Console →
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/dashboard"
+                  className="btn-enter-console"
+                  data-testid="enter-console-btn"
+                >
+                  ENTER CONSOLE →
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="font-mono text-[11px] uppercase tracking-wider text-zinc-400 hover:text-red-400 transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/dashboard"
+                className="btn-enter-console"
+                data-testid="enter-console-btn"
+              >
+                ENTER CONSOLE →
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -730,6 +754,16 @@ export function LandingPage() {
                 <li>
                   <Link to="/team" className="footer-nav-link">
                     Team & Organizations
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/login" className="footer-nav-link">
+                    Sign In
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/register" className="footer-nav-link">
+                    Register
                   </Link>
                 </li>
               </ul>

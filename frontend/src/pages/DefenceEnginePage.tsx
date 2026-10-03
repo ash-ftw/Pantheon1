@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useThemeStore } from '../stores/themeStore';
 import './DefenceEnginePage.css';
 
 export interface DefenceRecommendation {
@@ -59,13 +60,23 @@ export function DefenceEnginePage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [loading, setLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
-  const [selectedRec, setSelectedRec] = useState<DefenceRecommendation | null>(null);
+  const [selectedRecId, setSelectedRecId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{
     text: string;
     type: 'success' | 'error';
   } | null>(null);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
+
+  const theme = useThemeStore((s) => s.theme);
+  const isMatte = theme === 'matte-mono';
+
+  // Derived selected recommendation - stable and never triggers re-fetching
+  const selectedRec = useMemo(() => {
+    if (!selectedRecId) return null;
+    return recommendations.find((r) => r.id === selectedRecId) || null;
+  }, [recommendations, selectedRecId]);
 
   // Fetch Test Runs
   const fetchRuns = useCallback(async () => {
@@ -80,36 +91,43 @@ export function DefenceEnginePage() {
     }
   }, []);
 
-  // Fetch Recommendations
-  const fetchRecommendations = useCallback(async () => {
-    try {
-      setLoading(true);
-      const url =
-        selectedRunId && selectedRunId !== 'all'
-          ? `/api/defence/recommendations?test_run_id=${selectedRunId}`
-          : '/api/defence/recommendations';
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setRecommendations(data);
-        if (selectedRec) {
-          const updated = data.find((r: DefenceRecommendation) => r.id === selectedRec.id);
-          if (updated) setSelectedRec(updated);
+  // Fetch Recommendations - only triggers loading state on initial mount or run change
+  const fetchRecommendations = useCallback(
+    async (isInitialOrRunChange = false) => {
+      try {
+        if (isInitialOrRunChange) {
+          setLoading(true);
+        } else {
+          setIsSyncing(true);
+        }
+        const url =
+          selectedRunId && selectedRunId !== 'all'
+            ? `/api/defence/recommendations?test_run_id=${selectedRunId}`
+            : '/api/defence/recommendations';
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setRecommendations(data);
+        }
+      } catch {
+        // Offline fallback
+      } finally {
+        if (isInitialOrRunChange) {
+          setLoading(false);
+        } else {
+          setIsSyncing(false);
         }
       }
-    } catch {
-      // Offline fallback
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedRunId, selectedRec]);
+    },
+    [selectedRunId],
+  );
 
   useEffect(() => {
     fetchRuns();
   }, [fetchRuns]);
 
   useEffect(() => {
-    fetchRecommendations();
+    fetchRecommendations(true);
   }, [fetchRecommendations]);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -127,7 +145,7 @@ export function DefenceEnginePage() {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast(`Mitigation deployed to ${data.target_resource || 'cluster'}!`, 'success');
-        await fetchRecommendations();
+        await fetchRecommendations(false);
       } else {
         showToast(data.detail || data.message || 'Failed to apply mitigation', 'error');
       }
@@ -148,7 +166,7 @@ export function DefenceEnginePage() {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast(`Mitigation reverted from ${rec.target_resource}`, 'success');
-        await fetchRecommendations();
+        await fetchRecommendations(false);
       } else {
         showToast(data.detail || data.message || 'Failed to revert mitigation', 'error');
       }
@@ -226,12 +244,13 @@ export function DefenceEnginePage() {
           </div>
 
           <button
-            onClick={fetchRecommendations}
+            onClick={() => fetchRecommendations(false)}
             className="refresh-button"
+            disabled={isSyncing}
             title="Refresh Recommendations"
           >
-            <RefreshCw size={15} />
-            <span>SYNC</span>
+            <RefreshCw size={15} className={isSyncing ? 'animate-spin' : ''} />
+            <span>{isSyncing ? 'SYNCING...' : 'SYNC'}</span>
           </button>
         </div>
       </div>
@@ -349,14 +368,14 @@ export function DefenceEnginePage() {
                   return (
                     <tr
                       key={rec.id}
-                      className={`rec-row ${selectedRec?.id === rec.id ? 'active-row' : ''}`}
-                      onClick={() => setSelectedRec(rec)}
+                      className={`rec-row ${selectedRecId === rec.id ? 'active-row' : ''}`}
+                      onClick={() => setSelectedRecId(rec.id)}
                     >
                       <td className="rec-title-cell">
                         <div className="rec-title-wrap">
                           <div className="rec-icon">
                             {rec.mechanically_applicable ? (
-                              <Zap size={16} className="text-cyan" />
+                              <Zap size={16} className={isMatte ? 'text-white' : 'text-cyan'} />
                             ) : (
                               <Code2 size={16} />
                             )}
@@ -433,7 +452,7 @@ export function DefenceEnginePage() {
 
                           <button
                             className="inspect-button"
-                            onClick={() => setSelectedRec(rec)}
+                            onClick={() => setSelectedRecId(rec.id)}
                             title="Inspect Remediation Guidance"
                           >
                             <ArrowRight size={14} />
@@ -451,7 +470,7 @@ export function DefenceEnginePage() {
 
       {/* Inspector Slide-Over Drawer */}
       {selectedRec && (
-        <div className="inspector-drawer-backdrop" onClick={() => setSelectedRec(null)}>
+        <div className="inspector-drawer-backdrop" onClick={() => setSelectedRecId(null)}>
           <div className="inspector-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
               <div className="drawer-title-group">
@@ -466,7 +485,7 @@ export function DefenceEnginePage() {
                   </span>
                 </div>
               </div>
-              <button className="drawer-close" onClick={() => setSelectedRec(null)}>
+              <button className="drawer-close" onClick={() => setSelectedRecId(null)}>
                 <X size={18} />
               </button>
             </div>
@@ -476,7 +495,7 @@ export function DefenceEnginePage() {
               {selectedRec.mechanically_applicable && (
                 <div className="drawer-action-banner">
                   <div className="action-banner-info">
-                    <Zap size={18} className="text-cyan" />
+                    <Zap size={18} className={isMatte ? 'text-white' : 'text-cyan'} />
                     <div>
                       <strong>Automated Infrastructure Remediation</strong>
                       <p>

@@ -21,9 +21,12 @@ import {
   Sparkles,
   Users,
   Wrench,
+  LogOut,
 } from 'lucide-react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 
+import { useAuthStore } from '../stores/authStore';
 import './AppLayout.css';
 
 interface NavItem {
@@ -71,6 +74,41 @@ import { NotificationBell } from '../components/notifications/NotificationBell';
 import { ThemeSwitcher } from '../components/ui/ThemeSwitcher';
 
 export function AppLayout() {
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      const activeToken = localStorage.getItem('pantheon_token');
+      fetch('/api/auth/me', {
+        headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setUser({
+              id: data.id,
+              email: data.email,
+              name: data.full_name,
+              role: data.role,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user, setUser]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('pantheon_token');
+    logout();
+    navigate('/login');
+  };
+
+  const displayRole = (user?.role || 'admin').toUpperCase();
+  const displayEmail = user?.email || 'dev@pantheon.local';
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -119,9 +157,19 @@ export function AppLayout() {
             <ThemeSwitcher />
             <NotificationBell />
             <div className="user-profile-badge font-mono">
-              <span className="user-role-tag">ADMIN</span>
-              <span className="user-email-text">admin@pantheon.cyber</span>
+              <span className="user-role-tag">{displayRole}</span>
+              <span className="user-email-text">{displayEmail}</span>
             </div>
+            <button
+              type="button"
+              className="navbar-logout-btn font-mono"
+              onClick={handleLogout}
+              title="Sign out of Pantheon"
+              aria-label="Logout"
+            >
+              <LogOut size={13} />
+              <span>LOGOUT</span>
+            </button>
           </div>
         </header>
 

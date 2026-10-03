@@ -247,17 +247,33 @@ export const TeamManagementPage: React.FC = () => {
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+
+    if (authMode === 'register') {
+      if (!authFullName.trim()) {
+        setAuthError('Full name is required');
+        return;
+      }
+      if (!authOrgName.trim()) {
+        setAuthError('Organization name is required');
+        return;
+      }
+      if (authPassword.length < 8) {
+        setAuthError('Password must be at least 8 characters long');
+        return;
+      }
+    }
+
     try {
       const url = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
       const body =
         authMode === 'register'
           ? {
-              email: authEmail,
+              email: authEmail.trim(),
               password: authPassword,
-              full_name: authFullName,
-              org_name: authOrgName,
+              full_name: authFullName.trim(),
+              org_name: authOrgName.trim(),
             }
-          : { email: authEmail, password: authPassword };
+          : { email: authEmail.trim(), password: authPassword };
 
       const res = await fetch(url, {
         method: 'POST',
@@ -266,8 +282,25 @@ export const TeamManagementPage: React.FC = () => {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Authentication failed');
+        const err = await res.json().catch(() => null);
+        let message = 'Authentication failed';
+        if (err) {
+          if (typeof err.detail === 'string') {
+            message = err.detail;
+          } else if (Array.isArray(err.detail)) {
+            message = err.detail
+              .map((d: any) => {
+                const field = d.loc && d.loc.length > 1 ? `${d.loc[d.loc.length - 1]}: ` : '';
+                return `${field}${d.msg}`;
+              })
+              .join('; ');
+          } else if (err.detail && typeof err.detail === 'object') {
+            message = err.detail.msg || JSON.stringify(err.detail);
+          } else if (err.message) {
+            message = err.message;
+          }
+        }
+        throw new Error(message);
       }
 
       const data = await res.json();
@@ -852,14 +885,22 @@ export const TeamManagementPage: React.FC = () => {
             required
           />
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={authPassword}
-            onChange={(e) => setAuthPassword(e.target.value)}
-            required
-          />
+          <div>
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              minLength={authMode === 'register' ? 8 : 1}
+              required
+            />
+            {authMode === 'register' && (
+              <p className="text-[11px] text-[var(--muted-foreground)] mt-1 font-mono">
+                Must be at least 8 characters
+              </p>
+            )}
+          </div>
         </form>
       </Modal>
     </div>

@@ -81,6 +81,13 @@ class Settings(BaseSettings):
     nvidia_nim_enable_thinking: bool = True
     nvidia_nim_reasoning_budget: int = 2048
 
+    # Groq AI Layer (AI Dockerfile Generator Agent)
+    groq_api_key: str = ""
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_temperature: float = 0.2
+    groq_timeout: float = 20.0
+
     @property
     def is_development(self) -> bool:
         return self.app_env == Environment.DEVELOPMENT

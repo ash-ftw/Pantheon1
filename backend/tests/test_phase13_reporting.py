@@ -393,6 +393,9 @@ async def test_reporting_rest_endpoints(tmp_path: Path) -> None:
         created_at=datetime.now(UTC),
     )
 
+    assert sample_report.pdf_path is not None
+    assert sample_report.csv_path is not None
+
     # Write dummy files to disk for download testing
     with open(sample_report.pdf_path, "wb") as f:
         f.write(b"%PDF-1.4 test pdf content")

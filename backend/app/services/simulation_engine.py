@@ -36,6 +36,7 @@ from app.models import (
 from app.safety.simulation_guard import ScenarioTarget, validate_scenario_scope
 from app.scenarios.presets import PRESET_SCENARIOS
 from app.services.route_broker import route_broker_service
+from app.services.docker_builder import sanitize_docker_name
 
 logger = get_logger(__name__)
 
@@ -439,7 +440,7 @@ class SimulationEngine:
                 try:
                     route_info = await route_broker_service.open_route(
                         org_id=run.org_id,
-                        target_service=app.name.lower().replace(" ", "-"),
+                        target_service=sanitize_docker_name(app.name),
                         target_port=target_port,
                         ttl_seconds=1800,
                         path_prefix="/",

@@ -14,6 +14,8 @@ import {
   Box,
   CheckCircle2,
   Clock,
+  ExternalLink,
+  Eye,
   Flame,
   Lock,
   Play,
@@ -21,6 +23,7 @@ import {
   Server,
   ShieldAlert,
   ShieldCheck,
+  X,
   Zap,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -117,6 +120,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [deployingDemoId, setDeployingDemoId] = useState<string | null>(null);
   const [deploySuccessMsg, setDeploySuccessMsg] = useState<string | null>(null);
+  const [previewDemoId, setPreviewDemoId] = useState<string | null>(null);
 
   // 1. Fetch Dashboard Stats
   const {
@@ -649,10 +653,11 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              <div className="demo-card-footer">
+              <div className="demo-card-footer" style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"
-                  className="btn btn-primary btn-block font-mono"
+                  className="btn btn-primary font-mono"
+                  style={{ flex: 1 }}
                   disabled={deployingDemoId === demo.id || deployDemoMutation.isPending}
                   onClick={() => deployDemoMutation.mutate(demo.id)}
                 >
@@ -667,6 +672,24 @@ export function DashboardPage() {
                       <span>1-Click Launch Demo</span>
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary font-mono"
+                  onClick={() => {
+                    const demoSlugMap: Record<string, string> = {
+                      'juice-shop-lite': 'juice-shop',
+                      'fintech-gateway': 'fintech',
+                      'cloudstore-commerce': 'cloudstore',
+                      'devops-worker-agent': 'devops',
+                    };
+                    setPreviewDemoId(demoSlugMap[demo.id] || demo.id);
+                  }}
+                  style={{ padding: '10px 14px' }}
+                  title="Preview interactive demo with exploitable vulnerabilities"
+                >
+                  <Eye size={14} />
+                  <span>Preview</span>
                 </button>
               </div>
             </div>
@@ -814,6 +837,130 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+      {/* Demo App Preview Modal */}
+      {previewDemoId && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(5, 7, 9, 0.88)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 1100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+          onClick={() => setPreviewDemoId(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '1200px',
+              height: '88vh',
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: '#0b0f17',
+              border: '1px solid rgba(0, 212, 170, 0.3)',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.6)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Preview Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 20px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundColor: '#07090d',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #00d4aa, #3b82f6)',
+                    boxShadow: '0 0 12px rgba(0, 212, 170, 0.4)',
+                  }}
+                />
+                <span style={{ fontWeight: 700, fontSize: 15, color: '#fff' }}>
+                  Live Demo Preview: {previewDemoId}
+                </span>
+                <span className="badge badge-success font-mono" style={{ fontSize: 10 }}>
+                  ● Interactive
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <a
+                  href={`/api/demo-apps/${previewDemoId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-secondary font-mono"
+                  style={{ padding: '6px 12px', fontSize: 11, textDecoration: 'none' }}
+                >
+                  <ExternalLink size={13} />
+                  Open in New Tab
+                </a>
+                <button
+                  onClick={() => setPreviewDemoId(null)}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'var(--fg2)',
+                    borderRadius: 8,
+                    padding: '6px 8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Preview URL Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 20px',
+                backgroundColor: '#0f141f',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 12,
+                  color: 'var(--primary)',
+                  padding: '4px 12px',
+                  background: 'rgba(0, 212, 170, 0.06)',
+                  borderRadius: 6,
+                  border: '1px solid rgba(0, 212, 170, 0.15)',
+                  flex: 1,
+                }}
+              >
+                /api/demo-apps/{previewDemoId}
+              </span>
+            </div>
+
+            {/* iframe */}
+            <div style={{ flex: 1, backgroundColor: '#07090d' }}>
+              <iframe
+                src={`/api/demo-apps/${previewDemoId}`}
+                title={`Demo Preview: ${previewDemoId}`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

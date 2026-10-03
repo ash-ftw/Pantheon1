@@ -1,8 +1,23 @@
+import re
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+
+
+def _validate_email(v: Any) -> str:
+    if not isinstance(v, str):
+        raise ValueError("Email must be a string")
+    v = v.strip().lower()
+    if not EMAIL_REGEX.match(v):
+        raise ValueError("Invalid email address format")
+    return v
+
+
+EmailStr = Annotated[str, BeforeValidator(_validate_email)]
 
 
 # --- Auth Schemas ---

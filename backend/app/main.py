@@ -23,6 +23,7 @@ from app.routers import (
     auth,
     dashboard,
     defence,
+    demo_apps,
     discovery,
     infrastructure,
     notifications,
@@ -105,6 +106,7 @@ app.include_router(ai.router)
 app.include_router(reports.router)
 app.include_router(dashboard.router)
 app.include_router(notifications.router)
+app.include_router(demo_apps.router)
 
 
 @app.get("/health", tags=["system"])

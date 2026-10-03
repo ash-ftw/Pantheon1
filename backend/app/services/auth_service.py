@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db_session
-from app.models import Org, User
+from app.models import Org, OrgMember, User
 
 # OAuth2 scheme (auto_error=False allows optional auth token check for dev fallback)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
@@ -77,6 +77,15 @@ async def _get_or_create_dev_user(db: AsyncSession) -> User:
     result = await db.execute(select(User).where(User.email == "dev@pantheon.local"))
     user = result.scalar_one_or_none()
     if user:
+        if user.org_id:
+            mem_res = await db.execute(
+                select(OrgMember).where(
+                    OrgMember.user_id == user.id, OrgMember.org_id == user.org_id
+                )
+            )
+            if not mem_res.scalar_one_or_none():
+                db.add(OrgMember(org_id=user.org_id, user_id=user.id, role=user.role))
+                await db.commit()
         return user
 
     # Ensure dev org exists
@@ -95,6 +104,10 @@ async def _get_or_create_dev_user(db: AsyncSession) -> User:
         role="admin",
     )
     db.add(user)
+    await db.flush()
+
+    member = OrgMember(org_id=org.id, user_id=user.id, role="admin")
+    db.add(member)
     await db.commit()
     await db.refresh(user)
     return user

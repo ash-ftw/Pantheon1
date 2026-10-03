@@ -88,9 +88,17 @@ async def run_target_analysis(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str,
 
             if latest_version and latest_version.detected_framework:
                 fw = latest_version.detected_framework
-                # Parse "Language (Framework)" or "Language" format
-                if "(" in fw:
-                    parts = fw.split("(")
+                # Parse "Language / Framework", "Language (Framework)", or "Language" format
+                if " / " in fw:
+                    parts = fw.split(" / ", 1)
+                    profile["language"] = parts[0].strip().lower()
+                    profile["framework"] = parts[1].strip().lower()
+                elif "/" in fw:
+                    parts = fw.split("/", 1)
+                    profile["language"] = parts[0].strip().lower()
+                    profile["framework"] = parts[1].strip().lower()
+                elif "(" in fw:
+                    parts = fw.split("(", 1)
                     profile["language"] = parts[0].strip().lower()
                     profile["framework"] = parts[1].rstrip(")").strip().lower()
                 else:
