@@ -13,6 +13,8 @@ import {
   FileText,
   Lock,
   LogOut,
+  Search,
+  Eye,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -100,6 +102,11 @@ export const TeamManagementPage: React.FC = () => {
   const [editingMember, setEditingMember] = useState<OrgMember | null>(null);
   const [newRole, setNewRole] = useState<'admin' | 'tester' | 'viewer'>('tester');
 
+  // Audit log filter & inspection state
+  const [auditActionFilter, setAuditActionFilter] = useState<string>('all');
+  const [auditSearchQuery, setAuditSearchQuery] = useState<string>('');
+  const [selectedAuditLog, setSelectedAuditLog] = useState<AuditLogEntry | null>(null);
+
   // Helper for authenticated requests
   const getHeaders = () => {
     const activeToken = token || localStorage.getItem('pantheon_token');
@@ -148,12 +155,27 @@ export const TeamManagementPage: React.FC = () => {
 
   // 4. Fetch Audit Log
   const { data: auditLogs = [], refetch: refetchAudit } = useQuery<AuditLogEntry[]>({
-    queryKey: ['org', 'audit-log'],
+    queryKey: ['org', 'audit-log', auditActionFilter],
     queryFn: async () => {
-      const res = await fetch('/api/orgs/audit-log', { headers: getHeaders() });
+      const url =
+        auditActionFilter !== 'all'
+          ? `/api/orgs/audit-log?action=${encodeURIComponent(auditActionFilter)}`
+          : '/api/orgs/audit-log';
+      const res = await fetch(url, { headers: getHeaders() });
       if (!res.ok) return [];
       return res.json();
     },
+  });
+
+  const filteredAuditLogs = auditLogs.filter((log) => {
+    if (!auditSearchQuery.trim()) return true;
+    const q = auditSearchQuery.toLowerCase();
+    return (
+      log.action.toLowerCase().includes(q) ||
+      (log.resource_type && log.resource_type.toLowerCase().includes(q)) ||
+      (log.user_email && log.user_email.toLowerCase().includes(q)) ||
+      (log.resource_id && log.resource_id.toLowerCase().includes(q))
+    );
   });
 
   // Mutation: Invite Member
@@ -225,17 +247,33 @@ export const TeamManagementPage: React.FC = () => {
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+
+    if (authMode === 'register') {
+      if (!authFullName.trim()) {
+        setAuthError('Full name is required');
+        return;
+      }
+      if (!authOrgName.trim()) {
+        setAuthError('Organization name is required');
+        return;
+      }
+      if (authPassword.length < 8) {
+        setAuthError('Password must be at least 8 characters long');
+        return;
+      }
+    }
+
     try {
       const url = authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
       const body =
         authMode === 'register'
           ? {
-              email: authEmail,
+              email: authEmail.trim(),
               password: authPassword,
-              full_name: authFullName,
-              org_name: authOrgName,
+              full_name: authFullName.trim(),
+              org_name: authOrgName.trim(),
             }
-          : { email: authEmail, password: authPassword };
+          : { email: authEmail.trim(), password: authPassword };
 
       const res = await fetch(url, {
         method: 'POST',
@@ -244,8 +282,25 @@ export const TeamManagementPage: React.FC = () => {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Authentication failed');
+        const err = await res.json().catch(() => null);
+        let message = 'Authentication failed';
+        if (err) {
+          if (typeof err.detail === 'string') {
+            message = err.detail;
+          } else if (Array.isArray(err.detail)) {
+            message = err.detail
+              .map((d: any) => {
+                const field = d.loc && d.loc.length > 1 ? `${d.loc[d.loc.length - 1]}: ` : '';
+                return `${field}${d.msg}`;
+              })
+              .join('; ');
+          } else if (err.detail && typeof err.detail === 'object') {
+            message = err.detail.msg || JSON.stringify(err.detail);
+          } else if (err.message) {
+            message = err.message;
+          }
+        }
+        throw new Error(message);
       }
 
       const data = await res.json();
@@ -529,13 +584,49 @@ export const TeamManagementPage: React.FC = () => {
       {/* Security Audit Log */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock size={18} className="text-[var(--primary)]" />
-            Append-Only Security Audit Log
-          </CardTitle>
-          <CardDescription>
-            Immutable record of all mutating tenant operations and security events
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Clock size={18} className="text-[var(--primary)]" />
+                Append-Only Security Audit Log (FR-11.2)
+              </CardTitle>
+              <CardDescription>
+                Cryptographic immutable log of all tenant mutations, simulation starts, routes, and
+                mitigations
+              </CardDescription>
+            </div>
+
+            {/* Filter and Search Controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 bg-[var(--secondary)] border border-[var(--card-border)] rounded px-2 py-1">
+                <Search size={13} className="text-[var(--muted-foreground)]" />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  className="bg-transparent border-none text-xs text-[var(--foreground)] focus:outline-none w-28"
+                  value={auditSearchQuery}
+                  onChange={(e) => setAuditSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <select
+                className="bg-[var(--secondary)] border border-[var(--card-border)] text-xs text-[var(--foreground)] rounded px-2 py-1.5 focus:outline-none"
+                value={auditActionFilter}
+                onChange={(e) => setAuditActionFilter(e.target.value)}
+              >
+                <option value="all">All Actions</option>
+                <option value="auth.login">auth.login</option>
+                <option value="auth.register">auth.register</option>
+                <option value="app.demo_deployed">app.demo_deployed</option>
+                <option value="app.created">app.created</option>
+                <option value="route.created">route.created</option>
+                <option value="route.revoked">route.revoked</option>
+                <option value="simulation.started">simulation.started</option>
+                <option value="simulation.completed">simulation.completed</option>
+                <option value="defence.applied">defence.applied</option>
+              </select>
+            </div>
+          </div>
         </CardHeader>
         <Table>
           <TableHeader>
@@ -545,20 +636,25 @@ export const TeamManagementPage: React.FC = () => {
               <TableHead>Resource</TableHead>
               <TableHead>User / Actor</TableHead>
               <TableHead>IP Address</TableHead>
+              <TableHead className="text-right">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {auditLogs.length === 0 ? (
+            {filteredAuditLogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-[var(--muted-foreground)]">
-                  No audit log entries recorded yet.
+                <TableCell colSpan={6} className="text-center py-8 text-[var(--muted-foreground)]">
+                  No matching audit log entries found.
                 </TableCell>
               </TableRow>
             ) : (
-              auditLogs.slice(0, 15).map((log) => (
+              filteredAuditLogs.slice(0, 20).map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="font-mono text-xs text-[var(--muted-foreground)]">
-                    {new Date(log.created_at).toLocaleTimeString()}
+                    {new Date(log.created_at).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
                   </TableCell>
                   <TableCell>
                     <span className="font-mono text-xs font-bold text-[var(--primary)]">
@@ -575,12 +671,74 @@ export const TeamManagementPage: React.FC = () => {
                   <TableCell className="font-mono text-xs text-[var(--muted-foreground)]">
                     {log.ip_address || '127.0.0.1'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      iconLeft={<Eye size={12} />}
+                      onClick={() => setSelectedAuditLog(log)}
+                    >
+                      Inspect
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </Card>
+
+      {/* Audit Log Details Inspect Modal */}
+      {selectedAuditLog && (
+        <Modal
+          isOpen={true}
+          onClose={() => setSelectedAuditLog(null)}
+          title={`Audit Log Event: ${selectedAuditLog.action}`}
+          footer={
+            <Button variant="secondary" onClick={() => setSelectedAuditLog(null)}>
+              Close
+            </Button>
+          }
+        >
+          <div className="space-y-4 font-mono text-xs">
+            <div className="grid grid-cols-2 gap-2 bg-[var(--secondary)] p-3 rounded border border-[var(--card-border)]">
+              <div>
+                <span className="text-[var(--muted-foreground)]">Action:</span>{' '}
+                <strong className="text-[var(--primary)]">{selectedAuditLog.action}</strong>
+              </div>
+              <div>
+                <span className="text-[var(--muted-foreground)]">Resource Type:</span>{' '}
+                <span>{selectedAuditLog.resource_type}</span>
+              </div>
+              <div>
+                <span className="text-[var(--muted-foreground)]">Actor:</span>{' '}
+                <span>{selectedAuditLog.user_email || 'System'}</span>
+              </div>
+              <div>
+                <span className="text-[var(--muted-foreground)]">Timestamp:</span>{' '}
+                <span>{new Date(selectedAuditLog.created_at).toISOString()}</span>
+              </div>
+              {selectedAuditLog.resource_id && (
+                <div className="col-span-2">
+                  <span className="text-[var(--muted-foreground)]">Resource ID:</span>{' '}
+                  <span className="text-[var(--secondary-foreground)]">
+                    {selectedAuditLog.resource_id}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <span className="text-[var(--muted-foreground)] block mb-1">
+                Payload Details (JSON):
+              </span>
+              <pre className="bg-[#050709] border border-[var(--card-border)] rounded p-3 text-[11px] text-[var(--foreground)] overflow-x-auto max-h-60">
+                {JSON.stringify(selectedAuditLog.details, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Invite Modal */}
       <Modal
@@ -727,14 +885,22 @@ export const TeamManagementPage: React.FC = () => {
             required
           />
 
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={authPassword}
-            onChange={(e) => setAuthPassword(e.target.value)}
-            required
-          />
+          <div>
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              minLength={authMode === 'register' ? 8 : 1}
+              required
+            />
+            {authMode === 'register' && (
+              <p className="text-[11px] text-[var(--muted-foreground)] mt-1 font-mono">
+                Must be at least 8 characters
+              </p>
+            )}
+          </div>
         </form>
       </Modal>
     </div>

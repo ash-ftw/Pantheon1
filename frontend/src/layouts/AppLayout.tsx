@@ -21,9 +21,12 @@ import {
   Sparkles,
   Users,
   Wrench,
+  LogOut,
 } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { useEffect } from 'react';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 
+import { useAuthStore } from '../stores/authStore';
 import './AppLayout.css';
 
 interface NavItem {
@@ -35,8 +38,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   // Core
-  { to: '/', label: 'Dashboard', icon: <BarChart3 size={16} />, section: 'Overview' },
-  { to: '/design-preview', label: 'Design System', icon: <Sparkles size={16} /> },
+  { to: '/dashboard', label: 'Dashboard', icon: <BarChart3 size={16} />, section: 'Overview' },
 
   // Deploy
   { to: '/apps', label: 'App Onboarding', icon: <Box size={16} />, section: 'Deploy' },
@@ -68,14 +70,54 @@ const navItems: NavItem[] = [
   { to: '/team', label: 'Team', icon: <Users size={16} />, section: 'Admin' },
 ];
 
+import { NotificationBell } from '../components/notifications/NotificationBell';
+import { ThemeSwitcher } from '../components/ui/ThemeSwitcher';
+
 export function AppLayout() {
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      const activeToken = localStorage.getItem('pantheon_token');
+      fetch('/api/auth/me', {
+        headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setUser({
+              id: data.id,
+              email: data.email,
+              name: data.full_name,
+              role: data.role,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user, setUser]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('pantheon_token');
+    logout();
+    navigate('/login');
+  };
+
+  const displayRole = (user?.role || 'admin').toUpperCase();
+  const displayEmail = user?.email || 'dev@pantheon.local';
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">P</div>
+        <Link to="/dashboard" className="sidebar-logo">
+          <div className="sidebar-logo-icon">
+            <img src="/logo.svg" alt="Pantheon Logo" className="sidebar-logo-img" />
+          </div>
           <span className="sidebar-logo-text font-display">Pantheon</span>
-        </div>
+        </Link>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => (
@@ -83,7 +125,7 @@ export function AppLayout() {
               {item.section && <div className="sidebar-section">{item.section}</div>}
               <NavLink
                 to={item.to}
-                end={item.to === '/'}
+                end={item.to === '/dashboard'}
                 className={({ isActive }) =>
                   `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`
                 }
@@ -96,13 +138,45 @@ export function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <span className="badge badge-primary">Phase 4 (Ingestion)</span>
+          <span className="badge badge-primary font-mono text-xs">v1.0 · All Modules Active</span>
         </div>
       </aside>
 
-      <main className="main-content">
-        <Outlet />
-      </main>
+      <div className="main-wrapper">
+        <header className="top-navbar">
+          <div className="top-navbar-left">
+            <div className="cluster-status-indicator">
+              <span className="status-dot online" />
+              <span className="status-text font-mono">
+                Tenant Cluster: <strong>Isolated</strong> · Default-Deny Active
+              </span>
+            </div>
+          </div>
+
+          <div className="top-navbar-right">
+            <ThemeSwitcher />
+            <NotificationBell />
+            <div className="user-profile-badge font-mono">
+              <span className="user-role-tag">{displayRole}</span>
+              <span className="user-email-text">{displayEmail}</span>
+            </div>
+            <button
+              type="button"
+              className="navbar-logout-btn font-mono"
+              onClick={handleLogout}
+              title="Sign out of Pantheon"
+              aria-label="Logout"
+            >
+              <LogOut size={13} />
+              <span>LOGOUT</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="main-content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

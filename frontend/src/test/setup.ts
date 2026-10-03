@@ -30,3 +30,34 @@ if (
     writable: true,
   });
 }
+
+// Ensure IntersectionObserver mock is present in test environment for motion/react
+if (typeof window !== 'undefined' && !window.IntersectionObserver) {
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root: Element | null = null;
+    readonly rootMargin: string = '';
+    readonly thresholds: ReadonlyArray<number> = [];
+    observe = () => {};
+    unobserve = () => {};
+    disconnect = () => {};
+    takeRecords = () => [];
+  }
+  Object.defineProperty(window, 'IntersectionObserver', {
+    writable: true,
+    configurable: true,
+    value: MockIntersectionObserver,
+  });
+}
+
+if (typeof window !== 'undefined' && !window.ResizeObserver) {
+  class MockResizeObserver {
+    observe = () => {};
+    unobserve = () => {};
+    disconnect = () => {};
+  }
+  Object.defineProperty(window, 'ResizeObserver', {
+    writable: true,
+    configurable: true,
+    value: MockResizeObserver,
+  });
+}

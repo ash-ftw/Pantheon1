@@ -1,0 +1,543 @@
+/* ============================================================
+   Pantheon Cyber Sentinel Landing Page Styles
+   Compact, Refined, High-End Minimalist Dark Cyber Aesthetic
+   Proportionally balanced for standard desktop viewports
+   ============================================================ */
+
+.landing-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh;
+  background-color: #090a0c !important;
+  color: #f4f4f5 !important;
+  font-family:
+    'Space Grotesk',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Explicit Landing Font Classes to prevent cramped condensed fallback */
+.landing-container .font-sans {
+  font-family:
+    'Space Grotesk',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
+}
+
+.landing-container .font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+/* Typography Hierarchy - Scaled down to elegant proportions */
+.landing-container h1,
+.landing-container h2,
+.landing-container h3,
+.landing-container h4 {
+  font-family:
+    'Space Grotesk',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.landing-container p {
+  font-family:
+    'Space Grotesk',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif !important;
+  line-height: 1.65;
+}
+
+.landing-container a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Bulletproof Centered Containers with Refined Width */
+.landing-content-container {
+  width: 100% !important;
+  max-width: 74rem !important; /* 1184px - Crisp, balanced layout */
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1.75rem !important;
+  padding-right: 1.75rem !important;
+  box-sizing: border-box !important;
+}
+
+/* Centering guarantee for any landing element with mx-auto */
+.landing-container .mx-auto {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Refined Section Padding (Reduced from 8rem to 4.5rem) */
+.landing-section {
+  width: 100% !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #090a0c;
+  padding-top: 4.5rem !important;
+  padding-bottom: 4.5rem !important;
+  box-sizing: border-box;
+}
+
+/* Compact Header (Reduced from 80px to 54px) */
+.landing-header-bar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 3.5rem !important;
+  z-index: 50;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 10, 12, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: border-color 0.2s ease;
+}
+
+/* Header Enter Console Button */
+.btn-enter-console {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.45rem 1rem !important;
+  background-color: #ffffff !important;
+  color: #090a0c !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 3px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.15s ease !important;
+}
+
+.btn-enter-console:hover {
+  background-color: #e4e4e7 !important;
+  color: #000000 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Status Pill */
+.landing-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  color: #a1a1aa;
+}
+
+.landing-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+/* Primary Action Button - Scaled down */
+.btn-primary-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.65rem 1.5rem !important;
+  background: #ffffff !important;
+  color: #090a0c !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 3px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.btn-primary-action:hover {
+  background: #e4e4e7 !important;
+  color: #000000 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Outline Action Button - Scaled down */
+.btn-outline-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.65rem 1.5rem !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #f4f4f5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 3px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.btn-outline-action:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Platform Capability Card - Refined padding & sizing */
+.capability-card-article {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #121317;
+  padding: 1.75rem !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.capability-card-article:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: #16171d;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Pipeline Step Item */
+.pipeline-step-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #121317;
+  padding: 1.5rem 2rem !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .pipeline-step-box {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.75rem;
+  }
+}
+
+.pipeline-step-box:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: #16171d;
+}
+
+/* Architecture Row */
+.architecture-plane-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #121317;
+  padding: 1.5rem 2rem !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .architecture-plane-box {
+    flex-direction: row;
+    align-items: center;
+    gap: 2.25rem;
+  }
+}
+
+.architecture-plane-box:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: #16171d;
+}
+
+/* Terminal Window */
+.terminal-window {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #101114;
+  border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.terminal-header {
+  background: #16171b;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.terminal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #27272a;
+}
+
+.terminal-dot.active {
+  background: #52525b;
+}
+
+.terminal-body {
+  padding: 1.25rem 1.5rem !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1.8 !important;
+  color: #d4d4d8;
+}
+
+/* /* Refined Compact Contact / Access Request Form Elements - Scaled for Legibility */
+.contact-input {
+  height: 3.25rem !important;
+  padding: 0 1.25rem !important;
+  font-size: 0.9375rem !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  outline: none !important;
+  width: 100% !important;
+  max-width: 26rem !important;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease !important;
+  box-sizing: border-box !important;
+}
+
+.contact-input:focus {
+  border-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+}
+
+.btn-contact-submit {
+  height: 3.25rem !important;
+  padding: 0 1.75rem !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  background-color: #ffffff !important;
+  color: #090a0c !important;
+  border: 1px solid #ffffff !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+.btn-contact-submit:hover {
+  background-color: #f4f4f5 !important;
+  color: #000000 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ============================================================
+   Call to Action (CTA) Section - Centered, Symmetrical, Prominent
+   ============================================================ */
+.landing-cta-section {
+  width: 100% !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(16, 185, 129, 0.09) 0%, rgba(9, 10, 12, 0) 70%),
+    #090a0c !important;
+  padding-top: 6.5rem !important;
+  padding-bottom: 6.5rem !important;
+  box-sizing: border-box;
+}
+
+.landing-cta-inner {
+  max-width: 52rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.landing-cta-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding: 0.45rem 1.15rem !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  color: #e4e4e7 !important;
+  margin-bottom: 1.75rem !important;
+  border-radius: 9999px !important;
+}
+
+/* ============================================================
+   Comprehensive Platform Footer - Spacious, Multi-Column, Legible
+   ============================================================ */
+.landing-footer {
+  width: 100% !important;
+  background-color: #060708 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding-top: 6rem !important;
+  padding-bottom: 4.5rem !important;
+  box-sizing: border-box !important;
+}
+
+.landing-footer-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 3rem !important;
+  width: 100% !important;
+}
+
+@media (min-width: 640px) {
+  .landing-footer-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 3.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-footer-grid {
+    grid-template-columns: 2.3fr 1fr 1.15fr 1.15fr !important;
+    gap: 4.5rem !important;
+    align-items: start !important;
+  }
+}
+
+.landing-footer-col {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.landing-footer-brand-col {
+  max-width: 26rem !important;
+}
+
+.landing-footer-heading {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8125rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: #ffffff !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.landing-footer-links {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.95rem !important;
+}
+
+.footer-nav-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-family:
+    'Space Grotesk',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.45 !important;
+  color: #cbd5e1 !important;
+  transition:
+    color 0.15s ease,
+    transform 0.15s ease !important;
+  padding: 0.15rem 0 !important;
+}
+
+.footer-nav-link:hover {
+  color: #ffffff !important;
+  transform: translateX(4px) !important;
+}
+
+.landing-footer-bottom {
+  margin-top: 5rem !important;
+  padding-top: 2.25rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .landing-footer-bottom {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
+/* Label Kicker Utility */
+.label-kicker-clean {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}

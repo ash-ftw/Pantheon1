@@ -16,7 +16,26 @@ from slowapi.util import get_remote_address
 from app.config import settings
 from app.logging import get_logger, setup_logging
 from app.middleware import RequestContextMiddleware
-from app.routers import apps, auth, discovery, infrastructure, orgs
+from app.routers import (
+    ai,
+    apps,
+    attack_graph,
+    auth,
+    dashboard,
+    defence,
+    demo_apps,
+    discovery,
+    infrastructure,
+    notifications,
+    observability,
+    orgs,
+    reports,
+    route_proxy,
+    routes,
+    safety,
+    scenarios,
+    test_runs,
+)
 
 logger = get_logger(__name__)
 
@@ -56,10 +75,11 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, cast(Any, _rate_limit_exceeded_handler))
 
-# CORS — permissive for local dev, lock down in production
+# CORS — configurable via settings, permissive for LAN and development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=settings.cors_origins,
+    allow_origin_regex=settings.cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,6 +94,19 @@ app.include_router(orgs.router)
 app.include_router(infrastructure.router)
 app.include_router(apps.router)
 app.include_router(discovery.router)
+app.include_router(scenarios.router)
+app.include_router(safety.router)
+app.include_router(routes.router)
+app.include_router(route_proxy.router)
+app.include_router(test_runs.router)
+app.include_router(attack_graph.router)
+app.include_router(defence.router)
+app.include_router(observability.router)
+app.include_router(ai.router)
+app.include_router(reports.router)
+app.include_router(dashboard.router)
+app.include_router(notifications.router)
+app.include_router(demo_apps.router)
 
 
 @app.get("/health", tags=["system"])

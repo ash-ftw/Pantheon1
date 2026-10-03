@@ -20,6 +20,10 @@ export default defineConfig([
     },
     rules: {
       'react-refresh/only-export-components': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
     },
   },
 ])

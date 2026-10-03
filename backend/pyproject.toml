@@ -25,7 +25,12 @@ dependencies = [
     "pyyaml>=6.0,<7.0",
     "GitPython>=3.1.40",
     "docker>=7.0.0",
+    "prometheus-client>=0.20.0",
+    "openai>=1.50.0",
+    "matplotlib>=3.8.0",
+    "reportlab>=4.0.0",
 ]
+
 
 [project.optional-dependencies]
 dev = [
@@ -78,10 +83,12 @@ ignore = [
     "S607",    # Starting process with partial path
     "B904",    # raise ... from
     "RUF006",  # Store reference to return value of loop.create_task
+    "S104",    # Possible binding to all interfaces (docker containers HOST=0.0.0.0 and port probe)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]  # Standard pytest assertions
+"tests/*" = ["S101", "S106", "ASYNC230", "ASYNC240"]  # Standard pytest assertions, test passwords, and test file fixtures
+"app/routers/demo_apps.py" = ["S608", "S324", "S602", "ASYNC221", "ASYNC230", "ASYNC240", "A002"]  # Intentionally vulnerable demo apps for security testing
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -425,6 +425,137 @@ class K8sTenantService:
 
         return result
 
+    def create_ingress_route(
+        self,
+        namespace: str,
+        route_id: str | uuid.UUID,
+        target_service: str,
+        target_port: int,
+        path_prefix: str = "/",
+        expires_at_iso: str | None = None,
+        org_id: str | None = None,
+        test_run_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a scoped, application-layer Ingress for the Route Broker — PRD §7.5.
+
+        Zero tenant credentials exposed to range cluster.
+        One route = one rule: range-cluster attacker pod -> tenant-namespace/target-service:port.
+        """
+        ingress_name = f"route-{str(route_id)[:8]}"
+        has_k8s = self._get_client()
+
+        annotations = {
+            "pantheon.cyber/route-id": str(route_id),
+            "pantheon.cyber/expires-at": expires_at_iso or "",
+            "pantheon.cyber/managed-by": "pantheon-route-broker",
+            "traefik.ingress.kubernetes.io/router.entrypoints": "web",
+        }
+        if org_id:
+            annotations["pantheon.cyber/org-id"] = org_id
+        if test_run_id:
+            annotations["pantheon.cyber/test-run-id"] = test_run_id
+
+        if not has_k8s or not self._net_api:
+            logger.info(
+                "k8s_create_ingress_route_simulated",
+                namespace=namespace,
+                ingress_name=ingress_name,
+                target_service=target_service,
+                target_port=target_port,
+            )
+            return {
+                "ingress_name": ingress_name,
+                "namespace": namespace,
+                "simulated": True,
+                "target_service": target_service,
+                "target_port": target_port,
+            }
+
+        ingress_manifest = client.V1Ingress(
+            metadata=client.V1ObjectMeta(
+                name=ingress_name,
+                namespace=namespace,
+                annotations=annotations,
+                labels={
+                    "pantheon.cyber/route-broker": "true",
+                    "pantheon.cyber/route-id": str(route_id),
+                },
+            ),
+            spec=client.V1IngressSpec(
+                rules=[
+                    client.V1IngressRule(
+                        http=client.V1HTTPIngressRuleValue(
+                            paths=[
+                                client.V1HTTPIngressPath(
+                                    path=path_prefix,
+                                    path_type="Prefix",
+                                    backend=client.V1IngressBackend(
+                                        service=client.V1IngressServiceBackend(
+                                            name=target_service,
+                                            port=client.V1ServiceBackendPort(number=target_port),
+                                        )
+                                    ),
+                                )
+                            ]
+                        )
+                    )
+                ]
+            ),
+        )
+
+        try:
+            self._net_api.create_namespaced_ingress(namespace=namespace, body=ingress_manifest)
+            logger.info("k8s_ingress_route_created", ingress_name=ingress_name, namespace=namespace)
+            return {
+                "ingress_name": ingress_name,
+                "namespace": namespace,
+                "simulated": False,
+                "target_service": target_service,
+                "target_port": target_port,
+            }
+        except ApiException as e:
+            if e.status == 409:  # Already exists
+                logger.warning("k8s_ingress_route_already_exists", ingress_name=ingress_name)
+                return {"ingress_name": ingress_name, "namespace": namespace, "simulated": False}
+            if e.status == 404:  # Namespace not yet provisioned in cluster
+                logger.warning(
+                    "k8s_namespace_not_found_fallback_simulated", namespace=namespace, error=str(e)
+                )
+                return {
+                    "ingress_name": ingress_name,
+                    "namespace": namespace,
+                    "simulated": True,
+                    "target_service": target_service,
+                    "target_port": target_port,
+                }
+            logger.error("k8s_create_ingress_route_failed", error=str(e))
+            raise
+
+    def delete_ingress_route(self, namespace: str, ingress_name: str) -> bool:
+        """Synchronously delete the Ingress object for immediate Kill Switch revocation — PRD §7.5 / NFR-3.1."""
+        has_k8s = self._get_client()
+        if not has_k8s or not self._net_api:
+            logger.info(
+                "k8s_delete_ingress_route_simulated",
+                ingress_name=ingress_name,
+                namespace=namespace,
+            )
+            return True
+
+        try:
+            self._net_api.delete_namespaced_ingress(
+                name=ingress_name,
+                namespace=namespace,
+                body=client.V1DeleteOptions(grace_period_seconds=0),
+            )
+            logger.info("k8s_ingress_route_deleted", ingress_name=ingress_name, namespace=namespace)
+            return True
+        except ApiException as e:
+            if e.status == 404:
+                return True
+            logger.error("k8s_delete_ingress_route_failed", ingress_name=ingress_name, error=str(e))
+            return False
+
 
 # Global singleton service instance
 k8s_tenant_service = K8sTenantService()

@@ -14,13 +14,16 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Database,
   ExternalLink,
   GitBranch,
   Loader2,
   Package,
   Play,
   RefreshCw,
+  Square,
   Terminal,
+  Trash2,
   Upload,
   X,
 } from 'lucide-react';
@@ -32,13 +35,40 @@ import './AppOnboardingPage.css';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
+interface StorageRepository {
+  repository: string;
+  name: string;
+  clean_app_name: string;
+  org_id: string;
+  tags: string[];
+  size_human: string;
+  object_count: number;
+  is_orphaned: boolean;
+  bucket: string;
+  minio_path: string;
+}
+
+interface RegistryStorageResponse {
+  bucket: string;
+  total_repositories: number;
+  orphaned_count: number;
+  repositories: StorageRepository[];
+}
+
 interface AppRecord {
   id: string;
   org_id: string;
   name: string;
   source_type: 'git' | 'compose';
   source_url: string | null;
-  status: 'queued' | 'building' | 'pushing' | 'deploying' | 'running' | 'failed';
+  status: 'queued' | 'building' | 'pushing' | 'deploying' | 'running' | 'stopped' | 'failed';
+  discovery_status: string;
+  target_profile?: {
+    host_port?: number;
+    exposed_ports?: Array<{ container_port: number; host_port: number } | number>;
+    [key: string]: any;
+  } | null;
+  discovered_endpoints?: Record<string, any> | null;
 }
 
 interface AppVersion {
@@ -84,6 +114,18 @@ async function apiPost<T>(path: string, body: unknown, token: string | null): Pr
   return res.json();
 }
 
+async function apiDelete<T>(path: string, token: string | null): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `API error ${res.status}`);
+  }
+  return res.json();
+}
+
 /* ------------------------------------------------------------------ */
 /*  Status badge helper                                                */
 /* ------------------------------------------------------------------ */
@@ -95,6 +137,7 @@ function StatusBadge({ status }: { status: string }) {
     pushing: { cls: 'badge-warning', label: 'Pushing' },
     deploying: { cls: 'badge-info', label: 'Deploying' },
     running: { cls: 'badge-success', label: 'Running' },
+    stopped: { cls: 'badge-warning', label: 'Stopped' },
     failed: { cls: 'badge-danger', label: 'Failed' },
   };
   const { cls, label } = map[status] || { cls: 'badge-info', label: status };
@@ -112,8 +155,11 @@ function BuildLogPanel({ appId, onClose }: { appId: string; onClose: () => void 
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    // Connect to WebSocket for live build logs
-    const wsUrl = `ws://localhost:8000/api/apps/${appId}/logs/ws`;
+    // Connect to WebSocket for live build logs (dynamically resolves host for LAN/network readiness)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl =
+      import.meta.env.VITE_WS_URL ||
+      `${protocol}//${window.location.host}/api/apps/${appId}/logs/ws`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -236,12 +282,89 @@ function VersionHistoryPanel({ appId, token }: { appId: string; token: string | 
 }
 
 /* ------------------------------------------------------------------ */
+/*  Discovery Summary Inline (Phase 5)                                 */
+/* ------------------------------------------------------------------ */
+
+interface DiscoverySummary {
+  discovery_status: string;
+  language: string | null;
+  framework: string | null;
+  exposed_ports: number[];
+  detected_db: string | null;
+  endpoint_count: number;
+  classification_counts: Record<string, number>;
+}
+
+function DiscoverySummaryInline({ appId, token }: { appId: string; token: string | null }) {
+  const [summary, setSummary] = useState<DiscoverySummary | null>(null);
+
+  useEffect(() => {
+    apiGet<DiscoverySummary>(`/discovery/${appId}/summary`, token)
+      .then(setSummary)
+      .catch(() => {});
+  }, [appId, token]);
+
+  if (!summary || summary.discovery_status !== 'completed') return null;
+
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        borderTop: '1px solid var(--card-border)',
+        background: 'rgba(0, 212, 170, 0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        flexWrap: 'wrap',
+        fontSize: 11,
+      }}
+    >
+      <span
+        className="font-mono"
+        style={{
+          fontSize: 9,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: 'var(--muted-foreground)',
+        }}
+      >
+        Discovery:
+      </span>
+      {summary.language && <span className="badge badge-info">{summary.language}</span>}
+      {summary.framework && <span className="badge badge-primary">{summary.framework}</span>}
+      {summary.detected_db && <span className="badge badge-warning">{summary.detected_db}</span>}
+      {summary.endpoint_count > 0 && (
+        <span style={{ color: 'var(--secondary-foreground)' }}>
+          {summary.endpoint_count} endpoint{summary.endpoint_count !== 1 ? 's' : ''}
+        </span>
+      )}
+      <a
+        href="/target-analysis"
+        style={{
+          marginLeft: 'auto',
+          fontSize: 10,
+          color: 'var(--primary)',
+          fontFamily: 'var(--font-mono)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+        }}
+      >
+        View Full Profile →
+      </a>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Live App Preview Modal                                             */
 /* ------------------------------------------------------------------ */
 
 function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => void }) {
-  const [port, setPort] = useState(8085);
-  const proxyUrl = `/api/apps/${app.id}/preview?target_port=${port}`;
+  // Use the dynamically assigned host_port from target_profile (set by the backend port allocator)
+  const assignedPort = app.target_profile?.host_port;
+  const defaultPort = assignedPort || 8085;
+  const [port, setPort] = useState(defaultPort);
+  const proxyUrl = `/api/apps/${app.id}/preview?target_port=${defaultPort}`;
   const [previewUrl, setPreviewUrl] = useState(proxyUrl);
 
   const handlePortChange = (newPort: number) => {
@@ -295,8 +418,8 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
                 width: 10,
                 height: 10,
                 borderRadius: '50%',
-                backgroundColor: '#00d4aa',
-                boxShadow: '0 0 10px #00d4aa',
+                backgroundColor: 'var(--primary)',
+                boxShadow: '0 0 10px var(--primary)',
               }}
             />
             <span style={{ fontWeight: 700, fontSize: 16, color: '#ffffff' }}>
@@ -307,7 +430,7 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <a
-              href={`http://localhost:${port}`}
+              href={`http://${window.location.hostname}:${port}`}
               target="_blank"
               rel="noreferrer"
               className="btn-secondary"
@@ -351,11 +474,14 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '8px',
               padding: '6px 10px',
-              color: '#00d4aa',
+              color: 'var(--primary)',
               fontSize: '12px',
               fontFamily: 'monospace',
             }}
           >
+            {assignedPort && assignedPort !== 8085 && (
+              <option value={assignedPort}>{assignedPort} (Assigned Port)</option>
+            )}
             <option value={8085}>8085 (Default Tenant Port)</option>
             <option value={3000}>3000 (React / Next)</option>
             <option value={5000}>5000 (Flask / Python)</option>
@@ -375,7 +501,7 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '8px',
               padding: '6px 14px',
-              color: '#00d4aa',
+              color: 'var(--primary)',
               fontSize: '13px',
               fontFamily: 'monospace',
             }}
@@ -421,6 +547,486 @@ function LivePreviewModal({ app, onClose }: { app: AppRecord; onClose: () => voi
 }
 
 /* ------------------------------------------------------------------ */
+/*  Delete App Confirmation Modal (with MinIO Purge Option)           */
+/* ------------------------------------------------------------------ */
+
+interface DeleteAppModalProps {
+  app: AppRecord;
+  purgeMinio: boolean;
+  onPurgeMinioChange: (val: boolean) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+  loading: boolean;
+}
+
+function DeleteAppModal({
+  app,
+  purgeMinio,
+  onPurgeMinioChange,
+  onConfirm,
+  onClose,
+  loading,
+}: DeleteAppModalProps) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1050,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="delete-confirm-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Trash2 size={16} className="text-secondary-foreground" />
+            <h3 className="delete-modal-title">Remove Application</h3>
+          </div>
+          <button
+            className="log-close-btn"
+            onClick={onClose}
+            disabled={loading}
+            aria-label="Close modal"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="delete-modal-body">
+          <p className="delete-modal-text">
+            Are you sure you want to remove application{' '}
+            <strong style={{ color: 'var(--foreground)' }}>"{app.name}"</strong>? This will delete
+            build history and running container resources.
+          </p>
+
+          <label className="delete-checkbox-card">
+            <input
+              type="checkbox"
+              checked={purgeMinio}
+              onChange={(e) => onPurgeMinioChange(e.target.checked)}
+              disabled={loading}
+              data-testid="purge-minio-checkbox"
+              className="delete-checkbox-input"
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="delete-checkbox-title">
+                Also remove from MinIO S3 bucket & Docker cache
+              </span>
+              <span className="delete-checkbox-sub">
+                Purges image layers and blobs from MinIO bucket{' '}
+                <code className="font-mono">pantheon-registry</code> and frees local disk space.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        <div className="delete-confirm-footer">
+          <button className="btn-secondary" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn-confirm-delete"
+            onClick={onConfirm}
+            disabled={loading}
+            data-testid="confirm-delete-app-btn"
+          >
+            {loading ? <Loader2 size={13} className="spin" /> : <Trash2 size={13} />}
+            Delete Application
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  MinIO S3 & Docker Registry Storage Management Modal               */
+/* ------------------------------------------------------------------ */
+
+interface MinioStorageModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  token: string | null;
+  onStorageChanged?: () => void;
+}
+
+function MinioStorageModal({ isOpen, onClose, token, onStorageChanged }: MinioStorageModalProps) {
+  const [data, setData] = useState<RegistryStorageResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [purging, setPurging] = useState<Record<string, boolean>>({});
+  const [customPath, setCustomPath] = useState('');
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const fetchStorage = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiGet<RegistryStorageResponse>('/apps/storage/registry', token);
+      setData(res);
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to fetch MinIO storage');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchStorage();
+    }
+  }, [isOpen, fetchStorage]);
+
+  const handlePurgeRepo = async (repoPath: string) => {
+    if (
+      !window.confirm(
+        `Permanently remove repository "${repoPath}" from MinIO S3 bucket and local Docker cache?`,
+      )
+    ) {
+      return;
+    }
+    setPurging((prev) => ({ ...prev, [repoPath]: true }));
+    setStatusMsg(null);
+    setErrorMsg(null);
+    try {
+      await apiDelete(
+        `/apps/storage/registry/${encodeURIComponent(repoPath)}?purge_docker=true`,
+        token,
+      );
+      setStatusMsg(`Successfully purged "${repoPath}" from MinIO bucket.`);
+      fetchStorage();
+      onStorageChanged?.();
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to purge repository');
+    } finally {
+      setPurging((prev) => {
+        const copy = { ...prev };
+        delete copy[repoPath];
+        return copy;
+      });
+    }
+  };
+
+  const handlePurgeAllOrphans = async () => {
+    if (
+      !window.confirm(
+        'Are you sure you want to permanently purge all orphaned images from the MinIO bucket?',
+      )
+    ) {
+      return;
+    }
+    setLoading(true);
+    setStatusMsg(null);
+    setErrorMsg(null);
+    try {
+      const res = await apiPost<{ purged_count: number }>(
+        '/apps/storage/registry/purge-orphans',
+        {},
+        token,
+      );
+      setStatusMsg(`Successfully purged ${res.purged_count} orphaned repositories from MinIO.`);
+      fetchStorage();
+      onStorageChanged?.();
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to purge orphans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomPurge = async () => {
+    if (!customPath.trim()) return;
+    await handlePurgeRepo(customPath.trim());
+    setCustomPath('');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1040,
+        padding: '20px',
+      }}
+      onClick={onClose}
+    >
+      <div className="storage-modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="storage-header">
+          <div className="storage-header-title">
+            <Database size={18} className="text-secondary-foreground" />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 className="storage-modal-title">MinIO S3 & Docker Registry Storage</h3>
+                <span className="badge badge-secondary font-mono">pantheon-registry</span>
+              </div>
+              <div className="storage-subtext">
+                S3 Endpoint: <code className="font-mono">localhost:9000</code> • Registry:{' '}
+                <code className="font-mono">localhost:5000</code>
+              </div>
+            </div>
+          </div>
+          <button className="log-close-btn" onClick={onClose} aria-label="Close modal">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Stats bar */}
+        <div className="storage-stats-bar">
+          <div className="storage-stat-chip">
+            <span className="storage-stat-label">Total Repositories</span>
+            <span className="storage-stat-val">{data ? data.total_repositories : '—'}</span>
+          </div>
+          <div className={`storage-stat-chip ${data && data.orphaned_count > 0 ? 'warning' : ''}`}>
+            <span className="storage-stat-label">Orphaned Images</span>
+            <span
+              className={`storage-stat-val ${data && data.orphaned_count > 0 ? 'storage-stat-val-warning' : ''}`}
+            >
+              {data ? data.orphaned_count : '—'}
+            </span>
+          </div>
+          <div className="storage-stat-chip">
+            <span className="storage-stat-label">Backing Engine</span>
+            <span className="storage-stat-val font-mono" style={{ fontSize: 13 }}>
+              MinIO S3 (Active)
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            {data && data.orphaned_count > 0 && (
+              <button
+                type="button"
+                className="btn-purge-all-orphans"
+                onClick={handlePurgeAllOrphans}
+                disabled={loading}
+              >
+                <Trash2 size={12} />
+                Purge All {data.orphaned_count} Orphaned
+              </button>
+            )}
+            <button
+              className="btn-secondary"
+              onClick={fetchStorage}
+              disabled={loading}
+              style={{ padding: '6px 11px' }}
+              title="Refresh MinIO Storage"
+            >
+              <RefreshCw size={12} className={loading ? 'spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="storage-body">
+          {statusMsg && (
+            <div className="storage-notice storage-notice-success">
+              <CheckCircle2 size={14} />
+              <span>{statusMsg}</span>
+            </div>
+          )}
+          {errorMsg && (
+            <div className="storage-notice storage-notice-danger">
+              <AlertCircle size={14} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="storage-table-container">
+            <table className="storage-table">
+              <thead>
+                <tr>
+                  <th>Repository Name</th>
+                  <th>Tags</th>
+                  <th>MinIO Size</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && !data ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '30px' }}>
+                      <Loader2
+                        size={18}
+                        className="spin"
+                        style={{ margin: '0 auto 8px', color: 'var(--muted-foreground)' }}
+                      />
+                      <span style={{ color: 'var(--muted-foreground)' }}>
+                        Reading MinIO bucket catalog...
+                      </span>
+                    </td>
+                  </tr>
+                ) : !data || data.repositories.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: 'center',
+                        padding: '30px',
+                        color: 'var(--muted-foreground)',
+                      }}
+                    >
+                      No image repositories currently in the MinIO bucket.
+                    </td>
+                  </tr>
+                ) : (
+                  data.repositories.map((repo) => (
+                    <tr key={repo.repository}>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span
+                            style={{
+                              fontWeight: 600,
+                              color: 'var(--foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            {repo.name}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              color: 'var(--muted-foreground)',
+                              fontFamily: 'var(--font-mono)',
+                            }}
+                          >
+                            {repo.minio_path}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        {repo.tags && repo.tags.length > 0 ? (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {repo.tags.map((t: string) => (
+                              <span
+                                key={t}
+                                className="badge badge-secondary font-mono"
+                                style={{ fontSize: 10 }}
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>
+                            none
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className="font-mono"
+                          style={{ fontSize: 11, color: 'var(--foreground)' }}
+                        >
+                          {repo.size_human} ({repo.object_count} obj)
+                        </span>
+                      </td>
+                      <td>
+                        {repo.is_orphaned ? (
+                          <span
+                            className="badge badge-warning font-mono"
+                            style={{ fontSize: 10 }}
+                            title="No active app found with this name in PostgreSQL"
+                          >
+                            Orphaned
+                          </span>
+                        ) : (
+                          <span className="badge badge-success font-mono" style={{ fontSize: 10 }}>
+                            Active App
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="btn-purge-repo"
+                          onClick={() => handlePurgeRepo(repo.repository)}
+                          disabled={purging[repo.repository] || loading}
+                          title="Purge repository from MinIO bucket & Docker image cache"
+                        >
+                          {purging[repo.repository] ? (
+                            <Loader2 size={12} className="spin" />
+                          ) : (
+                            <Trash2 size={12} />
+                          )}
+                          Remove from MinIO
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Quick Purge by Name */}
+          <div className="storage-footer-tools">
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: 'var(--foreground)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Purge Specific Image Repository
+            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                type="text"
+                className="input font-mono"
+                value={customPath}
+                onChange={(e) => setCustomPath(e.target.value)}
+                placeholder="e.g. app-service-name or <org-id>/app-name"
+                style={{
+                  flex: 1,
+                  fontSize: 12,
+                  padding: '7px 12px',
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCustomPurge();
+                }}
+              />
+              <button
+                type="button"
+                className="btn-purge-repo"
+                onClick={handleCustomPurge}
+                disabled={!customPath.trim() || loading}
+                style={{ padding: '7px 14px' }}
+              >
+                <Trash2 size={12} />
+                Purge from MinIO
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main Page Component                                                */
 /* ------------------------------------------------------------------ */
 
@@ -441,12 +1047,40 @@ export function AppOnboardingPage() {
   const [selectedPreviewApp, setSelectedPreviewApp] = useState<AppRecord | null>(null);
   const [expandedApp, setExpandedApp] = useState<string | null>(null);
 
+  // Storage modal and Delete modal state
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [deleteModalApp, setDeleteModalApp] = useState<{
+    app: AppRecord;
+    purgeMinio: boolean;
+  } | null>(null);
+  const [storageSummary, setStorageSummary] = useState<{
+    total_repositories: number;
+    orphaned_count: number;
+  } | null>(null);
+
   // Auth — for now use a simple token from localStorage (set after login)
   const [token] = useState<string | null>(() =>
     typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function'
       ? localStorage.getItem('pantheon_token')
       : null,
   );
+
+  // Fetch storage summary (total & orphaned images in MinIO)
+  const fetchStorageSummary = useCallback(async () => {
+    try {
+      const res = await apiGet<RegistryStorageResponse>('/apps/storage/registry', token);
+      setStorageSummary({
+        total_repositories: res.total_repositories,
+        orphaned_count: res.orphaned_count,
+      });
+    } catch {
+      // background fetch error ignore
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchStorageSummary();
+  }, [fetchStorageSummary]);
 
   // Fetch apps list
   const fetchApps = useCallback(() => {
@@ -533,6 +1167,79 @@ export function AppOnboardingPage() {
     }
   };
 
+  // Action loading state (tracks start/stop/delete per app)
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
+
+  // Start app container handler
+  const handleStartApp = async (appId: string) => {
+    setActionLoading((prev) => ({ ...prev, [appId]: 'start' }));
+    setError(null);
+    try {
+      await apiPost<AppRecord>(`/apps/${appId}/start`, {}, token);
+      setSuccessMsg('Application container started successfully!');
+      fetchApps();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to start app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[appId];
+        return copy;
+      });
+    }
+  };
+
+  // Stop app container handler
+  const handleStopApp = async (appId: string) => {
+    setActionLoading((prev) => ({ ...prev, [appId]: 'stop' }));
+    setError(null);
+    try {
+      await apiPost<AppRecord>(`/apps/${appId}/stop`, {}, token);
+      setSuccessMsg('Application container stopped.');
+      fetchApps();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to stop app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[appId];
+        return copy;
+      });
+    }
+  };
+
+  // Delete app handler (opens confirmation modal with MinIO purge option)
+  const handleDeleteApp = (app: AppRecord) => {
+    setDeleteModalApp({ app, purgeMinio: true });
+  };
+
+  const confirmDeleteApp = async () => {
+    if (!deleteModalApp) return;
+    const { app, purgeMinio } = deleteModalApp;
+
+    setActionLoading((prev) => ({ ...prev, [app.id]: 'delete' }));
+    setError(null);
+    try {
+      await apiDelete(`/apps/${app.id}?purge_minio=${purgeMinio}`, token);
+      setApps((prev) => prev.filter((a) => a.id !== app.id));
+      setSuccessMsg(
+        `Application "${app.name}" removed${purgeMinio ? ' and MinIO image storage purged' : ''}.`,
+      );
+      if (selectedLogApp === app.id) setSelectedLogApp(null);
+      if (selectedPreviewApp?.id === app.id) setSelectedPreviewApp(null);
+      setDeleteModalApp(null);
+      fetchStorageSummary();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete app');
+    } finally {
+      setActionLoading((prev) => {
+        const copy = { ...prev };
+        delete copy[app.id];
+        return copy;
+      });
+    }
+  };
+
   return (
     <div className="page-container animate-fade-in">
       {/* Page Header */}
@@ -585,7 +1292,7 @@ export function AppOnboardingPage() {
                     id="app-name"
                     type="text"
                     className="input"
-                    placeholder="my-awesome-app"
+                    placeholder="e.g. backend-api or auth-service"
                     value={appName}
                     onChange={(e) => setAppName(e.target.value)}
                     disabled={submitting}
@@ -602,7 +1309,7 @@ export function AppOnboardingPage() {
                       id="git-url"
                       type="url"
                       className="input"
-                      placeholder="https://github.com/username/repo.git"
+                      placeholder="https://github.com/organization/repo.git"
                       value={gitUrl}
                       onChange={(e) => setGitUrl(e.target.value)}
                       disabled={submitting}
@@ -720,9 +1427,43 @@ export function AppOnboardingPage() {
                 <span className="card-title">Deployed Applications</span>
                 <span className="badge badge-primary">{apps.length}</span>
               </div>
-              <button className="btn-secondary" onClick={fetchApps} style={{ padding: '4px 10px' }}>
-                <RefreshCw size={12} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowStorageModal(true)}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                  title="View MinIO S3 & Docker Registry Image Storage"
+                  data-testid="open-minio-storage-btn"
+                >
+                  <Database size={13} style={{ color: 'var(--primary)' }} />
+                  MinIO Storage
+                  {storageSummary && storageSummary.orphaned_count > 0 && (
+                    <span
+                      className="badge badge-warning font-mono"
+                      style={{ fontSize: 9, padding: '1px 5px' }}
+                      title={`${storageSummary.orphaned_count} orphaned image repositories found`}
+                    >
+                      {storageSummary.orphaned_count} orphan
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={fetchApps}
+                  style={{ padding: '4px 10px' }}
+                  title="Refresh application list"
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </div>
             </div>
             <div className="card-body" style={{ padding: 0 }}>
               {loadingApps && apps.length === 0 ? (
@@ -766,6 +1507,16 @@ export function AppOnboardingPage() {
                               <div className="app-item-url font-mono">{app.source_url}</div>
                             )}
                           </div>
+                          {/* Show assigned host port when app has been deployed */}
+                          {app.target_profile?.host_port && (
+                            <span
+                              className="badge badge-info font-mono"
+                              style={{ fontSize: 10, marginLeft: 4 }}
+                              title={`Container mapped to host port ${app.target_profile.host_port}`}
+                            >
+                              :{app.target_profile.host_port}
+                            </span>
+                          )}
                         </div>
                         <div className="app-item-actions">
                           <StatusBadge status={app.status} />
@@ -779,25 +1530,86 @@ export function AppOnboardingPage() {
                               style={{ color: 'var(--warning)' }}
                             />
                           )}
-                          {app.status === 'running' && (
-                            <button
-                              className="mode-btn mode-active"
-                              onClick={() => setSelectedPreviewApp(app)}
-                              title="View Live App Preview"
-                              style={{
-                                padding: '3px 10px',
-                                fontSize: 11,
-                                textTransform: 'none',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 4,
-                              }}
-                            >
-                              <ExternalLink size={12} />
-                              Live Preview
-                            </button>
+
+                          {/* Start button: for stopped apps or reopening system */}
+                          {app.status === 'stopped' && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-start-app"
+                                onClick={() => handleStartApp(app.id)}
+                                disabled={actionLoading[app.id] === 'start'}
+                                title="Start application container"
+                                data-testid={`start-app-btn-${app.id}`}
+                              >
+                                {actionLoading[app.id] === 'start' ? (
+                                  <Loader2 size={12} className="spin" />
+                                ) : (
+                                  <Play size={12} />
+                                )}
+                                Start App
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => setSelectedPreviewApp(app)}
+                                title="View Live App Preview"
+                                style={{
+                                  padding: '4px 10px',
+                                  fontSize: 11,
+                                  textTransform: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <ExternalLink size={12} />
+                                Preview
+                              </button>
+                            </>
                           )}
+
+                          {/* Live Preview and Stop button for running apps */}
+                          {app.status === 'running' && (
+                            <>
+                              <button
+                                type="button"
+                                className="mode-btn mode-active"
+                                onClick={() => setSelectedPreviewApp(app)}
+                                title="View Live App Preview"
+                                style={{
+                                  padding: '3px 10px',
+                                  fontSize: 11,
+                                  textTransform: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <ExternalLink size={12} />
+                                Live Preview
+                              </button>
+
+                              <button
+                                type="button"
+                                className="btn-stop-app"
+                                onClick={() => handleStopApp(app.id)}
+                                disabled={actionLoading[app.id] === 'stop'}
+                                title="Stop application container"
+                                data-testid={`stop-app-btn-${app.id}`}
+                              >
+                                {actionLoading[app.id] === 'stop' ? (
+                                  <Loader2 size={12} className="spin" />
+                                ) : (
+                                  <Square size={11} />
+                                )}
+                                Stop
+                              </button>
+                            </>
+                          )}
+
                           <button
+                            type="button"
                             className="btn-secondary"
                             onClick={() =>
                               setSelectedLogApp(selectedLogApp === app.id ? null : app.id)
@@ -808,6 +1620,7 @@ export function AppOnboardingPage() {
                             <Terminal size={12} />
                           </button>
                           <button
+                            type="button"
                             className="btn-secondary"
                             onClick={() => handleRedeploy(app.id)}
                             title="Redeploy"
@@ -815,12 +1628,50 @@ export function AppOnboardingPage() {
                           >
                             <RefreshCw size={12} />
                           </button>
+
+                          {/* Delete button: removes failed or unwanted apps */}
+                          <button
+                            type="button"
+                            className="btn-delete-app"
+                            onClick={() => handleDeleteApp(app)}
+                            disabled={actionLoading[app.id] === 'delete'}
+                            title="Remove application ingestion"
+                            data-testid={`delete-app-btn-${app.id}`}
+                          >
+                            {actionLoading[app.id] === 'delete' ? (
+                              <Loader2 size={12} className="spin" />
+                            ) : (
+                              <Trash2 size={13} />
+                            )}
+                          </button>
                         </div>
                       </div>
 
                       {/* Version History (expanded) */}
                       {expandedApp === app.id && (
-                        <VersionHistoryPanel appId={app.id} token={token} />
+                        <>
+                          <VersionHistoryPanel appId={app.id} token={token} />
+                          {/* Phase 5 — Compact Discovery Summary */}
+                          {app.discovery_status === 'completed' && (
+                            <DiscoverySummaryInline appId={app.id} token={token} />
+                          )}
+                          {app.discovery_status === 'running' && (
+                            <div
+                              style={{
+                                padding: '10px 16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                fontSize: 11,
+                                color: 'var(--warning)',
+                                fontFamily: 'var(--font-mono)',
+                              }}
+                            >
+                              <Loader2 size={12} className="spin" />
+                              Discovery running — analyzing application...
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   ))}
@@ -839,6 +1690,28 @@ export function AppOnboardingPage() {
       {/* Live App Preview Modal */}
       {selectedPreviewApp && (
         <LivePreviewModal app={selectedPreviewApp} onClose={() => setSelectedPreviewApp(null)} />
+      )}
+
+      {/* MinIO & Registry Storage Management Modal */}
+      <MinioStorageModal
+        isOpen={showStorageModal}
+        onClose={() => setShowStorageModal(false)}
+        token={token}
+        onStorageChanged={fetchStorageSummary}
+      />
+
+      {/* Delete App Confirmation Modal with MinIO Purge Option */}
+      {deleteModalApp && (
+        <DeleteAppModal
+          app={deleteModalApp.app}
+          purgeMinio={deleteModalApp.purgeMinio}
+          onPurgeMinioChange={(val) =>
+            setDeleteModalApp((prev) => (prev ? { ...prev, purgeMinio: val } : null))
+          }
+          onConfirm={confirmDeleteApp}
+          onClose={() => setDeleteModalApp(null)}
+          loading={actionLoading[deleteModalApp.app.id] === 'delete'}
+        />
       )}
     </div>
   );

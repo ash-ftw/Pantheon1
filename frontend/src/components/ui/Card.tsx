@@ -14,7 +14,7 @@ export const Card: React.FC<CardProps> = ({
   let accentStyle: React.CSSProperties = {};
   if (accentColor !== 'none') {
     accentStyle = {
-      borderTop: `2px solid var(--${accentColor})`,
+      borderTop: `2px solid var(--card-accent-${accentColor}, var(--${accentColor}))`,
     };
   }
 

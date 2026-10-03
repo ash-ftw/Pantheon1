@@ -14,9 +14,9 @@ import {
   CustomScenarioPage,
   DashboardPage,
   DefenceEnginePage,
-  DesignPreviewPage,
   EndpointDiscoveryPage,
   InfrastructurePage,
+  LandingPage,
   ObservabilityPage,
   ReportingPage,
   RouteBrokerPage,
@@ -25,18 +25,36 @@ import {
   TargetAnalysisPage,
   TeamManagementPage,
   TestRunPage,
+  AuthPage,
 } from '../pages';
 
 export const router = createBrowserRouter([
+  // Scroll-Driven Narrative Landing Page
   {
     path: '/',
+    element: <LandingPage />,
+  },
+  {
+    path: '/landing',
+    element: <LandingPage />,
+  },
+
+  // Standalone Auth & Registration Pages
+  {
+    path: '/login',
+    element: <AuthPage />,
+  },
+  {
+    path: '/register',
+    element: <AuthPage initialMode="register" />,
+  },
+
+  // Operational Platform App
+  {
     element: <AppLayout />,
     children: [
-      // Phase 1 — Design Preview Route
-      { path: 'design-preview', element: <DesignPreviewPage /> },
-
       // Module 1 — Dashboard (Phase 14)
-      { index: true, element: <DashboardPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
 
       // Module 2 — App Onboarding (Phase 4)
       { path: 'apps', element: <AppOnboardingPage /> },

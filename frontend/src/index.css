@@ -6,17 +6,41 @@
    tokens — nothing gets restyled later.
    ============================================================ */
 
-/* ---- Font Imports ---- */
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ---- Tailwind v4 Base ---- */
 @import 'tailwindcss';
+@source "../src";
+@source "./**/*.{ts,tsx}";
+
+@theme inline {
+  --color-matte-black: var(--palette-matte-black, #0f0f10);
+  --color-charcoal: var(--palette-charcoal, #232323);
+  --color-silver: var(--palette-silver, #c8c8c8);
+  --color-light-gray: var(--palette-light-gray, #eaeaea);
+  --color-pure-white: var(--palette-pure-white, #ffffff);
+}
+
+@utility hairline {
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35) 50%, transparent);
+  height: 1px;
+  width: 100%;
+}
+
+@utility label-kicker {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted-foreground, #8a8a93);
+}
 
 /* ---- Design Tokens (CSS Custom Properties) ---- */
 :root {
   /* --- Fonts --- */
-  --font-display: 'Rajdhani', sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* --- Background & Surface Colors --- */
@@ -48,6 +72,266 @@
   /* --- Shadows --- */
   --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
   --elevated-shadow: 0 8px 28px rgba(0, 0, 0, 0.75);
+  --primary-glow: rgba(0, 212, 170, 0.25);
+  --primary-subtle: rgba(0, 212, 170, 0.12);
+  --selection-bg: rgba(0, 212, 170, 0.2);
+}
+
+/* ---- Theme: Matte Studio / Minimal Mono ---- */
+/* Minimal, timeless, and sophisticated palette from Brand Identity Guidelines */
+/* Zero neon colors: all outlines replaced with dark charcoal / graphite (#232323 / #28282b) */
+[data-theme='matte-mono'],
+.theme-matte-mono {
+  /* --- Brand Identity Guideline Spec --- */
+  --palette-matte-black: #0f0f10;
+  --palette-charcoal: #232323;
+  --palette-silver: #c8c8c8;
+  --palette-light-gray: #eaeaea;
+  --palette-pure-white: #ffffff;
+
+  /* --- Background & Surface Colors --- */
+  --background: #0f0f10;
+  --sidebar: #0b0b0c;
+  --card: #141416;
+  --card-border: #232323;
+  --secondary: #1a1a1c;
+  --muted: #232323;
+
+  /* --- Foreground / Text Colors --- */
+  --foreground: #eaeaea;
+  --secondary-foreground: #c8c8c8;
+  --muted-foreground: #8a8a93;
+
+  /* --- Accent Colors (Zero Neon, Minimal Monochrome) --- */
+  --primary: #ffffff;
+  --primary-foreground: #0f0f10;
+  --accent: #c8c8c8;
+  --info: #8a8a93;
+  --success: #eaeaea;
+  --warning: #a8a8b0;
+  --danger: #2a2a2d;
+
+  /* --- Dark Card Accent Outlines (Replaces Neon Borders) --- */
+  --card-accent-primary: #28282b;
+  --card-accent-accent: #232323;
+  --card-accent-info: #232323;
+  --card-accent-success: #28282b;
+  --card-accent-warning: #28282b;
+  --card-accent-danger: #232323;
+
+  /* --- Shadows & Glows (Zero Neon Glow, Dark Soft Shadows) --- */
+  --primary-glow: rgba(0, 0, 0, 0);
+  --primary-subtle: rgba(255, 255, 255, 0.05);
+  --selection-bg: rgba(200, 200, 200, 0.2);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.85);
+  --elevated-shadow: 0 10px 32px rgba(0, 0, 0, 0.95);
+}
+
+/* ---- Matte Theme Outlines, Badges, Buttons, and Severity Overrides ---- */
+[data-theme='matte-mono'] :focus-visible,
+.theme-matte-mono :focus-visible {
+  outline: 2px solid #333336;
+}
+
+[data-theme='matte-mono'] .input:focus,
+.theme-matte-mono .input:focus {
+  border-color: #38383c;
+  box-shadow: 0 0 0 2px #232323;
+}
+
+[data-theme='matte-mono'] .card,
+.theme-matte-mono .card {
+  border-color: #232323;
+}
+
+[data-theme='matte-mono'] .btn-primary,
+.theme-matte-mono .btn-primary {
+  background-color: #ffffff;
+  color: #0f0f10;
+  border-color: #232323;
+  box-shadow: none;
+}
+
+[data-theme='matte-mono'] .btn-primary:hover,
+.theme-matte-mono .btn-primary:hover {
+  background-color: #eaeaea;
+  border-color: #38383c;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='matte-mono'] .btn-secondary,
+.theme-matte-mono .btn-secondary {
+  background-color: #1a1a1c;
+  color: #eaeaea;
+  border-color: #232323;
+}
+
+[data-theme='matte-mono'] .btn-secondary:hover,
+.theme-matte-mono .btn-secondary:hover {
+  background-color: #232326;
+  border-color: #333336;
+}
+
+[data-theme='matte-mono'] .btn-danger,
+.theme-matte-mono .btn-danger {
+  background-color: #1c1818;
+  color: #eaeaea;
+  border-color: #2a2222;
+  box-shadow: none;
+}
+
+[data-theme='matte-mono'] .badge-primary,
+.theme-matte-mono .badge-primary {
+  color: #eaeaea;
+  background-color: #1a1a1c;
+  border: 1px solid #2a2a2e;
+}
+
+[data-theme='matte-mono'] .badge-accent,
+.theme-matte-mono .badge-accent {
+  color: #c8c8c8;
+  background-color: #18181a;
+  border: 1px solid #262629;
+}
+
+[data-theme='matte-mono'] .badge-success,
+.theme-matte-mono .badge-success {
+  color: #eaeaea;
+  background-color: #181918;
+  border: 1px solid #252825;
+}
+
+[data-theme='matte-mono'] .badge-warning,
+.theme-matte-mono .badge-warning {
+  color: #c8c8c8;
+  background-color: #1a1918;
+  border: 1px solid #282725;
+}
+
+[data-theme='matte-mono'] .badge-danger,
+.theme-matte-mono .badge-danger {
+  color: #eaeaea;
+  background-color: #1c1818;
+  border: 1px solid #2a2222;
+}
+
+[data-theme='matte-mono'] .badge-info,
+.theme-matte-mono .badge-info {
+  color: #c8c8c8;
+  background-color: #18181a;
+  border: 1px solid #252528;
+}
+
+[data-theme='matte-mono'] .severity-critical,
+.theme-matte-mono .severity-critical {
+  color: #ffffff;
+}
+
+[data-theme='matte-mono'] .severity-high,
+.theme-matte-mono .severity-high {
+  color: #eaeaea;
+}
+
+[data-theme='matte-mono'] .severity-medium,
+.theme-matte-mono .severity-medium {
+  color: #c8c8c8;
+}
+
+[data-theme='matte-mono'] .severity-low,
+.theme-matte-mono .severity-low,
+[data-theme='matte-mono'] .severity-info,
+.theme-matte-mono .severity-info {
+  color: #8a8a93;
+}
+
+[data-theme='matte-mono'] .severity-resolved,
+.theme-matte-mono .severity-resolved,
+[data-theme='matte-mono'] .severity-active,
+.theme-matte-mono .severity-active {
+  color: #ffffff;
+}
+
+[data-theme='matte-mono'] .status-dot.online,
+.theme-matte-mono .status-dot.online,
+[data-theme='matte-mono'] .status-dot-pulse,
+.theme-matte-mono .status-dot-pulse {
+  background: #c8c8c8;
+  box-shadow: 0 0 4px rgba(200, 200, 200, 0.3);
+}
+
+[data-theme='matte-mono'] .status-badge-pill,
+.theme-matte-mono .status-badge-pill {
+  background: #1a1a1c;
+  border-color: #232323;
+  color: #eaeaea;
+}
+
+[data-theme='matte-mono'] .user-role-tag,
+.theme-matte-mono .user-role-tag {
+  color: #ffffff;
+  background: #232323;
+  border: 1px solid #333336;
+}
+
+[data-theme='matte-mono'] .sidebar-link-active,
+.theme-matte-mono .sidebar-link-active {
+  color: #ffffff;
+  background-color: #1a1a1d;
+  border-left-color: #38383c;
+}
+
+[data-theme='matte-mono'] .sidebar-logo:hover .sidebar-logo-icon,
+.theme-matte-mono .sidebar-logo:hover .sidebar-logo-icon {
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.6),
+    0 0 0 1px #333336;
+}
+
+/* ---- Global Pure Monochrome Utility Overrides for Matte Studio ---- */
+[data-theme='matte-mono'] .text-primary,
+[data-theme='matte-mono'] .text-success,
+[data-theme='matte-mono'] .text-info,
+[data-theme='matte-mono'] .text-warning,
+[data-theme='matte-mono'] .text-danger,
+[data-theme='matte-mono'] .text-accent,
+.theme-matte-mono .text-primary,
+.theme-matte-mono .text-success,
+.theme-matte-mono .text-info,
+.theme-matte-mono .text-warning,
+.theme-matte-mono .text-danger,
+.theme-matte-mono .text-accent {
+  color: #eaeaea !important;
+}
+
+[data-theme='matte-mono'] .bg-primary,
+[data-theme='matte-mono'] .bg-success,
+[data-theme='matte-mono'] .bg-info,
+[data-theme='matte-mono'] .bg-warning,
+[data-theme='matte-mono'] .bg-danger,
+[data-theme='matte-mono'] .bg-accent,
+.theme-matte-mono .bg-primary,
+.theme-matte-mono .bg-success,
+.theme-matte-mono .bg-info,
+.theme-matte-mono .bg-warning,
+.theme-matte-mono .bg-danger,
+.theme-matte-mono .bg-accent {
+  background-color: #232323 !important;
+  color: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .border-primary,
+[data-theme='matte-mono'] .border-success,
+[data-theme='matte-mono'] .border-info,
+[data-theme='matte-mono'] .border-warning,
+[data-theme='matte-mono'] .border-danger,
+[data-theme='matte-mono'] .border-accent,
+.theme-matte-mono .border-primary,
+.theme-matte-mono .border-success,
+.theme-matte-mono .border-info,
+.theme-matte-mono .border-warning,
+.theme-matte-mono .border-danger,
+.theme-matte-mono .border-accent {
+  border-color: #232323 !important;
 }
 
 /* ---- Tailwind v4 Theme Integration ---- */
@@ -70,9 +354,10 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  /* Fonts */
-  --font-display: 'Rajdhani', sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* --- Fonts --- */
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Border Radius */
@@ -86,12 +371,30 @@
 }
 
 /* ---- Base Styles ---- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  figure,
+  blockquote,
+  dl,
+  dd,
+  ul,
+  ol {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
@@ -145,7 +448,7 @@ body {
 
 /* ---- Selection ---- */
 ::selection {
-  background-color: rgba(0, 212, 170, 0.2);
+  background-color: var(--selection-bg, rgba(0, 212, 170, 0.2));
   color: var(--foreground);
 }
 
@@ -193,7 +496,7 @@ a:hover {
 
 .btn-primary:hover {
   background-color: color-mix(in srgb, var(--primary) 85%, white);
-  box-shadow: 0 0 20px rgba(0, 212, 170, 0.25);
+  box-shadow: 0 0 20px var(--primary-glow, rgba(0, 212, 170, 0.25));
   transform: translateY(-1px);
 }
 
@@ -314,8 +617,8 @@ a:hover {
 
 .badge-primary {
   color: var(--primary);
-  background-color: rgba(0, 212, 170, 0.12);
-  border: 1px solid rgba(0, 212, 170, 0.28);
+  background-color: var(--primary-subtle, rgba(0, 212, 170, 0.12));
+  border: 1px solid var(--primary-glow, rgba(0, 212, 170, 0.28));
 }
 
 .badge-accent {
@@ -393,7 +696,7 @@ a:hover {
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-subtle, rgba(0, 212, 170, 0.1));
 }
 
 .input::placeholder {
@@ -622,4 +925,120 @@ a:hover {
 
 .animate-slide-in {
   animation: slideInRight 0.3s ease-out;
+}
+
+/* ---- Theme Settings Button (matches NotificationBell) ---- */
+.theme-settings-btn {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  color: var(--secondary-foreground);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.theme-settings-btn:hover {
+  color: var(--foreground);
+  border-color: var(--primary);
+  background: var(--secondary);
+}
+
+.theme-settings-btn.has-label {
+  width: auto;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.theme-settings-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+[data-theme='matte-mono'] .theme-settings-btn,
+.theme-matte-mono .theme-settings-btn {
+  background: #141416;
+  border-color: #232323;
+  color: #c8c8c8;
+}
+
+[data-theme='matte-mono'] .theme-settings-btn:hover,
+.theme-matte-mono .theme-settings-btn:hover {
+  background: #1e1e21;
+  border-color: #38383c;
+  color: #ffffff;
+}
+
+/* Global Monochrome Overrides for Multi-Page Components in Matte Theme */
+[data-theme='matte-mono'] .method-GET,
+.theme-matte-mono .method-GET,
+[data-theme='matte-mono'] .method-POST,
+.theme-matte-mono .method-POST,
+[data-theme='matte-mono'] .method-PUT,
+.theme-matte-mono .method-PUT,
+[data-theme='matte-mono'] .method-DELETE,
+.theme-matte-mono .method-DELETE {
+  color: #ffffff !important;
+  background-color: #232323 !important;
+  border-color: #38383c !important;
+}
+
+[data-theme='matte-mono'] .gauge-bar-fill.cyan,
+.theme-matte-mono .gauge-bar-fill.cyan {
+  background: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .gauge-bar-fill.blue,
+.theme-matte-mono .gauge-bar-fill.blue {
+  background: #c8c8c8 !important;
+}
+
+[data-theme='matte-mono'] .gauge-bar-fill.orange,
+.theme-matte-mono .gauge-bar-fill.orange {
+  background: #8a8a93 !important;
+}
+
+[data-theme='matte-mono'] .status-code-badge.status-2xx,
+.theme-matte-mono .status-code-badge.status-2xx {
+  background: #232323 !important;
+  color: #ffffff !important;
+  border-color: #38383c !important;
+}
+
+[data-theme='matte-mono'] .meter-fill.status-2xx,
+.theme-matte-mono .meter-fill.status-2xx {
+  background: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .container-status-dot,
+.theme-matte-mono .container-status-dot {
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+[data-theme='matte-mono'] .container-badge-state,
+.theme-matte-mono .container-badge-state {
+  color: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .defence-toast.success,
+.theme-matte-mono .defence-toast.success {
+  background: #141416 !important;
+  border-color: #38383c !important;
+  color: #ffffff !important;
+}
+
+[data-theme='matte-mono'] .defence-badge,
+.theme-matte-mono .defence-badge {
+  background: #232323 !important;
+  border-color: #38383c !important;
+  color: #ffffff !important;
 }

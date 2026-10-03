@@ -41,7 +41,7 @@ async def trigger_provisioning(
             status_code=status.HTTP_404_NOT_FOUND, detail="User has no associated org"
         )
 
-    if current_user.role != "admin":
+    if current_user.role.lower() != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
 
     try:
