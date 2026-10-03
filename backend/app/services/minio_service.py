@@ -62,7 +62,9 @@ class MinioStorageService:
             logger.warning("registry_exec_error", error=str(e), cmd=cmd)
             return -1, str(e)
 
-    async def list_repositories(self, active_app_names: set[str] | None = None) -> list[dict[str, Any]]:
+    async def list_repositories(
+        self, active_app_names: set[str] | None = None
+    ) -> list[dict[str, Any]]:
         """List all image repositories stored in Registry v2 / MinIO with metadata."""
         repos: list[str] = []
 
@@ -145,18 +147,20 @@ class MinioStorageService:
                     or repo_name.lower() in active_app_names
                 )
 
-            results.append({
-                "repository": repo_path,
-                "name": repo_name,
-                "clean_app_name": clean_app_name,
-                "org_id": org_id,
-                "tags": tags,
-                "size_human": size_human,
-                "object_count": object_count,
-                "is_orphaned": not is_active,
-                "bucket": self.registry_bucket,
-                "minio_path": f"{self.registry_bucket}/docker/registry/v2/repositories/{repo_path}",
-            })
+            results.append(
+                {
+                    "repository": repo_path,
+                    "name": repo_name,
+                    "clean_app_name": clean_app_name,
+                    "org_id": org_id,
+                    "tags": tags,
+                    "size_human": size_human,
+                    "object_count": object_count,
+                    "is_orphaned": not is_active,
+                    "bucket": self.registry_bucket,
+                    "minio_path": f"{self.registry_bucket}/docker/registry/v2/repositories/{repo_path}",
+                }
+            )
 
         return results
 
@@ -171,23 +175,23 @@ class MinioStorageService:
         logger.info("purging_repository_from_minio", repository=clean_path)
 
         # 1. Remove repository directory from MinIO pantheon-registry bucket
-        minio_target = f"myminio/{self.registry_bucket}/docker/registry/v2/repositories/{clean_path}"
+        minio_target = (
+            f"myminio/{self.registry_bucket}/docker/registry/v2/repositories/{clean_path}"
+        )
         code, out = await asyncio.to_thread(
             self._exec_in_minio, f"mc rm --recursive --force {minio_target}"
         )
-        minio_success = (code == 0)
+        minio_success = code == 0
 
         # 2. Trigger Docker Registry garbage collection inside registry container to reclaim blobs
-        gc_code, gc_out = await asyncio.to_thread(
+        gc_code, _gc_out = await asyncio.to_thread(
             self._exec_in_registry,
             ["bin/registry", "garbage-collect", "-m", "/etc/docker/registry/config.yml"],
         )
 
         # 3. Purge matching artifacts in pantheon-artifacts bucket if any exist
         artifact_target = f"myminio/{self.artifacts_bucket}/{clean_path}"
-        await asyncio.to_thread(
-            self._exec_in_minio, f"mc rm --recursive --force {artifact_target}"
-        )
+        await asyncio.to_thread(self._exec_in_minio, f"mc rm --recursive --force {artifact_target}")
 
         # 4. Optional: Clean up local Docker daemon cache (images & stopped preview containers)
         docker_cleanup_info: dict[str, Any] = {"images_removed": [], "containers_removed": []}
@@ -217,7 +221,11 @@ class MinioStorageService:
                         tags = img.tags or []
                         should_remove = False
                         for t in tags:
-                            if clean_path in t or f":5000/{clean_path}" in t or f"pantheon-app-{service_name}" in t:
+                            if (
+                                clean_path in t
+                                or f":5000/{clean_path}" in t
+                                or f"pantheon-app-{service_name}" in t
+                            ):
                                 should_remove = True
                                 break
                         if should_remove:
@@ -225,7 +233,9 @@ class MinioStorageService:
                                 client.images.remove(img.id, force=True)
                                 docker_cleanup_info["images_removed"].append(img.short_id)
                             except Exception as rm_err:
-                                logger.debug("docker_image_rm_failed", id=img.short_id, error=str(rm_err))
+                                logger.debug(
+                                    "docker_image_rm_failed", id=img.short_id, error=str(rm_err)
+                                )
                 except Exception as img_err:
                     logger.warning("docker_image_list_failed", error=str(img_err))
 
@@ -250,7 +260,11 @@ class MinioStorageService:
             repo_path = r["repository"]
             name = r["name"].lower()
             # Match app-xyz, xyz, or exact match
-            if name == f"app-{clean_name}" or name == clean_name or r["clean_app_name"].lower() == clean_name:
+            if (
+                name == f"app-{clean_name}"
+                or name == clean_name
+                or r["clean_app_name"].lower() == clean_name
+            ):
                 if not org_id or org_id in repo_path:
                     await self.delete_repository(repo_path, purge_local_docker=purge_local_docker)
                     deleted_repos.append(repo_path)

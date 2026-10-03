@@ -1,121 +1,121 @@
-import { motion, useScroll, useSpring } from "motion/react";
-import { useState } from "react";
-import { Link } from "react-router";
-import { ArrowRight, CheckCircle2, ExternalLink, Shield } from "lucide-react";
-import { useAuthStore } from "../stores/authStore";
-import { SceneMount } from "./three/SceneMount";
-import { Reveal } from "./Reveal";
-import "./LandingPage.css";
+import { motion, useScroll, useSpring } from 'motion/react';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { ArrowRight, CheckCircle2, ExternalLink, Shield } from 'lucide-react';
+import { useAuthStore } from '../stores/authStore';
+import { SceneMount } from './three/SceneMount';
+import { Reveal } from './Reveal';
+import './LandingPage.css';
 
 const capabilities = [
   {
-    index: "01",
-    title: "Tenant Isolation",
-    body: "Every customer application lands in its own Kubernetes namespace with default-deny network policies and hard resource quotas.",
-    link: "/apps",
-    linkText: "Onboard Apps & Namespaces",
+    index: '01',
+    title: 'Tenant Isolation',
+    body: 'Every customer application lands in its own Kubernetes namespace with default-deny network policies and hard resource quotas.',
+    link: '/apps',
+    linkText: 'Onboard Apps & Namespaces',
   },
   {
-    index: "02",
-    title: "Ephemeral Route Broker",
-    body: "Attack workloads reach targets through TTL-managed temporary routes. No tenant credentials are ever exposed to the engine.",
-    link: "/route-broker",
-    linkText: "Configure Route Broker",
+    index: '02',
+    title: 'Ephemeral Route Broker',
+    body: 'Attack workloads reach targets through TTL-managed temporary routes. No tenant credentials are ever exposed to the engine.',
+    link: '/route-broker',
+    linkText: 'Configure Route Broker',
   },
   {
-    index: "03",
-    title: "Live Attack Graphs",
-    body: "Watch HTTP, load, and security scenarios propagate in real time across a rendered graph of services and dependencies.",
-    link: "/attack-graph",
-    linkText: "Inspect Attack Graph",
+    index: '03',
+    title: 'Live Attack Graphs',
+    body: 'Watch HTTP, load, and security scenarios propagate in real time across a rendered graph of services and dependencies.',
+    link: '/attack-graph',
+    linkText: 'Inspect Attack Graph',
   },
   {
-    index: "04",
-    title: "Fault Injection",
-    body: "Chaos Mesh hooks introduce controlled latency, packet loss, and pod failure while scenarios execute.",
-    link: "/scenarios",
-    linkText: "Browse Simulation Library",
+    index: '04',
+    title: 'Fault Injection',
+    body: 'Chaos Mesh hooks introduce controlled latency, packet loss, and pod failure while scenarios execute.',
+    link: '/scenarios',
+    linkText: 'Browse Simulation Library',
   },
   {
-    index: "05",
-    title: "Observability Plane",
-    body: "Prometheus and Loki capture system behavior for every run, correlated back to the scenario timeline.",
-    link: "/observability",
-    linkText: "View Observability Metrics",
+    index: '05',
+    title: 'Observability Plane',
+    body: 'Prometheus and Loki capture system behavior for every run, correlated back to the scenario timeline.',
+    link: '/observability',
+    linkText: 'View Observability Metrics',
   },
   {
-    index: "06",
-    title: "Defense Reports",
-    body: "Each execution ends in an actionable report: what broke, why it broke, and the remediation worth shipping first.",
-    link: "/reports",
-    linkText: "Access Defense Reports",
+    index: '06',
+    title: 'Defense Reports',
+    body: 'Each execution ends in an actionable report: what broke, why it broke, and the remediation worth shipping first.',
+    link: '/reports',
+    linkText: 'Access Defense Reports',
   },
 ];
 
 const planes = [
   {
-    name: "Control Plane",
+    name: 'Control Plane',
     detail:
-      "FastAPI backend and React console managing organizations, applications, scenarios, safety allowlists, and execution jobs.",
-    stack: ["FastAPI 0.115", "React 19", "Celery 5.4", "PostgreSQL 16"],
-    link: "/dashboard",
-    linkText: "Control Plane Console",
+      'FastAPI backend and React console managing organizations, applications, scenarios, safety allowlists, and execution jobs.',
+    stack: ['FastAPI 0.115', 'React 19', 'Celery 5.4', 'PostgreSQL 16'],
+    link: '/dashboard',
+    linkText: 'Control Plane Console',
   },
   {
-    name: "Tenant Environment",
+    name: 'Tenant Environment',
     detail:
-      "Isolated namespaces holding customer applications with default-deny policies, quotas, and Chaos Mesh fault hooks.",
-    stack: ["k3s 1.30", "Chaos Mesh", "Buildpacks", "Registry v2"],
-    link: "/infrastructure",
-    linkText: "Infrastructure Topology",
+      'Isolated namespaces holding customer applications with default-deny policies, quotas, and Chaos Mesh fault hooks.',
+    stack: ['k3s 1.30', 'Chaos Mesh', 'Buildpacks', 'Registry v2'],
+    link: '/infrastructure',
+    linkText: 'Infrastructure Topology',
   },
   {
-    name: "Attack Engine",
+    name: 'Attack Engine',
     detail:
-      "Ephemeral attacker workloads executing HTTP, load, and security scenarios across temporary access routes.",
-    stack: ["Route Broker", "Trivy 0.56", "Redis 7", "MinIO S3"],
-    link: "/route-broker",
-    linkText: "Route Broker & Guard",
+      'Ephemeral attacker workloads executing HTTP, load, and security scenarios across temporary access routes.',
+    stack: ['Route Broker', 'Trivy 0.56', 'Redis 7', 'MinIO S3'],
+    link: '/route-broker',
+    linkText: 'Route Broker & Guard',
   },
 ];
 
 const stats = [
-  { value: "RS256", label: "Signed tenant tokens", href: "/route-broker" },
-  { value: "TTL", label: "Scoped attack routes", href: "/route-broker" },
-  { value: "Deny", label: "Default network policy", href: "/apps" },
-  { value: "k8s", label: "Namespace per tenant", href: "/infrastructure" },
+  { value: 'RS256', label: 'Signed tenant tokens', href: '/route-broker' },
+  { value: 'TTL', label: 'Scoped attack routes', href: '/route-broker' },
+  { value: 'Deny', label: 'Default network policy', href: '/apps' },
+  { value: 'k8s', label: 'Namespace per tenant', href: '/infrastructure' },
 ];
 
 const pipeline = [
   {
-    step: "01",
-    title: "Deploy",
-    body: "Buildpacks compile your target app and push it to the internal registry.",
-    link: "/apps",
+    step: '01',
+    title: 'Deploy',
+    body: 'Buildpacks compile your target app and push it to the internal registry.',
+    link: '/apps',
   },
   {
-    step: "02",
-    title: "Isolate",
-    body: "A dedicated namespace spins up with quotas and default-deny networking.",
-    link: "/infrastructure",
+    step: '02',
+    title: 'Isolate',
+    body: 'A dedicated namespace spins up with quotas and default-deny networking.',
+    link: '/infrastructure',
   },
   {
-    step: "03",
-    title: "Broker",
-    body: "A TTL-scoped route opens for the attacker workload. Nothing else gets through.",
-    link: "/route-broker",
+    step: '03',
+    title: 'Broker',
+    body: 'A TTL-scoped route opens for the attacker workload. Nothing else gets through.',
+    link: '/route-broker',
   },
   {
-    step: "04",
-    title: "Execute",
-    body: "HTTP, load, and security scenarios run while chaos hooks perturb the system.",
-    link: "/test-runs",
+    step: '04',
+    title: 'Execute',
+    body: 'HTTP, load, and security scenarios run while chaos hooks perturb the system.',
+    link: '/test-runs',
   },
   {
-    step: "05",
-    title: "Report",
-    body: "Graphs, metrics, and logs collapse into one prioritized defense report.",
-    link: "/reports",
+    step: '05',
+    title: 'Report',
+    body: 'Graphs, metrics, and logs collapse into one prioritized defense report.',
+    link: '/reports',
   },
 ];
 
@@ -131,7 +131,7 @@ function ScrollProgress() {
 }
 
 function Hero() {
-  const headlineWords = ["Attack", "your", "own", "stack"];
+  const headlineWords = ['Attack', 'your', 'own', 'stack'];
 
   return (
     <section className="relative min-h-[78vh] flex items-center justify-center overflow-hidden border-b border-white/10 pt-24 pb-16 w-full">
@@ -224,20 +224,20 @@ function Hero() {
 
 function Marquee() {
   const words = [
-    "Isolated",
-    "Ephemeral",
-    "Observable",
-    "Attributable",
-    "Reversible",
-    "Chaos Mesh Native",
-    "Zero Trust Route Broker",
+    'Isolated',
+    'Ephemeral',
+    'Observable',
+    'Attributable',
+    'Reversible',
+    'Chaos Mesh Native',
+    'Zero Trust Route Broker',
   ];
   return (
     <div className="overflow-hidden border-b border-white/10 bg-[#090a0c] py-3.5 w-full">
       <motion.div
         className="flex w-max gap-12 pr-12"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{ duration: 26, repeat: Infinity, ease: 'linear' }}
       >
         {[...words, ...words, ...words, ...words].map((word, i) => (
           <span key={i} className="label-kicker-clean whitespace-nowrap text-zinc-400 text-[11px]">
@@ -276,9 +276,7 @@ function PipelineSection() {
 
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <h3 className="text-lg sm:text-xl font-semibold text-white">
-                      {item.title}
-                    </h3>
+                    <h3 className="text-lg sm:text-xl font-semibold text-white">{item.title}</h3>
                     <Link
                       to={item.link}
                       className="font-mono text-[11px] text-zinc-400 group-hover:text-white inline-flex items-center gap-1 transition-colors"
@@ -311,7 +309,8 @@ function PlatformSection() {
               Six primitives that make adversary simulation safe to run.
             </h2>
             <p className="mt-2.5 text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
-              Zero trust isolation while capturing deep forensic telemetry across the scenario lifecycle.
+              Zero trust isolation while capturing deep forensic telemetry across the scenario
+              lifecycle.
             </p>
           </div>
         </Reveal>
@@ -334,7 +333,9 @@ function PlatformSection() {
                   <h3 className="mt-4 text-base sm:text-lg font-semibold text-white group-hover:text-white transition-colors">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">{item.body}</p>
+                  <p className="mt-2 text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+                    {item.body}
+                  </p>
                 </div>
 
                 <div className="mt-6 pt-3.5 border-t border-white/10">
@@ -370,7 +371,8 @@ function ArchitectureSection() {
               A tenant-isolated control plane and execution model.
             </h2>
             <p className="mt-2.5 text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
-              Engineered for high-assurance validation without risking tenant credentials or shared network paths.
+              Engineered for high-assurance validation without risking tenant credentials or shared
+              network paths.
             </p>
           </div>
         </Reveal>
@@ -394,7 +396,9 @@ function ArchitectureSection() {
                 </div>
 
                 <div className="flex-1">
-                  <p className="text-xs sm:text-sm leading-relaxed text-zinc-300 font-sans">{plane.detail}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed text-zinc-300 font-sans">
+                    {plane.detail}
+                  </p>
                   <ul className="mt-3.5 flex flex-wrap gap-2">
                     {plane.stack.map((tech) => (
                       <li
@@ -427,7 +431,8 @@ function SafetySection() {
               Controlled blast radius, by construction.
             </h2>
             <p className="mt-2.5 text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
-              Scenarios only execute against allowlisted targets with strict TTL routes and hardware kill switches.
+              Scenarios only execute against allowlisted targets with strict TTL routes and hardware
+              kill switches.
             </p>
           </div>
         </Reveal>
@@ -438,7 +443,8 @@ function SafetySection() {
               <div>
                 <p className="text-xs sm:text-sm leading-relaxed text-zinc-300 font-sans">
                   Ephemeral routes expire via strict TTL brokers. Namespaces deny egress by default.
-                  Every job is attributable to an organization, an operator, and a signed RS256 token.
+                  Every job is attributable to an organization, an operator, and a signed RS256
+                  token.
                 </p>
 
                 <div className="mt-5 flex flex-col gap-2.5">
@@ -480,7 +486,9 @@ function SafetySection() {
                   <p className="text-zinc-500"># scenario initiation sequence</p>
                   <p className="text-emerald-400 font-semibold">POST /v1/scenarios/:id/execute</p>
                   <p className="text-zinc-400">→ allowlist check: PASS (org_allowlist_verified)</p>
-                  <p className="text-zinc-400">→ broker route initialized (ttl=600s, egress=restricted)</p>
+                  <p className="text-zinc-400">
+                    → broker route initialized (ttl=600s, egress=restricted)
+                  </p>
                   <p className="text-zinc-400">→ ephemeral attacker pod spun in tenant namespace</p>
                   <p className="text-zinc-400">→ live attack graph streaming: WebSocket 101</p>
                   <p className="text-zinc-400">→ metrics & traces ingested to Prometheus/Loki</p>
@@ -502,7 +510,7 @@ function SafetySection() {
 
 export function LandingPage() {
   const [emailSubmitted, setEmailSubmitted] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -539,19 +547,34 @@ export function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex">
-            <a href="#platform" className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors">
+            <a
+              href="#platform"
+              className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors"
+            >
               Platform
             </a>
-            <a href="#pipeline" className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors">
+            <a
+              href="#pipeline"
+              className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors"
+            >
               Execution
             </a>
-            <a href="#architecture" className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors">
+            <a
+              href="#architecture"
+              className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors"
+            >
               Architecture
             </a>
-            <a href="#security" className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors">
+            <a
+              href="#security"
+              className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors"
+            >
               Security
             </a>
-            <Link to="/scenarios" className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors">
+            <Link
+              to="/scenarios"
+              className="font-mono text-[11px] tracking-wider text-zinc-400 hover:text-white uppercase transition-colors"
+            >
               Scenarios
             </Link>
           </nav>
@@ -559,11 +582,7 @@ export function LandingPage() {
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-3">
-                <Link
-                  to="/dashboard"
-                  className="btn-enter-console"
-                  data-testid="enter-console-btn"
-                >
+                <Link to="/dashboard" className="btn-enter-console" data-testid="enter-console-btn">
                   ENTER CONSOLE →
                 </Link>
                 <button
@@ -575,11 +594,7 @@ export function LandingPage() {
                 </button>
               </div>
             ) : (
-              <Link
-                to="/dashboard"
-                className="btn-enter-console"
-                data-testid="enter-console-btn"
-              >
+              <Link to="/dashboard" className="btn-enter-console" data-testid="enter-console-btn">
                 ENTER CONSOLE →
               </Link>
             )}
@@ -600,16 +615,14 @@ export function LandingPage() {
                 <Reveal
                   key={stat.label}
                   delay={i * 0.06}
-                  className={`py-3 ${
-                    i !== 0 ? "md:border-l md:border-white/10 md:pl-6" : ""
-                  }`}
+                  className={`py-3 ${i !== 0 ? 'md:border-l md:border-white/10 md:pl-6' : ''}`}
                 >
                   <Link to={stat.href} className="group block text-center md:text-left">
                     <p className="font-mono text-2xl sm:text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">
                       {stat.value}
                     </p>
                     <p className="mt-1 text-xs text-zinc-400 font-sans flex items-center justify-center md:justify-start gap-1.5 group-hover:text-white transition-colors">
-                      {stat.label}{" "}
+                      {stat.label}{' '}
                       <ArrowRight
                         size={12}
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -648,7 +661,8 @@ export function LandingPage() {
                 </h2>
                 <p className="mt-5 text-base sm:text-lg leading-relaxed text-zinc-300 font-sans max-w-2xl mx-auto">
                   We onboard security and platform teams with a guided range build against a
-                  non-production replica of your stack. Deploy, attack, and remediate with confidence.
+                  non-production replica of your stack. Deploy, attack, and remediate with
+                  confidence.
                 </p>
               </Reveal>
 
@@ -683,10 +697,7 @@ export function LandingPage() {
                       aria-label="Work email"
                       className="contact-input flex-1"
                     />
-                    <button
-                      type="submit"
-                      className="btn-contact-submit shrink-0"
-                    >
+                    <button type="submit" className="btn-contact-submit shrink-0">
                       Request access
                     </button>
                   </form>
@@ -732,9 +743,7 @@ export function LandingPage() {
             </div>
 
             <div className="landing-footer-col">
-              <p className="landing-footer-heading">
-                Console
-              </p>
+              <p className="landing-footer-heading">Console</p>
               <ul className="landing-footer-links">
                 <li>
                   <Link to="/dashboard" className="footer-nav-link">
@@ -770,9 +779,7 @@ export function LandingPage() {
             </div>
 
             <div className="landing-footer-col">
-              <p className="landing-footer-heading">
-                Attack Engine
-              </p>
+              <p className="landing-footer-heading">Attack Engine</p>
               <ul className="landing-footer-links">
                 <li>
                   <Link to="/scenarios" className="footer-nav-link">
@@ -803,9 +810,7 @@ export function LandingPage() {
             </div>
 
             <div className="landing-footer-col">
-              <p className="landing-footer-heading">
-                Defense & Audit
-              </p>
+              <p className="landing-footer-heading">Defense & Audit</p>
               <ul className="landing-footer-links">
                 <li>
                   <Link to="/attack-graph" className="footer-nav-link">

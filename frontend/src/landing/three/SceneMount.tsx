@@ -1,14 +1,14 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from 'react';
 
-const PantheonScene = lazy(() => import("./PantheonScene"));
+const PantheonScene = lazy(() => import('./PantheonScene'));
 
 function isWebGLAvailable() {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
   try {
-    const canvas = document.createElement("canvas");
+    const canvas = document.createElement('canvas');
     return !!(
       window.WebGLRenderingContext &&
-      (canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     );
   } catch {
     return false;

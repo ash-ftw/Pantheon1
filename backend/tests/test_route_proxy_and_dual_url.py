@@ -33,9 +33,7 @@ async def auth_client():
         await session.commit()
         await session.refresh(user)
 
-        token = create_access_token(
-            user_id=user.id, email=user.email, org_id=org.id, role="owner"
-        )
+        token = create_access_token(user_id=user.id, email=user.email, org_id=org.id, role="owner")
 
     transport = ASGITransport(app=app)
     async with AsyncClient(

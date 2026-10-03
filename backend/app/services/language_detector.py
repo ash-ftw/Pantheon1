@@ -368,9 +368,9 @@ class LanguageDetector:
                     else:
                         # Check file content for the dependency/keyword
                         try:
-                            content = (
-                                marker_path.read_text(encoding="utf-8", errors="ignore").lower()
-                            )
+                            content = marker_path.read_text(
+                                encoding="utf-8", errors="ignore"
+                            ).lower()
                             if marker["content_check"].lower() in content:
                                 framework = marker["framework"]
                                 marker_files.append(marker["marker"])

@@ -105,12 +105,30 @@ describe('Pantheon Enterprise Cyber Range Landing Page', () => {
     expect(screen.getAllByText('Defense Reports').length).toBeGreaterThan(0);
 
     // Verify deep links to console modules
-    expect(screen.getByText('Onboard Apps & Namespaces').closest('a')).toHaveAttribute('href', '/apps');
-    expect(screen.getByText('Configure Route Broker').closest('a')).toHaveAttribute('href', '/route-broker');
-    expect(screen.getByText('Inspect Attack Graph').closest('a')).toHaveAttribute('href', '/attack-graph');
-    expect(screen.getByText('Browse Simulation Library').closest('a')).toHaveAttribute('href', '/scenarios');
-    expect(screen.getByText('View Observability Metrics').closest('a')).toHaveAttribute('href', '/observability');
-    expect(screen.getByText('Access Defense Reports').closest('a')).toHaveAttribute('href', '/reports');
+    expect(screen.getByText('Onboard Apps & Namespaces').closest('a')).toHaveAttribute(
+      'href',
+      '/apps',
+    );
+    expect(screen.getByText('Configure Route Broker').closest('a')).toHaveAttribute(
+      'href',
+      '/route-broker',
+    );
+    expect(screen.getByText('Inspect Attack Graph').closest('a')).toHaveAttribute(
+      'href',
+      '/attack-graph',
+    );
+    expect(screen.getByText('Browse Simulation Library').closest('a')).toHaveAttribute(
+      'href',
+      '/scenarios',
+    );
+    expect(screen.getByText('View Observability Metrics').closest('a')).toHaveAttribute(
+      'href',
+      '/observability',
+    );
+    expect(screen.getByText('Access Defense Reports').closest('a')).toHaveAttribute(
+      'href',
+      '/reports',
+    );
   });
 
   it('06 Architecture & Safety: renders plane topologies and CLI execution terminal', () => {
@@ -156,7 +174,13 @@ describe('Pantheon Enterprise Cyber Range Landing Page', () => {
     // Footer links
     expect(screen.getByText('PANTHEON © 2026 · SECURITY TESTING PLATFORM')).toBeInTheDocument();
     expect(screen.getByText('Applications').closest('a')).toHaveAttribute('href', '/apps');
-    expect(screen.getByText('Simulation Library').closest('a')).toHaveAttribute('href', '/scenarios');
-    expect(screen.getByText('Attack Graph & Replay').closest('a')).toHaveAttribute('href', '/attack-graph');
+    expect(screen.getByText('Simulation Library').closest('a')).toHaveAttribute(
+      'href',
+      '/scenarios',
+    );
+    expect(screen.getByText('Attack Graph & Replay').closest('a')).toHaveAttribute(
+      'href',
+      '/attack-graph',
+    );
   });
 });

@@ -36,9 +36,9 @@ from app.logging import get_logger
 from app.models import App, AppVersion, User
 from app.routers.orgs import log_audit_event
 from app.services.app_runtime_service import app_runtime_service
+from app.services.auth_service import get_current_user
 from app.services.docker_builder import docker_builder, sanitize_docker_name
 from app.services.minio_service import minio_service
-from app.services.auth_service import get_current_user
 from app.tasks.ingestion import _async_ingest_app, ingest_app
 
 logger = get_logger(__name__)
@@ -248,7 +248,9 @@ async def list_registry_storage(
     """List all image repositories stored in MinIO pantheon-registry bucket with active/orphaned status."""
     active_names: set[str] = set()
     if current_user.org_id:
-        active_apps_res = await db.execute(select(App.name).where(App.org_id == current_user.org_id))
+        active_apps_res = await db.execute(
+            select(App.name).where(App.org_id == current_user.org_id)
+        )
         active_names = {sanitize_docker_name(name) for name in active_apps_res.scalars().all()}
 
     repos = await minio_service.list_repositories(active_app_names=active_names)
@@ -263,7 +265,9 @@ async def list_registry_storage(
 @router.delete("/storage/registry/{repo_path:path}", status_code=status.HTTP_200_OK)
 async def delete_registry_storage(
     repo_path: str,
-    purge_docker: bool = Query(default=True, description="Also remove local Docker image cache and container"),
+    purge_docker: bool = Query(
+        default=True, description="Also remove local Docker image cache and container"
+    ),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> dict[str, Any]:
@@ -280,7 +284,9 @@ async def purge_orphaned_registry_storage(
     """Purge all orphaned images from MinIO bucket that are not associated with any active application."""
     active_names: set[str] = set()
     if current_user.org_id:
-        active_apps_res = await db.execute(select(App.name).where(App.org_id == current_user.org_id))
+        active_apps_res = await db.execute(
+            select(App.name).where(App.org_id == current_user.org_id)
+        )
         active_names = {sanitize_docker_name(name) for name in active_apps_res.scalars().all()}
 
     repos = await minio_service.list_repositories(active_app_names=active_names)
@@ -591,7 +597,10 @@ async def preview_app(
             return Response(content=fallback_html, status_code=200, media_type="text/html")
 
 
-@router.api_route("/{app_id}/preview/{subpath:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
+@router.api_route(
+    "/{app_id}/preview/{subpath:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+)
 async def preview_app_subpath(
     app_id: uuid.UUID,
     subpath: str,
@@ -622,7 +631,11 @@ async def preview_app_subpath(
                                     break
                 except Exception:
                     pass
-            if (effective_port is None or effective_port == 8085) and app_obj.target_profile and "host_port" in app_obj.target_profile:
+            if (
+                (effective_port is None or effective_port == 8085)
+                and app_obj.target_profile
+                and "host_port" in app_obj.target_profile
+            ):
                 effective_port = int(app_obj.target_profile["host_port"])
 
     if effective_port is None:

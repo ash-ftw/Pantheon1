@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Key, Loader2, LogOut } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Key,
+  Loader2,
+  LogOut,
+} from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import './AuthPage.css';
 
@@ -12,7 +20,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryMode = searchParams.get('mode');
   const [mode, setMode] = useState<'login' | 'register'>(
-    queryMode === 'register' || initialMode === 'register' ? 'register' : 'login'
+    queryMode === 'register' || initialMode === 'register' ? 'register' : 'login',
   );
 
   const navigate = useNavigate();
@@ -145,7 +153,11 @@ export function AuthPage({ initialMode }: AuthPageProps) {
             <span className="auth-logo-text">Pantheon</span>
           </Link>
           <h2 className="auth-header-title">
-            {user ? 'Authenticated Session' : mode === 'login' ? 'Sign in to Platform' : 'Create Tenant Workspace'}
+            {user
+              ? 'Authenticated Session'
+              : mode === 'login'
+                ? 'Sign in to Platform'
+                : 'Create Tenant Workspace'}
           </h2>
           <p className="auth-header-sub">
             {user
@@ -174,8 +186,15 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
                   {user.name || user.email}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>
-                  {user.email} • Role: <strong style={{ color: 'var(--foreground)' }}>{user.role.toUpperCase()}</strong>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--muted-foreground)',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  {user.email} • Role:{' '}
+                  <strong style={{ color: 'var(--foreground)' }}>{user.role.toUpperCase()}</strong>
                 </div>
               </div>
             </div>
@@ -223,7 +242,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 <div className="auth-error-banner animate-fade-in">
                   <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <strong style={{ display: 'block', marginBottom: 2 }}>Authentication Failed</strong>
+                    <strong style={{ display: 'block', marginBottom: 2 }}>
+                      Authentication Failed
+                    </strong>
                     <span>{error}</span>
                   </div>
                 </div>
@@ -282,7 +303,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
               </div>
 
               <div className="auth-field">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <label className="auth-label" htmlFor="auth-password">
                     Password
                   </label>
@@ -303,11 +326,7 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 />
               </div>
 
-              <button
-                type="submit"
-                className="btn-primary auth-submit-btn"
-                disabled={loading}
-              >
+              <button type="submit" className="btn-primary auth-submit-btn" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 size={14} className="spin" />
@@ -316,7 +335,9 @@ export function AuthPage({ initialMode }: AuthPageProps) {
                 ) : (
                   <>
                     <Key size={14} />
-                    <span>{mode === 'login' ? 'Sign In to Console' : 'Create Organization & Admin'}</span>
+                    <span>
+                      {mode === 'login' ? 'Sign In to Console' : 'Create Organization & Admin'}
+                    </span>
                   </>
                 )}
               </button>
@@ -325,7 +346,16 @@ export function AuthPage({ initialMode }: AuthPageProps) {
         )}
 
         <div className="auth-footer">
-          <Link to="/" style={{ color: 'var(--muted-foreground)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link
+            to="/"
+            style={{
+              color: 'var(--muted-foreground)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
             <ArrowLeft size={12} />
             <span>Return to Landing Page</span>
           </Link>

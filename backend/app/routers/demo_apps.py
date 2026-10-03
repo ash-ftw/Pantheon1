@@ -11,7 +11,6 @@ They should only run inside the Pantheon tenant sandbox environment.
 """
 
 import hashlib
-import html as html_mod
 import json
 import os
 import sqlite3
@@ -19,9 +18,8 @@ import subprocess
 import tempfile
 import time
 import uuid
-from typing import Any
 
-from fastapi import APIRouter, Cookie, Header, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Cookie, Header, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
@@ -150,13 +148,25 @@ def _init_juice_db() -> None:
     c.execute("SELECT COUNT(*) FROM products")
     if c.fetchone()[0] == 0:
         products = [
-            (1, "Apple Juice (1L)", "Fresh pressed organic apple juice from local orchards", 3.99, "juice"),
+            (
+                1,
+                "Apple Juice (1L)",
+                "Fresh pressed organic apple juice from local orchards",
+                3.99,
+                "juice",
+            ),
             (2, "Orange Punch (500ml)", "Citrus blend with a tropical twist", 2.49, "juice"),
             (3, "Green Smoothie", "Kale, spinach, banana, and almond milk blend", 5.99, "smoothie"),
             (4, "Lemon & Ginger Shot", "Immunity booster with raw lemon and ginger", 1.99, "shots"),
             (5, "Berry Blast (1L)", "Mixed berries with acai and chia seeds", 6.49, "juice"),
             (6, "Mango Lassi", "Creamy Indian-style mango yogurt drink", 4.49, "smoothie"),
-            (7, "Admin Debug Panel Key", "FLAG{sql_injection_master} — You found a hidden item!", 0.00, "secret"),
+            (
+                7,
+                "Admin Debug Panel Key",
+                "FLAG{sql_injection_master} — You found a hidden item!",
+                0.00,
+                "secret",
+            ),
             (8, "Coconut Water", "Pure hydration from young green coconuts", 3.29, "juice"),
         ]
         c.executemany("INSERT OR IGNORE INTO products VALUES (?, ?, ?, ?, ?)", products)
@@ -331,18 +341,23 @@ async def juice_shop_frontend():
       }
     </script>
     """
-    return HTMLResponse(_wrap_page(
-        "🍹 OWASP Juice Shop (Micro Edition)",
-        "Intentionally vulnerable web app covering OWASP Top 10 — SQL Injection, XSS, BOLA, Auth Bypass",
-        body,
-        "juice",
-    ))
+    return HTMLResponse(
+        _wrap_page(
+            "🍹 OWASP Juice Shop (Micro Edition)",
+            "Intentionally vulnerable web app covering OWASP Top 10 — SQL Injection, XSS, BOLA, Auth Bypass",
+            body,
+            "juice",
+        )
+    )
 
 
 # Juice Shop API Endpoints
 
+
 @router.get("/juice-shop/api/products/search")
-async def juice_shop_search(q: str = Query("", description="Search query — VULNERABLE to SQL injection")):
+async def juice_shop_search(
+    q: str = Query("", description="Search query — VULNERABLE to SQL injection"),
+):
     """VULNERABLE: Direct string concatenation into SQL query (CWE-89)."""
     conn = sqlite3.connect(_JUICE_DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -352,7 +367,10 @@ async def juice_shop_search(q: str = Query("", description="Search query — VUL
         results = conn.execute(query).fetchall()
         return [dict(r) for r in results]
     except Exception as e:
-        return JSONResponse({"error": str(e), "query": f"SELECT * FROM products WHERE name LIKE '%{q}%'..."}, status_code=200)
+        return JSONResponse(
+            {"error": str(e), "query": f"SELECT * FROM products WHERE name LIKE '%{q}%'..."},
+            status_code=200,
+        )
     finally:
         conn.close()
 
@@ -374,18 +392,23 @@ async def juice_shop_login(payload: JuiceLoginRequest):
         if user:
             user_dict = dict(user)
             # Weak JWT-like token (intentionally crackable)
-            token_payload = json.dumps({"user_id": user_dict["id"], "email": user_dict["email"], "role": user_dict["role"]})
+            token_payload = json.dumps(
+                {"user_id": user_dict["id"], "email": user_dict["email"], "role": user_dict["role"]}
+            )
             token = hashlib.md5(f"{token_payload}:{_JWT_WEAK_SECRET}".encode()).hexdigest()
             return {
                 "success": True,
                 "token": token,
                 "user": {k: v for k, v in user_dict.items() if k != "password"},
                 "message": f"Welcome back, {user_dict['name']}!",
-                "jwt_hint": "Token uses MD5 with weak secret 'secret123' — try cracking it!"
+                "jwt_hint": "Token uses MD5 with weak secret 'secret123' — try cracking it!",
             }
         return {"success": False, "message": "Invalid credentials"}
     except Exception as e:
-        return JSONResponse({"success": False, "error": str(e), "hint": "SQL error leaked — check for injection"}, status_code=200)
+        return JSONResponse(
+            {"success": False, "error": str(e), "hint": "SQL error leaked — check for injection"},
+            status_code=200,
+        )
     finally:
         conn.close()
 
@@ -402,7 +425,7 @@ async def juice_shop_user_profile(user_id: int):
             user_dict = dict(user)
             return {
                 "user": user_dict,
-                "vulnerability_note": "No authorization check performed — BOLA/IDOR vulnerability (CWE-639)"
+                "vulnerability_note": "No authorization check performed — BOLA/IDOR vulnerability (CWE-639)",
             }
         return {"error": "User not found"}
     finally:
@@ -424,10 +447,13 @@ async def juice_shop_submit_review(payload: ReviewRequest):
         # INTENTIONALLY VULNERABLE — no sanitization of review text
         conn.execute(
             "INSERT INTO reviews (product_id, user_id, text, rating) VALUES (?, ?, ?, ?)",
-            (payload.product_id, payload.user_id, payload.text, payload.rating)
+            (payload.product_id, payload.user_id, payload.text, payload.rating),
         )
         conn.commit()
-        return {"success": True, "message": "Review submitted (stored without sanitization — XSS possible!)"}
+        return {
+            "success": True,
+            "message": "Review submitted (stored without sanitization — XSS possible!)",
+        }
     finally:
         conn.close()
 
@@ -438,7 +464,9 @@ async def juice_shop_get_reviews(product_id: int = Query(1)):
     conn = sqlite3.connect(_JUICE_DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
-        reviews = conn.execute("SELECT * FROM reviews WHERE product_id = ?", (product_id,)).fetchall()
+        reviews = conn.execute(
+            "SELECT * FROM reviews WHERE product_id = ?", (product_id,)
+        ).fetchall()
         return [dict(r) for r in reviews]
     finally:
         conn.close()
@@ -450,10 +478,38 @@ async def juice_shop_get_reviews(product_id: int = Query(1)):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _FINTECH_ACCOUNTS: dict[str, dict] = {
-    "ACC-001": {"id": "ACC-001", "owner": "alice@bank.com", "name": "Alice Chen", "balance": 15420.50, "currency": "USD", "type": "checking"},
-    "ACC-002": {"id": "ACC-002", "owner": "bob@bank.com", "name": "Bob Smith", "balance": 89230.00, "currency": "USD", "type": "savings"},
-    "ACC-003": {"id": "ACC-003", "owner": "charlie@bank.com", "name": "Charlie Davis", "balance": 3200.75, "currency": "USD", "type": "checking"},
-    "ACC-004": {"id": "ACC-004", "owner": "admin@bank.com", "name": "System Admin (Internal)", "balance": 999999.99, "currency": "USD", "type": "internal"},
+    "ACC-001": {
+        "id": "ACC-001",
+        "owner": "alice@bank.com",
+        "name": "Alice Chen",
+        "balance": 15420.50,
+        "currency": "USD",
+        "type": "checking",
+    },
+    "ACC-002": {
+        "id": "ACC-002",
+        "owner": "bob@bank.com",
+        "name": "Bob Smith",
+        "balance": 89230.00,
+        "currency": "USD",
+        "type": "savings",
+    },
+    "ACC-003": {
+        "id": "ACC-003",
+        "owner": "charlie@bank.com",
+        "name": "Charlie Davis",
+        "balance": 3200.75,
+        "currency": "USD",
+        "type": "checking",
+    },
+    "ACC-004": {
+        "id": "ACC-004",
+        "owner": "admin@bank.com",
+        "name": "System Admin (Internal)",
+        "balance": 999999.99,
+        "currency": "USD",
+        "type": "internal",
+    },
 }
 _FINTECH_TRANSFERS: list[dict] = []
 _FINTECH_RATE_LIMITS: dict[str, list[float]] = {}
@@ -608,12 +664,14 @@ async def fintech_frontend():
       }
     </script>
     """
-    return HTMLResponse(_wrap_page(
-        "🏦 BankCore FinTech API Gateway",
-        "Financial ledger with BOLA, rate-limit bypass, and debug information disclosure vulnerabilities",
-        body,
-        "fintech",
-    ))
+    return HTMLResponse(
+        _wrap_page(
+            "🏦 BankCore FinTech API Gateway",
+            "Financial ledger with BOLA, rate-limit bypass, and debug information disclosure vulnerabilities",
+            body,
+            "fintech",
+        )
+    )
 
 
 @router.get("/fintech/api/accounts/{account_id}")
@@ -628,7 +686,9 @@ async def fintech_get_account(
     now = time.time()
     _FINTECH_RATE_LIMITS.setdefault(client_ip, [])
     _FINTECH_RATE_LIMITS[client_ip] = [t for t in _FINTECH_RATE_LIMITS[client_ip] if now - t < 60]
-    if len(_FINTECH_RATE_LIMITS[client_ip]) > 100:  # Very generous limit — practically no real protection
+    if (
+        len(_FINTECH_RATE_LIMITS[client_ip]) > 100
+    ):  # Very generous limit — practically no real protection
         return JSONResponse({"error": "Rate limited", "retry_after": 60}, status_code=429)
     _FINTECH_RATE_LIMITS[client_ip].append(now)
 
@@ -637,7 +697,7 @@ async def fintech_get_account(
         return JSONResponse({"error": f"Account '{account_id}' not found"}, status_code=404)
     return {
         "account": account,
-        "vulnerability_note": "No authorization check — BOLA allows accessing any account"
+        "vulnerability_note": "No authorization check — BOLA allows accessing any account",
     }
 
 
@@ -654,48 +714,65 @@ async def fintech_transfer(account_id: str, payload: TransferRequest):
 
     if not source:
         # VULNERABLE: Debug info leak in error
-        return JSONResponse({
-            "success": False,
-            "error": f"Source account '{account_id}' not found",
-            "debug_info": {
-                "db_connection": "postgresql://bankcore_admin:B4nkC0re_S3cret!@db.internal:5432/ledger",
-                "redis_url": "redis://:r3d1s_p4ss@cache.internal:6379/0",
-                "stack_trace": "at TransferService.execute() in /app/services/transfer.py:142",
-                "internal_accounts": list(_FINTECH_ACCOUNTS.keys()),
+        return JSONResponse(
+            {
+                "success": False,
+                "error": f"Source account '{account_id}' not found",
+                "debug_info": {
+                    "db_connection": "postgresql://bankcore_admin:B4nkC0re_S3cret!@db.internal:5432/ledger",
+                    "redis_url": "redis://:r3d1s_p4ss@cache.internal:6379/0",
+                    "stack_trace": "at TransferService.execute() in /app/services/transfer.py:142",
+                    "internal_accounts": list(_FINTECH_ACCOUNTS.keys()),
+                },
             },
-        }, status_code=200)
+            status_code=200,
+        )
 
     if not dest:
-        return JSONResponse({"success": False, "error": f"Destination account '{payload.to_account}' not found"}, status_code=200)
+        return JSONResponse(
+            {"success": False, "error": f"Destination account '{payload.to_account}' not found"},
+            status_code=200,
+        )
 
     if payload.amount <= 0:
-        return JSONResponse({
-            "success": False,
-            "error": "Invalid amount",
-            "debug_info": {
-                "validation_error": "amount must be positive",
-                "internal_config": {"max_transfer": 50000, "daily_limit": 100000},
-                "db_credentials": "postgresql://bankcore_admin:B4nkC0re_S3cret!@db.internal:5432/ledger",
-            }
-        }, status_code=200)
+        return JSONResponse(
+            {
+                "success": False,
+                "error": "Invalid amount",
+                "debug_info": {
+                    "validation_error": "amount must be positive",
+                    "internal_config": {"max_transfer": 50000, "daily_limit": 100000},
+                    "db_credentials": "postgresql://bankcore_admin:B4nkC0re_S3cret!@db.internal:5432/ledger",
+                },
+            },
+            status_code=200,
+        )
 
     if source["balance"] < payload.amount:
-        return JSONResponse({"success": False, "error": "Insufficient funds", "current_balance": source["balance"]}, status_code=200)
+        return JSONResponse(
+            {"success": False, "error": "Insufficient funds", "current_balance": source["balance"]},
+            status_code=200,
+        )
 
     # Execute transfer (in-memory)
     source["balance"] -= payload.amount
     dest["balance"] += payload.amount
     txn_id = f"TXN-{uuid.uuid4().hex[:8].upper()}"
-    _FINTECH_TRANSFERS.append({
-        "id": txn_id, "from": account_id, "to": payload.to_account,
-        "amount": payload.amount, "timestamp": time.time(),
-    })
+    _FINTECH_TRANSFERS.append(
+        {
+            "id": txn_id,
+            "from": account_id,
+            "to": payload.to_account,
+            "amount": payload.amount,
+            "timestamp": time.time(),
+        }
+    )
     return {
         "success": True,
         "transaction_id": txn_id,
         "from_balance": source["balance"],
         "to_balance": dest["balance"],
-        "vulnerability_note": "Transfer executed without authentication or authorization"
+        "vulnerability_note": "Transfer executed without authentication or authorization",
     }
 
 
@@ -727,7 +804,7 @@ async def fintech_debug_config():
             "http://ledger-service.internal:8002/transactions",
             "http://notifications.internal:8003/send",
         ],
-        "vulnerability_note": "DEBUG endpoint should never be exposed in production!"
+        "vulnerability_note": "DEBUG endpoint should never be exposed in production!",
     }
 
 
@@ -737,10 +814,34 @@ async def fintech_debug_config():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _CLOUDSTORE_ORDERS: list[dict] = [
-    {"id": "ORD-1001", "customer": "alice@shop.com", "items": ["Laptop Pro 16", "USB-C Hub"], "total": 1849.99, "status": "shipped"},
-    {"id": "ORD-1002", "customer": "bob@shop.com", "items": ["Wireless Mouse", "Keyboard"], "total": 129.50, "status": "delivered"},
-    {"id": "ORD-1003", "customer": "charlie@shop.com", "items": ["4K Monitor 27\"", "HDMI Cable"], "total": 549.00, "status": "processing"},
-    {"id": "ORD-1004", "customer": "internal@cloudstore.com", "items": ["[INTERNAL] Server Rack", "10TB HDD x4"], "total": 12500.00, "status": "internal"},
+    {
+        "id": "ORD-1001",
+        "customer": "alice@shop.com",
+        "items": ["Laptop Pro 16", "USB-C Hub"],
+        "total": 1849.99,
+        "status": "shipped",
+    },
+    {
+        "id": "ORD-1002",
+        "customer": "bob@shop.com",
+        "items": ["Wireless Mouse", "Keyboard"],
+        "total": 129.50,
+        "status": "delivered",
+    },
+    {
+        "id": "ORD-1003",
+        "customer": "charlie@shop.com",
+        "items": ['4K Monitor 27"', "HDMI Cable"],
+        "total": 549.00,
+        "status": "processing",
+    },
+    {
+        "id": "ORD-1004",
+        "customer": "internal@cloudstore.com",
+        "items": ["[INTERNAL] Server Rack", "10TB HDD x4"],
+        "total": 12500.00,
+        "status": "internal",
+    },
 ]
 
 
@@ -880,12 +981,14 @@ async def cloudstore_frontend():
       }
     </script>
     """
-    return HTMLResponse(_wrap_page(
-        "🛒 CloudStore E-Commerce Platform",
-        "Multi-tier e-commerce platform with SSRF, cookie-based privilege escalation, and unauthenticated data export",
-        body,
-        "cloudstore",
-    ))
+    return HTMLResponse(
+        _wrap_page(
+            "🛒 CloudStore E-Commerce Platform",
+            "Multi-tier e-commerce platform with SSRF, cookie-based privilege escalation, and unauthenticated data export",
+            body,
+            "cloudstore",
+        )
+    )
 
 
 @router.get("/cloudstore/api/media/fetch")
@@ -904,16 +1007,21 @@ async def cloudstore_ssrf(url: str = Query(..., description="URL to fetch — VU
                 "status_code": resp.status_code,
                 "content_type": content_type,
                 "content_length": len(resp.content),
-                "body_preview": resp.text[:2000] if "text" in content_type or "json" in content_type or "html" in content_type else f"[Binary content: {len(resp.content)} bytes]",
+                "body_preview": resp.text[:2000]
+                if "text" in content_type or "json" in content_type or "html" in content_type
+                else f"[Binary content: {len(resp.content)} bytes]",
                 "headers": dict(resp.headers),
-                "vulnerability_note": "SSRF — no URL validation performed. Internal services and cloud metadata are accessible."
+                "vulnerability_note": "SSRF — no URL validation performed. Internal services and cloud metadata are accessible.",
             }
     except Exception as e:
-        return JSONResponse({
-            "error": str(e),
-            "url": url,
-            "hint": "The URL could not be reached, but the server DID attempt the request (SSRF confirmed)"
-        }, status_code=200)
+        return JSONResponse(
+            {
+                "error": str(e),
+                "url": url,
+                "hint": "The URL could not be reached, but the server DID attempt the request (SSRF confirmed)",
+            },
+            status_code=200,
+        )
 
 
 @router.get("/cloudstore/api/admin/panel")
@@ -930,12 +1038,12 @@ async def cloudstore_admin_panel(role: str | None = Cookie(None)):
                 "users_table": "cloudstore.users (2,847 records)",
                 "payment_processor": "Stripe (sk_live_xxx...)",
             },
-            "vulnerability_note": "Admin access granted via client-side cookie — trivially bypassable"
+            "vulnerability_note": "Admin access granted via client-side cookie — trivially bypassable",
         }
     return {
         "access_granted": False,
         "message": "Access denied. Admin role required.",
-        "hint": "Set cookie 'role=admin' to bypass this check"
+        "hint": "Set cookie 'role=admin' to bypass this check",
     }
 
 
@@ -947,12 +1055,14 @@ async def cloudstore_export_orders(format: str = Query("json")):
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "total_orders": len(_CLOUDSTORE_ORDERS),
         "orders": _CLOUDSTORE_ORDERS,
-        "vulnerability_note": "No authentication required to access this sensitive report"
+        "vulnerability_note": "No authentication required to access this sensitive report",
     }
     if format == "csv":
         csv_lines = ["order_id,customer,items,total,status"]
         for o in _CLOUDSTORE_ORDERS:
-            csv_lines.append(f"{o['id']},{o['customer']},\"{'; '.join(o['items'])}\",{o['total']},{o['status']}")
+            csv_lines.append(
+                f'{o["id"]},{o["customer"]},"{"; ".join(o["items"])}",{o["total"]},{o["status"]}'
+            )
         data["csv_content"] = "\n".join(csv_lines)
     return data
 
@@ -970,6 +1080,7 @@ async def cloudstore_get_order(order_id: str):
 # DEMO 4: DEVOPS TASK PIPELINE WORKER
 # Vulnerabilities: Command injection, env variable dump, path traversal
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/devops", response_class=HTMLResponse)
 async def devops_frontend():
@@ -1105,12 +1216,14 @@ async def devops_frontend():
       }
     </script>
     """
-    return HTMLResponse(_wrap_page(
-        "⚙️ DevOps Task Pipeline Worker",
-        "CI/CD job execution agent with command injection, environment secret dumping, and path traversal vulnerabilities",
-        body,
-        "devops",
-    ))
+    return HTMLResponse(
+        _wrap_page(
+            "⚙️ DevOps Task Pipeline Worker",
+            "CI/CD job execution agent with command injection, environment secret dumping, and path traversal vulnerabilities",
+            body,
+            "devops",
+        )
+    )
 
 
 class BuildCommand(BaseModel):
@@ -1135,10 +1248,14 @@ async def devops_execute_command(payload: BuildCommand):
             "exit_code": result.returncode,
             "stdout": result.stdout[:5000],
             "stderr": result.stderr[:2000],
-            "vulnerability_note": "OS command injection — user input executed directly in shell (CWE-78)"
+            "vulnerability_note": "OS command injection — user input executed directly in shell (CWE-78)",
         }
     except subprocess.TimeoutExpired:
-        return {"command": payload.command, "error": "Command timed out (10s limit)", "exit_code": -1}
+        return {
+            "command": payload.command,
+            "error": "Command timed out (10s limit)",
+            "exit_code": -1,
+        }
     except Exception as e:
         return {"command": payload.command, "error": str(e), "exit_code": -1}
 
@@ -1149,14 +1266,16 @@ async def devops_dump_env(filter: str | None = Query(None)):
     env_vars = dict(os.environ)
 
     # Add fake sensitive secrets for demo purposes
-    env_vars.update({
-        "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
-        "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-        "DATABASE_PASSWORD": "pr0duct10n_db_p4ss!",
-        "GITHUB_TOKEN": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "SLACK_WEBHOOK": "https://hooks.slack.com/services/T00/B00/xxxx",
-        "DEPLOY_SECRET": "dp-sec-0x7f3e9a2d1b4c",
-    })
+    env_vars.update(
+        {
+            "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
+            "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "DATABASE_PASSWORD": "pr0duct10n_db_p4ss!",
+            "GITHUB_TOKEN": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "SLACK_WEBHOOK": "https://hooks.slack.com/services/T00/B00/xxxx",
+            "DEPLOY_SECRET": "dp-sec-0x7f3e9a2d1b4c",
+        }
+    )
 
     if filter:
         env_vars = {k: v for k, v in env_vars.items() if filter.upper() in k.upper()}
@@ -1164,7 +1283,7 @@ async def devops_dump_env(filter: str | None = Query(None)):
     return {
         "total_variables": len(env_vars),
         "variables": env_vars,
-        "vulnerability_note": "All environment variables exposed — secrets, API keys, and credentials leaked (CWE-214)"
+        "vulnerability_note": "All environment variables exposed — secrets, API keys, and credentials leaked (CWE-214)",
     }
 
 
@@ -1180,29 +1299,32 @@ async def devops_read_artifact(file_path: str):
 
     try:
         if os.path.isfile(resolved):
-            with open(resolved, "r", encoding="utf-8", errors="replace") as f:
+            with open(resolved, encoding="utf-8", errors="replace") as f:
                 content = f.read(10000)
             return {
                 "file": file_path,
                 "resolved_path": resolved,
                 "size": os.path.getsize(resolved),
                 "content": content,
-                "vulnerability_note": "Path traversal — no sanitization on file_path input (CWE-22)"
+                "vulnerability_note": "Path traversal — no sanitization on file_path input (CWE-22)",
             }
         else:
             # Try from CWD as well
             alt_path = os.path.abspath(os.path.join(os.getcwd(), file_path))
             if os.path.isfile(alt_path):
-                with open(alt_path, "r", encoding="utf-8", errors="replace") as f:
+                with open(alt_path, encoding="utf-8", errors="replace") as f:
                     content = f.read(10000)
                 return {
                     "file": file_path,
                     "resolved_path": alt_path,
                     "size": os.path.getsize(alt_path),
                     "content": content,
-                    "vulnerability_note": "Path traversal — no sanitization on file_path input (CWE-22)"
+                    "vulnerability_note": "Path traversal — no sanitization on file_path input (CWE-22)",
                 }
-            return {"error": f"File not found: {file_path}", "attempted_paths": [resolved, alt_path]}
+            return {
+                "error": f"File not found: {file_path}",
+                "attempted_paths": [resolved, alt_path],
+            }
     except Exception as e:
         return {"error": str(e), "file": file_path, "resolved_path": resolved}
 
@@ -1236,16 +1358,22 @@ async def devops_worker_status():
         },
         "recent_builds": [
             {"id": "build-001", "command": "npm run build", "status": "success", "duration": "12s"},
-            {"id": "build-002", "command": "docker build -t app .", "status": "success", "duration": "45s"},
+            {
+                "id": "build-002",
+                "command": "docker build -t app .",
+                "status": "success",
+                "duration": "45s",
+            },
             {"id": "build-003", "command": "pytest --cov", "status": "failed", "duration": "8s"},
         ],
-        "vulnerability_note": "Detailed system information disclosed without authentication (CWE-200)"
+        "vulnerability_note": "Detailed system information disclosed without authentication (CWE-200)",
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DEMO APPS INDEX
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("", response_class=HTMLResponse)
 async def demo_apps_index():
@@ -1298,9 +1426,11 @@ async def demo_apps_index():
       </a>
     </div>
     """
-    return HTMLResponse(_wrap_page(
-        "🎯 Pantheon Demo Vulnerable Applications",
-        "4 intentionally vulnerable micro-applications for security testing demonstrations. Each contains real exploitable endpoints.",
-        body,
-        "",
-    ))
+    return HTMLResponse(
+        _wrap_page(
+            "🎯 Pantheon Demo Vulnerable Applications",
+            "4 intentionally vulnerable micro-applications for security testing demonstrations. Each contains real exploitable endpoints.",
+            body,
+            "",
+        )
+    )

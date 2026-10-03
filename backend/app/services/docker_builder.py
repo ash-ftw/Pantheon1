@@ -5,6 +5,7 @@ MinIO-backed registry:2 instance. Supports streaming build logs for
 real-time WebSocket forwarding.
 """
 
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,6 @@ from typing import Any
 import docker
 from docker.errors import BuildError, DockerException
 
-import re
 from app.logging import get_logger
 
 logger = get_logger(__name__)
@@ -153,7 +153,11 @@ class DockerBuilder:
         try:
             image_id: str | None = None
             # If client is a mock with images.build configured (e.g. unit tests)
-            if hasattr(client, "images") and hasattr(client.images, "build") and type(client).__name__ == "MagicMock":
+            if (
+                hasattr(client, "images")
+                and hasattr(client.images, "build")
+                and type(client).__name__ == "MagicMock"
+            ):
                 image, log_stream = client.images.build(
                     path=build_context,
                     dockerfile=dockerfile,
@@ -187,16 +191,24 @@ class DockerBuilder:
                             if line:
                                 _log(line)
                                 if line.startswith("Step ") and "RUN" in line:
-                                    _log(f"⚡ [Pantheon Build] Processing {line} (this may take 30-60s for asset compilation)...")
+                                    _log(
+                                        f"⚡ [Pantheon Build] Processing {line} (this may take 30-60s for asset compilation)..."
+                                    )
                                 elif "packages installed" in line or "added " in line:
-                                    _log("📦 [Pantheon Build] Dependencies resolved successfully. Proceeding to asset compilation...")
+                                    _log(
+                                        "📦 [Pantheon Build] Dependencies resolved successfully. Proceeding to asset compilation..."
+                                    )
                         elif "status" in chunk and isinstance(chunk["status"], str):
                             status = chunk["status"].strip()
                             progress = chunk.get("progress", "")
                             msg = f"{status} {progress}".strip()
                             if msg:
                                 _log(msg)
-                        elif "aux" in chunk and isinstance(chunk["aux"], dict) and "ID" in chunk["aux"]:
+                        elif (
+                            "aux" in chunk
+                            and isinstance(chunk["aux"], dict)
+                            and "ID" in chunk["aux"]
+                        ):
                             image_id = chunk["aux"]["ID"]
                         elif "error" in chunk and isinstance(chunk["error"], str):
                             error_msg = chunk["error"].strip()
@@ -306,7 +318,11 @@ class DockerBuilder:
                         raise DockerBuildError(f"Registry push failed: {error_msg}")
 
                     # Capture the digest from the push response
-                    if "aux" in chunk and isinstance(chunk["aux"], dict) and "Digest" in chunk["aux"]:
+                    if (
+                        "aux" in chunk
+                        and isinstance(chunk["aux"], dict)
+                        and "Digest" in chunk["aux"]
+                    ):
                         digest = str(chunk["aux"]["Digest"])
 
             _log(f"Image pushed successfully: {image_tag}")

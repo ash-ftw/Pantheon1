@@ -660,12 +660,7 @@ interface MinioStorageModalProps {
   onStorageChanged?: () => void;
 }
 
-function MinioStorageModal({
-  isOpen,
-  onClose,
-  token,
-  onStorageChanged,
-}: MinioStorageModalProps) {
+function MinioStorageModal({ isOpen, onClose, token, onStorageChanged }: MinioStorageModalProps) {
   const [data, setData] = useState<RegistryStorageResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [purging, setPurging] = useState<Record<string, boolean>>({});
@@ -782,9 +777,7 @@ function MinioStorageModal({
             <Database size={18} className="text-secondary-foreground" />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h3 className="storage-modal-title">
-                  MinIO S3 & Docker Registry Storage
-                </h3>
+                <h3 className="storage-modal-title">MinIO S3 & Docker Registry Storage</h3>
                 <span className="badge badge-secondary font-mono">pantheon-registry</span>
               </div>
               <div className="storage-subtext">
@@ -887,7 +880,11 @@ function MinioStorageModal({
                   <tr>
                     <td
                       colSpan={5}
-                      style={{ textAlign: 'center', padding: '30px', color: 'var(--muted-foreground)' }}
+                      style={{
+                        textAlign: 'center',
+                        padding: '30px',
+                        color: 'var(--muted-foreground)',
+                      }}
                     >
                       No image repositories currently in the MinIO bucket.
                     </td>
@@ -931,11 +928,16 @@ function MinioStorageModal({
                             ))}
                           </div>
                         ) : (
-                          <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>none</span>
+                          <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>
+                            none
+                          </span>
                         )}
                       </td>
                       <td>
-                        <span className="font-mono" style={{ fontSize: 11, color: 'var(--foreground)' }}>
+                        <span
+                          className="font-mono"
+                          style={{ fontSize: 11, color: 'var(--foreground)' }}
+                        >
                           {repo.size_human} ({repo.object_count} obj)
                         </span>
                       </td>

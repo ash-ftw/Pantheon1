@@ -164,16 +164,16 @@ http.createServer((req, res) => {
 
 # Dockerfile RUN instruction that writes the static server into the image
 _DOCKERFILE_STATIC_SERVER_RUN = (
-    '# Zero-dependency Node.js static server (fallback when serve is unavailable)\n'
-    'RUN printf \'%s\\n\' '
-    "'const http=require(\"http\"),fs=require(\"fs\"),path=require(\"path\");"
-    "const PORT=process.env.PORT||8085,ROOT=process.argv[2]||\".\";"
-    'const M={\".html\":\"text/html\",\".js\":\"application/javascript\",\".mjs\":\"application/javascript\",\".cjs\":\"application/javascript\",\".ts\":\"application/javascript\",\".tsx\":\"application/javascript\",\".jsx\":\"application/javascript\",\".css\":\"text/css\",\".json\":\"application/json\",\".png\":\"image/png\",\".jpg\":\"image/jpeg\",\".jpeg\":\"image/jpeg\",\".svg\":\"image/svg+xml\",\".ico\":\"image/x-icon\",\".woff\":\"font/woff\",\".woff2\":\"font/woff2\",\".ttf\":\"font/ttf\",\".map\":\"application/json\",\".webp\":\"image/webp\",\".gif\":\"image/gif\",\".wasm\":\"application/wasm\"};'
-    "http.createServer((q,r)=>{r.setHeader(\"Access-Control-Allow-Origin\",\"*\");r.setHeader(\"Access-Control-Allow-Methods\",\"*\");r.setHeader(\"Access-Control-Allow-Headers\",\"*\");"
-    "let p=path.join(ROOT,decodeURIComponent(q.url.split(\"?\")[0]));if(p.endsWith(\"/\"))p=path.join(p,\"index.html\");"
-    "fs.stat(p,(e,s)=>{if(e||!s.isFile()){const i=path.join(ROOT,\"index.html\");fs.readFile(i,(e2,d)=>{if(e2){r.writeHead(404);r.end(\"Not found\");return}r.writeHead(200,{\"Content-Type\":\"text/html\"});r.end(d)});return}"
-    "const x=path.extname(p).toLowerCase();r.writeHead(200,{\"Content-Type\":M[x]||\"application/octet-stream\"});fs.createReadStream(p).pipe(r)});"
-    "}).listen(PORT,\"0.0.0.0\",()=>console.log(\"Pantheon static server on port \"+PORT));"
+    "# Zero-dependency Node.js static server (fallback when serve is unavailable)\n"
+    "RUN printf '%s\\n' "
+    '\'const http=require("http"),fs=require("fs"),path=require("path");'
+    'const PORT=process.env.PORT||8085,ROOT=process.argv[2]||".";'
+    'const M={".html":"text/html",".js":"application/javascript",".mjs":"application/javascript",".cjs":"application/javascript",".ts":"application/javascript",".tsx":"application/javascript",".jsx":"application/javascript",".css":"text/css",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".jpeg":"image/jpeg",".svg":"image/svg+xml",".ico":"image/x-icon",".woff":"font/woff",".woff2":"font/woff2",".ttf":"font/ttf",".map":"application/json",".webp":"image/webp",".gif":"image/gif",".wasm":"application/wasm"};'
+    'http.createServer((q,r)=>{r.setHeader("Access-Control-Allow-Origin","*");r.setHeader("Access-Control-Allow-Methods","*");r.setHeader("Access-Control-Allow-Headers","*");'
+    'let p=path.join(ROOT,decodeURIComponent(q.url.split("?")[0]));if(p.endsWith("/"))p=path.join(p,"index.html");'
+    'fs.stat(p,(e,s)=>{if(e||!s.isFile()){const i=path.join(ROOT,"index.html");fs.readFile(i,(e2,d)=>{if(e2){r.writeHead(404);r.end("Not found");return}r.writeHead(200,{"Content-Type":"text/html"});r.end(d)});return}'
+    'const x=path.extname(p).toLowerCase();r.writeHead(200,{"Content-Type":M[x]||"application/octet-stream"});fs.createReadStream(p).pipe(r)});'
+    '}).listen(PORT,"0.0.0.0",()=>console.log("Pantheon static server on port "+PORT));'
     "' > /app/_pantheon_serve.js\n"
 )
 
@@ -191,7 +191,6 @@ def _make_serve_fallback(dir_expr: str, port_expr: str = "${PORT:-8085}") -> str
         f"|| npx --yes serve -s {dir_expr} -l {port_expr} --cors 2>/dev/null "
         f"|| node /app/_pantheon_serve.js {dir_expr})"
     )
-
 
 
 def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
@@ -221,25 +220,27 @@ def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
             "npm install --workspaces --legacy-peer-deps --no-audit --no-fund || true; fi\n"
             "# Pre-install serve globally\n"
             "RUN npm install -g serve 2>/dev/null || true\n"
-            + _DOCKERFILE_STATIC_SERVER_RUN +
-            "ENV PORT=8085\n"
+            + _DOCKERFILE_STATIC_SERVER_RUN
+            + "ENV PORT=8085\n"
             "ENV HOST=0.0.0.0\n"
             "EXPOSE 8085\n"
             "RUN if grep -q '\"build\"' package.json 2>/dev/null; then (npm run build || true); fi\n"
-            "CMD [\"/bin/sh\", \"-c\", \""
+            'CMD ["/bin/sh", "-c", "'
             "JS_ENTRY=$(find . -maxdepth 5 -type f \\( -name index.js -o -name main.js -o -name server.js -o -name app.js \\) 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | grep -v '/packages/' | grep -v '/assets/' | head -n 1); "
             "HTML_ENTRY=$(find . -maxdepth 5 -type f -name index.html 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | head -n 1); "
             "if [ -f package.json ] && grep -q '\\\"start\\\"' package.json; then exec npm start; "
-            "elif [ -n \\\"$JS_ENTRY\\\" ]; then echo \\\"Starting Node backend: $JS_ENTRY\\\" && exec node \\\"$JS_ENTRY\\\"; "
+            'elif [ -n \\"$JS_ENTRY\\" ]; then echo \\"Starting Node backend: $JS_ENTRY\\" && exec node \\"$JS_ENTRY\\"; '
             "elif [ -d dist ]; then " + _make_serve_fallback("dist", "8085") + "; "
-            "elif [ -n \\\"$HTML_ENTRY\\\" ]; then HTML_DIR=$(dirname \\\"$HTML_ENTRY\\\") && echo \\\"Serving static frontend: $HTML_DIR\\\" && " + _make_serve_fallback("\\\"$HTML_DIR\\\"", "8085") + "; "
+            'elif [ -n \\"$HTML_ENTRY\\" ]; then HTML_DIR=$(dirname \\"$HTML_ENTRY\\") && echo \\"Serving static frontend: $HTML_DIR\\" && '
+            + _make_serve_fallback('\\"$HTML_DIR\\"', "8085")
+            + "; "
             "elif [ -d build ]; then " + _make_serve_fallback("build", "8085") + "; "
             "elif [ -f server.js ]; then exec node server.js; "
             "elif [ -f index.js ]; then exec node index.js; "
             "elif [ -f app.js ]; then exec node app.js; "
             "elif [ -f main.js ]; then exec node main.js; "
             "else " + _make_serve_fallback(".", "8085") + "; fi"
-            "\"]\n"
+            '"]\n'
         )
     elif category == "node_frontend":
         # Frontend & meta frameworks: React, Vite, Next.js, Nuxt.js, Vue.js, Angular, SvelteKit, Astro, Remix
@@ -259,25 +260,27 @@ def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
             "npm install --workspaces --legacy-peer-deps || true; fi\n"
             "# Pre-install serve so CMD doesn't need npx download at runtime\n"
             "RUN npm install -g serve 2>/dev/null || true\n"
-            + _DOCKERFILE_STATIC_SERVER_RUN +
-            "ENV PORT=8085\n"
+            + _DOCKERFILE_STATIC_SERVER_RUN
+            + "ENV PORT=8085\n"
             "ENV HOST=0.0.0.0\n"
             "EXPOSE 8085\n"
             "RUN if grep -q '\"build\"' package.json 2>/dev/null; then (npm run build || npx vite build || true); else (npx vite build || true); fi\n"
-            "CMD [\"/bin/sh\", \"-c\", \""
+            'CMD ["/bin/sh", "-c", "'
             "if [ ! -d dist ] && [ ! -d build ] && [ -f package.json ] && grep -q '\"build\"' package.json 2>/dev/null; then "
             "(npm run build 2>/dev/null || npx vite build 2>/dev/null || true); fi; "
             "JS_ENTRY=$(find . -maxdepth 5 -type f \\( -name index.js -o -name main.js -o -name server.js -o -name app.js \\) 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | grep -v '/packages/' | grep -v '/assets/' | head -n 1); "
             "HTML_ENTRY=$(find . -maxdepth 5 -type f -name index.html 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | head -n 1); "
             "if [ -f package.json ] && grep -q '\\\"start\\\"' package.json; then exec npm start; "
-            "elif [ -n \\\"$JS_ENTRY\\\" ]; then echo \\\"Starting Node backend: $JS_ENTRY\\\" && exec node \\\"$JS_ENTRY\\\"; "
+            'elif [ -n \\"$JS_ENTRY\\" ]; then echo \\"Starting Node backend: $JS_ENTRY\\" && exec node \\"$JS_ENTRY\\"; '
             "elif [ -d dist ]; then " + _make_serve_fallback("dist", "8085") + "; "
-            "elif [ -n \\\"$HTML_ENTRY\\\" ]; then HTML_DIR=$(dirname \\\"$HTML_ENTRY\\\") && echo \\\"Serving static frontend: $HTML_DIR\\\" && " + _make_serve_fallback("\\\"$HTML_DIR\\\"", "8085") + "; "
+            'elif [ -n \\"$HTML_ENTRY\\" ]; then HTML_DIR=$(dirname \\"$HTML_ENTRY\\") && echo \\"Serving static frontend: $HTML_DIR\\" && '
+            + _make_serve_fallback('\\"$HTML_DIR\\"', "8085")
+            + "; "
             "elif [ -d build ]; then " + _make_serve_fallback("build", "8085") + "; "
             "elif [ -d .next ]; then npm start -- -p 8085 -H 0.0.0.0 || npx next start -p 8085 -H 0.0.0.0; "
             "elif [ -f package.json ] && grep -q '\\\"dev\\\"' package.json; then exec npm run dev -- --host 0.0.0.0 --port 8085; "
             "else " + _make_serve_fallback(".", "8085") + "; fi"
-            "\"]\n"
+            '"]\n'
         )
     elif category == "python":
         # Python: FastAPI, Django, Flask, Tornado, Sanic, Litestar, Aiohttp
@@ -331,7 +334,7 @@ def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
             "RUN cargo build --release || true\n"
             "EXPOSE 8085\n"
             "ENV PORT=8085\n"
-            'CMD BIN=$(find target/release -maxdepth 1 -type f -perm +111 2>/dev/null | head -n 1); '
+            "CMD BIN=$(find target/release -maxdepth 1 -type f -perm +111 2>/dev/null | head -n 1); "
             'if [ -n "$BIN" ]; then "$BIN"; else echo "Rust app running" && sleep infinity; fi\n'
         )
     elif category == "php":
@@ -342,7 +345,7 @@ def _generate_dockerfile(detection: dict[str, Any], scratch_dir: str) -> Path:
             "COPY . .\n"
             "EXPOSE 8085\n"
             "ENV PORT=8085\n"
-            'CMD if [ -f artisan ]; then php artisan serve --host=0.0.0.0 --port=8085; else php -S 0.0.0.0:8085; fi\n'
+            "CMD if [ -f artisan ]; then php artisan serve --host=0.0.0.0 --port=8085; else php -S 0.0.0.0:8085; fi\n"
         )
     elif category == "ruby":
         # Ruby: Rails, Sinatra
@@ -445,6 +448,7 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
             compose_services: dict[str, Any] | None = None
 
             from app.services.demo_workloads import match_demo_app_key, write_demo_files
+
             demo_key = match_demo_app_key(app_obj.name, app_obj.source_url)
 
             if demo_key and ("github.com/pantheon-cyber/demo-" in (app_obj.source_url or "")):
@@ -484,10 +488,12 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             write_demo_files(demo_key, scratch_dir)
                         else:
                             # Create a minimal fallback Dockerfile
-                            await (anyio.Path(scratch_dir) / "app").mkdir(parents=True, exist_ok=True)
+                            await (anyio.Path(scratch_dir) / "app").mkdir(
+                                parents=True, exist_ok=True
+                            )
                             df_p = anyio.Path(scratch_dir) / "Dockerfile"
                             await df_p.write_text(
-                                "FROM python:3.12-slim\nCMD [\"python\", \"-m\", \"http.server\", \"8085\"]\n"
+                                'FROM python:3.12-slim\nCMD ["python", "-m", "http.server", "8085"]\n'
                             )
                             log("Created fallback Dockerfile (Python HTTP server).")
 
@@ -746,7 +752,11 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             cmd = img_config.get("Cmd")
                             entrypoint = img_config.get("Entrypoint")
                             cmd_str = " ".join(cmd) if isinstance(cmd, list) else str(cmd or "")
-                            if "0.0.0.0:" in cmd_str or "${HOST}:${PORT}" in cmd_str or "$HOST:$PORT" in cmd_str:
+                            if (
+                                "0.0.0.0:" in cmd_str
+                                or "${HOST}:${PORT}" in cmd_str
+                                or "$HOST:$PORT" in cmd_str
+                            ):
                                 # Invalid serve argument format detected in image config
                                 has_native_cmd = False
                             elif cmd and cmd != ["/bin/sh"]:
@@ -756,7 +766,12 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                         except Exception:
                             pass
 
-                    if container_port == 8085 and ports and isinstance(ports, list) and len(ports) > 0:
+                    if (
+                        container_port == 8085
+                        and ports
+                        and isinstance(ports, list)
+                        and len(ports) > 0
+                    ):
                         first_p = ports[0]
                         if isinstance(first_p, dict):
                             container_port = first_p.get("container_port", 8085)
@@ -764,7 +779,10 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             container_port = first_p
 
                     from app.services.app_runtime_service import find_available_host_port
-                    host_port = find_available_host_port(container_port, exclude_container=container_name)
+
+                    host_port = find_available_host_port(
+                        container_port, exclude_container=container_name
+                    )
 
                     log(
                         f"Spinning up local container instance '{container_name}' on host port {host_port} (container port {container_port})..."
@@ -783,11 +801,19 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             "JS_ENTRY=$(find . -maxdepth 5 -type f \\( -name index.js -o -name main.js -o -name server.js -o -name app.js \\) 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | grep -v '/packages/' | grep -v '/assets/' | head -n 1); "
                             "HTML_ENTRY=$(find . -maxdepth 5 -type f -name index.html 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | head -n 1); "
                             "if [ -f package.json ] && grep -q '\"start\"' package.json; then exec npm start; "
-                            "elif [ -n \"$JS_ENTRY\" ]; then echo \"Starting Node backend: $JS_ENTRY\" && exec node \"$JS_ENTRY\"; "
-                            "elif [ -f dist/index.html ]; then " + _make_serve_fallback("dist", f"${{PORT:-{container_port}}}") + "; "
-                            "elif [ -f dist/client/index.html ]; then " + _make_serve_fallback("dist/client", f"${{PORT:-{container_port}}}") + "; "
-                            "elif [ -n \"$HTML_ENTRY\" ]; then HTML_DIR=$(dirname \"$HTML_ENTRY\") && echo \"Serving static frontend: $HTML_DIR\" && " + _make_serve_fallback("\"$HTML_DIR\"", f"${{PORT:-{container_port}}}") + "; "
-                            "elif [ -f build/index.html ]; then " + _make_serve_fallback("build", f"${{PORT:-{container_port}}}") + "; "
+                            'elif [ -n "$JS_ENTRY" ]; then echo "Starting Node backend: $JS_ENTRY" && exec node "$JS_ENTRY"; '
+                            "elif [ -f dist/index.html ]; then "
+                            + _make_serve_fallback("dist", f"${{PORT:-{container_port}}}")
+                            + "; "
+                            "elif [ -f dist/client/index.html ]; then "
+                            + _make_serve_fallback("dist/client", f"${{PORT:-{container_port}}}")
+                            + "; "
+                            'elif [ -n "$HTML_ENTRY" ]; then HTML_DIR=$(dirname "$HTML_ENTRY") && echo "Serving static frontend: $HTML_DIR" && '
+                            + _make_serve_fallback('"$HTML_DIR"', f"${{PORT:-{container_port}}}")
+                            + "; "
+                            "elif [ -f build/index.html ]; then "
+                            + _make_serve_fallback("build", f"${{PORT:-{container_port}}}")
+                            + "; "
                             "elif [ -d .next ]; then npm start -- -p ${PORT:-8085} -H 0.0.0.0 || npx next start -p ${PORT:-8085} -H 0.0.0.0; "
                             "elif [ -f server.js ]; then exec node server.js; "
                             "elif [ -f index.js ]; then exec node index.js; "
@@ -797,7 +823,9 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                             "elif [ -f app.py ]; then exec python app.py; "
                             "elif [ -f manage.py ]; then exec python manage.py runserver 0.0.0.0:${PORT:-8085}; "
                             "elif [ -f package.json ] && grep -q '\"dev\"' package.json; then (exec bun run dev --host 0.0.0.0 --port ${PORT:-8085} 2>/dev/null || exec npm run dev -- --host 0.0.0.0 --port ${PORT:-8085}); "
-                            "else " + _make_serve_fallback(".", f"${{PORT:-{container_port}}}") + "; fi"
+                            "else "
+                            + _make_serve_fallback(".", f"${{PORT:-{container_port}}}")
+                            + "; fi"
                         )
 
                         run_kwargs: dict[str, Any] = {
@@ -818,8 +846,7 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                         container = client.containers.run(**run_kwargs)
                         # Health verification: ensure container didn't immediately crash due to unexpected entrypoint
                         try:
-                            import time
-                            time.sleep(1)
+                            await asyncio.sleep(1)
                             container.reload()
                             if container.status != "running":
                                 log(
@@ -832,9 +859,7 @@ async def _async_ingest_app(app_id_str: str, version_id_str: str) -> dict[str, A
                         except Exception as rec_err:
                             log(f"Container health check note: {rec_err!s}")
 
-                        log(
-                            f"Live container active and listening on http://localhost:{host_port}"
-                        )
+                        log(f"Live container active and listening on http://localhost:{host_port}")
                         # Always save host_port to target_profile (even if it was None)
                         tp = dict(app_obj.target_profile) if app_obj.target_profile else {}
                         tp["host_port"] = host_port

@@ -83,10 +83,12 @@ ignore = [
     "S607",    # Starting process with partial path
     "B904",    # raise ... from
     "RUF006",  # Store reference to return value of loop.create_task
+    "S104",    # Possible binding to all interfaces (docker containers HOST=0.0.0.0 and port probe)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S106", "ASYNC230", "ASYNC240"]  # Standard pytest assertions, test passwords, and test file fixtures
+"app/routers/demo_apps.py" = ["S608", "S324", "S602", "ASYNC221", "ASYNC230", "ASYNC240", "A002"]  # Intentionally vulnerable demo apps for security testing
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -75,7 +75,9 @@ def _is_port_free_on_host(port: int) -> bool:
             return False
 
 
-def find_available_host_port(preferred_port: int = 8085, exclude_container: str | None = None) -> int:
+def find_available_host_port(
+    preferred_port: int = 8085, exclude_container: str | None = None
+) -> int:
     """Find an available TCP port that is free on the host AND not used by other Pantheon containers.
 
     Args:
@@ -233,7 +235,9 @@ class AppRuntimeService:
             c = await asyncio.to_thread(client.containers.get, container_name)
             if c.status != "running":
                 # Check if the container's old host port is still free
-                old_host_port = await asyncio.to_thread(self._get_container_host_port, container_name)
+                old_host_port = await asyncio.to_thread(
+                    self._get_container_host_port, container_name
+                )
                 port_ok = True
                 if old_host_port:
                     # Port might be taken by another container now
@@ -327,10 +331,17 @@ class AppRuntimeService:
         if img is None:
             # 2. Check if this is a known demo app or has demo workload
             from app.services.demo_workloads import match_demo_app_key, write_demo_files
+
             demo_key = match_demo_app_key(app.name, app.source_url)
             if demo_key:
-                logger.info("building_demo_image_on_demand", app=app.name, demo_key=demo_key, tag=current_image_tag)
+                logger.info(
+                    "building_demo_image_on_demand",
+                    app=app.name,
+                    demo_key=demo_key,
+                    tag=current_image_tag,
+                )
                 import tempfile
+
                 with tempfile.TemporaryDirectory() as td:
                     write_demo_files(demo_key, td)
                     await asyncio.to_thread(
@@ -383,11 +394,11 @@ class AppRuntimeService:
         # Build a robust CMD override — bypasses any broken CMD or node base image entrypoint
         # Includes zero-dependency Node.js static server as ultimate fallback when
         # `serve` is not installed and `npx serve` can't download (no internet in container).
-        _serve_fb = (
-            lambda d, p=f"${{PORT:-{container_port}}}": (
+        def _serve_fb(d: str, p: str = f"${{PORT:-{container_port}}}") -> str:
+            return (
                 f"(serve -s {d} -l {p} --cors 2>/dev/null "
                 f"|| npx --yes serve -s {d} -l {p} --cors 2>/dev/null "
-                f"|| node -e \""
+                f'|| node -e "'
                 "const h=require('http'),f=require('fs'),p=require('path'),"
                 f"P={p},R='{d}',"
                 "M={{'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.cjs':'application/javascript','.ts':'application/javascript','.tsx':'application/javascript','.jsx':'application/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2'}};"
@@ -397,9 +408,8 @@ class AppRuntimeService:
                 "f.stat(u,(e,s)=>{{if(e||!s.isFile()){{f.readFile(p.join(R,'index.html'),(e2,d)=>{{if(e2){{r.writeHead(404);r.end('Not found');return}}r.writeHead(200,{{'Content-Type':'text/html'}});r.end(d)}});return}}"
                 "r.writeHead(200,{{'Content-Type':M[p.extname(u).toLowerCase()]||'application/octet-stream'}});f.createReadStream(u).pipe(r)}})}})"
                 f".listen(P,'0.0.0.0',()=>console.log('Pantheon static server on port '+P))"
-                "\")"
+                '")'
             )
-        )
 
         fallback_cmd = (
             "if [ ! -d dist ] && [ ! -d build ] && [ -f package.json ] && grep -q '\"build\"' package.json 2>/dev/null; then "
@@ -407,10 +417,12 @@ class AppRuntimeService:
             "JS_ENTRY=$(find . -maxdepth 5 -type f \\( -name index.js -o -name main.js -o -name server.js -o -name app.js \\) 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | grep -v '/packages/' | grep -v '/assets/' | head -n 1); "
             "HTML_ENTRY=$(find . -maxdepth 5 -type f -name index.html 2>/dev/null | grep '/dist/' | grep -v '/node_modules/' | head -n 1); "
             "if [ -f package.json ] && grep -q '\"start\"' package.json; then exec npm start; "
-            "elif [ -n \"$JS_ENTRY\" ]; then echo \"Starting Node backend: $JS_ENTRY\" && exec node \"$JS_ENTRY\"; "
+            'elif [ -n "$JS_ENTRY" ]; then echo "Starting Node backend: $JS_ENTRY" && exec node "$JS_ENTRY"; '
             "elif [ -f dist/index.html ]; then " + _serve_fb("dist") + "; "
             "elif [ -f dist/client/index.html ]; then " + _serve_fb("dist/client") + "; "
-            "elif [ -n \"$HTML_ENTRY\" ]; then HTML_DIR=$(dirname \"$HTML_ENTRY\") && echo \"Serving static frontend: $HTML_DIR\" && " + _serve_fb("\"$HTML_DIR\"") + "; "
+            'elif [ -n "$HTML_ENTRY" ]; then HTML_DIR=$(dirname "$HTML_ENTRY") && echo "Serving static frontend: $HTML_DIR" && '
+            + _serve_fb('"$HTML_DIR"')
+            + "; "
             "elif [ -f build/index.html ]; then " + _serve_fb("build") + "; "
             "elif [ -d .next ]; then npm start -- -p ${PORT:-8085} -H 0.0.0.0 || npx next start -p ${PORT:-8085} -H 0.0.0.0; "
             "elif [ -f server.js ]; then exec node server.js; "
@@ -471,8 +483,7 @@ class AppRuntimeService:
             app.status = "failed"
             await db.commit()
             raise ValueError(
-                f"Container started but exited (status: {c.status}). "
-                f"Logs:\n{logs_tail}"
+                f"Container started but exited (status: {c.status}). Logs:\n{logs_tail}"
             )
 
         app.status = "running"
@@ -481,7 +492,12 @@ class AppRuntimeService:
         tp["host_port"] = host_port
         app.target_profile = tp
         await db.commit()
-        return {"status": "running", "container": container_name, "state": "running", "host_port": host_port}
+        return {
+            "status": "running",
+            "container": container_name,
+            "state": "running",
+            "host_port": host_port,
+        }
 
     async def stop_app(self, app: App, db: AsyncSession) -> dict[str, Any]:
         """Stop the application's Docker container instance."""

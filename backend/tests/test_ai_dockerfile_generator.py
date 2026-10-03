@@ -3,7 +3,6 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -44,7 +43,7 @@ EXPOSE 8085
 CMD ["npm", "start"]
 ```"""
     agent = AIDockerfileGenerator()
-    is_valid, cleaned, reason = agent.validate_dockerfile(raw)
+    is_valid, cleaned, _reason = agent.validate_dockerfile(raw)
 
     assert is_valid is True
     assert "```" not in cleaned
@@ -56,7 +55,7 @@ CMD ["npm", "start"]
 
 def test_validate_dockerfile_missing_from_rejected() -> None:
     """Verify validation rejects content missing FROM."""
-    raw = "WORKDIR /app\nRUN npm install\nCMD [\"npm\", \"start\"]"
+    raw = 'WORKDIR /app\nRUN npm install\nCMD ["npm", "start"]'
     agent = AIDockerfileGenerator()
     is_valid, _, reason = agent.validate_dockerfile(raw)
 
@@ -79,7 +78,9 @@ async def test_generate_dockerfile_returns_none_when_unconfigured() -> None:
     """Verify agent gracefully returns None when API key is unconfigured."""
     agent = AIDockerfileGenerator(api_key="")
     logs: list[str] = []
-    res = await agent.generate_dockerfile("/tmp", {"framework": "Vite"}, log_callback=logs.append)
+    res = await agent.generate_dockerfile(
+        tempfile.gettempdir(), {"framework": "Vite"}, log_callback=logs.append
+    )
 
     assert res is None
     assert any("not configured" in line for line in logs)

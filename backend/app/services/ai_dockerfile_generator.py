@@ -87,7 +87,9 @@ class AIDockerfileGenerator:
     @property
     def is_configured(self) -> bool:
         """Check if Groq API key is present."""
-        return bool(self.api_key and self.api_key.strip() and not self.api_key.startswith("gsk-your-"))
+        return bool(
+            self.api_key and self.api_key.strip() and not self.api_key.startswith("gsk-your-")
+        )
 
     def inspect_repository(self, scratch_dir: str | Path) -> dict[str, Any]:
         """Scan cloned repository files and manifests to assemble context for the LLM."""
@@ -110,13 +112,23 @@ class AIDockerfileGenerator:
             for item in repo_path.iterdir():
                 if item.name.startswith(".") and item.name not in (".env.example", ".env.local"):
                     continue
-                if item.is_dir() and item.name not in ("node_modules", ".git", "venv", ".venv", "__pycache__"):
+                if item.is_dir() and item.name not in (
+                    "node_modules",
+                    ".git",
+                    "venv",
+                    ".venv",
+                    "__pycache__",
+                ):
                     context["directories"].append(item.name)
                 elif item.is_file():
                     context["root_files"].append(item.name)
 
             # 2. Detect package managers & lockfiles
-            if (repo_path / "bun.lock").exists() or (repo_path / "bun.lockb").exists() or (repo_path / "bunfig.toml").exists():
+            if (
+                (repo_path / "bun.lock").exists()
+                or (repo_path / "bun.lockb").exists()
+                or (repo_path / "bunfig.toml").exists()
+            ):
                 context["package_manager"] = "bun"
             elif (repo_path / "pnpm-lock.yaml").exists():
                 context["package_manager"] = "pnpm"
@@ -129,7 +141,9 @@ class AIDockerfileGenerator:
             pkg_json_path = repo_path / "package.json"
             if pkg_json_path.exists():
                 try:
-                    pkg_data = json.loads(pkg_json_path.read_text(encoding="utf-8", errors="ignore"))
+                    pkg_data = json.loads(
+                        pkg_json_path.read_text(encoding="utf-8", errors="ignore")
+                    )
                     context["manifests"]["package.json"] = {
                         "name": pkg_data.get("name"),
                         "type": pkg_data.get("type"),
@@ -147,19 +161,34 @@ class AIDockerfileGenerator:
             req_path = repo_path / "requirements.txt"
             if req_path.exists():
                 try:
-                    req_content = req_path.read_text(encoding="utf-8", errors="ignore").splitlines()[:30]
+                    req_content = req_path.read_text(
+                        encoding="utf-8", errors="ignore"
+                    ).splitlines()[:30]
                     context["manifests"]["requirements.txt"] = [
-                        line.strip() for line in req_content if line.strip() and not line.strip().startswith("#")
+                        line.strip()
+                        for line in req_content
+                        if line.strip() and not line.strip().startswith("#")
                     ]
                 except Exception:
                     pass
 
             pyproject_path = repo_path / "pyproject.toml"
             if pyproject_path.exists():
-                context["manifests"]["pyproject.toml"] = pyproject_path.read_text(encoding="utf-8", errors="ignore")[:500]
+                context["manifests"]["pyproject.toml"] = pyproject_path.read_text(
+                    encoding="utf-8", errors="ignore"
+                )[:500]
 
             # 5. Look for key entrypoints
-            for pattern in ("index.ts", "index.js", "server.ts", "server.js", "main.ts", "main.js", "app.py", "main.py"):
+            for pattern in (
+                "index.ts",
+                "index.js",
+                "server.ts",
+                "server.js",
+                "main.ts",
+                "main.js",
+                "app.py",
+                "main.py",
+            ):
                 matches = list(repo_path.glob(f"**/{pattern}"))
                 filtered = [
                     str(m.relative_to(repo_path))
@@ -192,11 +221,11 @@ DETECTED STACK:
 - Preferred Package Manager: {pkg_manager}
 
 PROJECT DETAILS:
-- Root Files: {', '.join(repo_context.get('root_files', [])[:20])}
-- Root Directories: {', '.join(repo_context.get('directories', [])[:10])}
+- Root Files: {", ".join(repo_context.get("root_files", [])[:20])}
+- Root Directories: {", ".join(repo_context.get("directories", [])[:10])}
 - NPM Scripts: {json.dumps(scripts)}
-- Top Dependencies ({len(deps)} total): {', '.join(deps[:15])}
-- Entrypoint Candidates: {', '.join(entrypoints[:5])}
+- Top Dependencies ({len(deps)} total): {", ".join(deps[:15])}
+- Entrypoint Candidates: {", ".join(entrypoints[:5])}
 
 PROJECT MANIFESTS (truncated):
 {manifests_summary[:2000]}
@@ -217,7 +246,11 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
         cleaned = re.sub(r"\s*```$", "", cleaned.strip())
         cleaned = cleaned.strip()
 
-        lines = [line.strip() for line in cleaned.splitlines() if line.strip() and not line.strip().startswith("#")]
+        lines = [
+            line.strip()
+            for line in cleaned.splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        ]
         if not lines:
             return False, "", "No active Dockerfile instructions found."
 
@@ -232,7 +265,10 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
             return False, "", "Missing WORKDIR instruction."
 
         # Check for CMD or ENTRYPOINT
-        has_cmd = any(line.upper().startswith("CMD ") or line.upper().startswith("ENTRYPOINT ") for line in lines)
+        has_cmd = any(
+            line.upper().startswith("CMD ") or line.upper().startswith("ENTRYPOINT ")
+            for line in lines
+        )
         if not has_cmd:
             return False, "", "Missing CMD or ENTRYPOINT instruction."
 
@@ -272,12 +308,15 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
         Returns Path to the generated Dockerfile if successful and validated,
         or None if generation fails (signaling fallback to heuristic presets).
         """
+
         def _log(msg: str) -> None:
             if log_callback:
                 log_callback(msg)
 
         if not self.is_configured:
-            _log("[AI Agent] Groq API key not configured. Proceeding with deterministic heuristic generator.")
+            _log(
+                "[AI Agent] Groq API key not configured. Proceeding with deterministic heuristic generator."
+            )
             return None
 
         dockerfile_path = Path(scratch_dir) / "Dockerfile"
@@ -289,7 +328,9 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
         framework = detection.get("framework", "Unknown")
         primary_lang = detection.get("primary_language", "Unknown")
 
-        _log(f"[AI Agent] Repository analysis: {primary_lang} / {framework} (Package Manager: {pkg_manager})")
+        _log(
+            f"[AI Agent] Repository analysis: {primary_lang} / {framework} (Package Manager: {pkg_manager})"
+        )
 
         # 2. Build prompt
         user_prompt = self._build_user_prompt(repo_context, detection)
@@ -307,7 +348,9 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
 
         async with httpx.AsyncClient(timeout=settings.groq_timeout) as client:
             for model_name in models_to_try:
-                _log(f"[AI Agent] Synthesizing optimized multi-stage Dockerfile via Groq ({model_name})...")
+                _log(
+                    f"[AI Agent] Synthesizing optimized multi-stage Dockerfile via Groq ({model_name})..."
+                )
                 start_time = time.time()
                 try:
                     payload = {
@@ -329,7 +372,9 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
                             raw_dockerfile = choices[0].get("message", {}).get("content", "")
                             elapsed = round(time.time() - start_time, 2)
                             used_model = model_name
-                            _log(f"[AI Agent] Received Dockerfile synthesis from {model_name} in {elapsed}s.")
+                            _log(
+                                f"[AI Agent] Received Dockerfile synthesis from {model_name} in {elapsed}s."
+                            )
                             break
                     else:
                         logger.warning(
@@ -343,7 +388,9 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
                     continue
 
         if not raw_dockerfile:
-            _log("[AI Agent] Groq service did not return a response. Falling back to heuristic generator.")
+            _log(
+                "[AI Agent] Groq service did not return a response. Falling back to heuristic generator."
+            )
             return None
 
         # 4. Validate synthesized Dockerfile
@@ -357,11 +404,17 @@ Generate a complete, ready-to-run Dockerfile adhering strictly to the system pro
         # 5. Write validated Dockerfile
         try:
             dockerfile_path.write_text(cleaned_dockerfile, encoding="utf-8")
-            _log(f"[AI Agent] Dockerfile verified and saved successfully (Generated via Groq / {used_model}).")
-            logger.info("ai_dockerfile_generated_successfully", model=used_model, path=str(dockerfile_path))
+            _log(
+                f"[AI Agent] Dockerfile verified and saved successfully (Generated via Groq / {used_model})."
+            )
+            logger.info(
+                "ai_dockerfile_generated_successfully", model=used_model, path=str(dockerfile_path)
+            )
             return dockerfile_path
         except Exception as e:
-            _log(f"[AI Agent] Failed to save Dockerfile: {e!s}. Falling back to heuristic generator.")
+            _log(
+                f"[AI Agent] Failed to save Dockerfile: {e!s}. Falling back to heuristic generator."
+            )
             return None
 
 

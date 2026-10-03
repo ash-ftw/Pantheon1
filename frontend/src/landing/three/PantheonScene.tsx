@@ -1,18 +1,18 @@
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, Lightformer, useGLTF } from "@react-three/drei";
-import { useEffect, useMemo, useRef } from "react";
-import * as THREE from "three";
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Environment, Lightformer, useGLTF } from '@react-three/drei';
+import { useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three';
 
 /** Scroll progress 0..1 shared without React re-renders. */
 const scrollRef = { current: 0 };
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   const update = () => {
     const max = document.documentElement.scrollHeight - window.innerHeight;
     scrollRef.current = max > 0 ? window.scrollY / max : 0;
   };
   update();
-  window.addEventListener("scroll", update, { passive: true });
-  window.addEventListener("resize", update);
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
 }
 
 function SuperlaserCannon() {
@@ -28,58 +28,59 @@ function SuperlaserCannon() {
   const energyPulseMeshes = useRef<THREE.Mesh[]>([]);
 
   // Exact geometry based on Death Star model coordinates and reference image
-  const { focalPoint, rimRays, beamCenter, beamQuat, beamLength, pNozzle, dishQuat } = useMemo(() => {
-    const dir = new THREE.Vector3(-0.915605, 0.402078, 0.0).normalize();
-    const u1 = new THREE.Vector3(0.0, 0.0, 1.0);
-    const u2 = new THREE.Vector3().crossVectors(dir, u1).normalize();
-    const nozzlePos = new THREE.Vector3(-3.584, 1.574, 0.002);
-    
-    // Convergence point hovering in space in front of the dish (matches reference image)
-    const fPoint = nozzlePos.clone().addScaledVector(dir, 2.2);
+  const { focalPoint, rimRays, beamCenter, beamQuat, beamLength, pNozzle, dishQuat } =
+    useMemo(() => {
+      const dir = new THREE.Vector3(-0.915605, 0.402078, 0.0).normalize();
+      const u1 = new THREE.Vector3(0.0, 0.0, 1.0);
+      const u2 = new THREE.Vector3().crossVectors(dir, u1).normalize();
+      const nozzlePos = new THREE.Vector3(-3.584, 1.574, 0.002);
 
-    const radius = 1.48;
-    const rays: {
-      start: THREE.Vector3;
-      end: THREE.Vector3;
-      position: THREE.Vector3;
-      quat: THREE.Quaternion;
-      length: number;
-    }[] = [];
+      // Convergence point hovering in space in front of the dish (matches reference image)
+      const fPoint = nozzlePos.clone().addScaledVector(dir, 2.2);
 
-    for (let i = 0; i < 8; i++) {
-      // 8 evenly-spaced emitters around the outer lip of the concave dish
-      const th = (i * 2 * Math.PI) / 8 + Math.PI / 8;
-      const rim = nozzlePos
-        .clone()
-        .addScaledVector(dir, 0.4)
-        .addScaledVector(u1, Math.cos(th) * radius)
-        .addScaledVector(u2, Math.sin(th) * radius);
+      const radius = 1.48;
+      const rays: {
+        start: THREE.Vector3;
+        end: THREE.Vector3;
+        position: THREE.Vector3;
+        quat: THREE.Quaternion;
+        length: number;
+      }[] = [];
 
-      const segment = new THREE.Vector3().subVectors(fPoint, rim);
-      const len = segment.length();
-      const midpoint = rim.clone().addScaledVector(segment, 0.5);
-      const q = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0),
-        segment.clone().normalize(),
-      );
-      rays.push({ start: rim, end: fPoint, position: midpoint, quat: q, length: len });
-    }
+      for (let i = 0; i < 8; i++) {
+        // 8 evenly-spaced emitters around the outer lip of the concave dish
+        const th = (i * 2 * Math.PI) / 8 + Math.PI / 8;
+        const rim = nozzlePos
+          .clone()
+          .addScaledVector(dir, 0.4)
+          .addScaledVector(u1, Math.cos(th) * radius)
+          .addScaledVector(u2, Math.sin(th) * radius);
 
-    const bLength = 55.0;
-    const bCenter = fPoint.clone().addScaledVector(dir, bLength / 2);
-    const bQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-    const dQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+        const segment = new THREE.Vector3().subVectors(fPoint, rim);
+        const len = segment.length();
+        const midpoint = rim.clone().addScaledVector(segment, 0.5);
+        const q = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          segment.clone().normalize(),
+        );
+        rays.push({ start: rim, end: fPoint, position: midpoint, quat: q, length: len });
+      }
 
-    return {
-      focalPoint: fPoint,
-      rimRays: rays,
-      beamCenter: bCenter,
-      beamQuat: bQuat,
-      beamLength: bLength,
-      pNozzle: nozzlePos,
-      dishQuat: dQuat,
-    };
-  }, []);
+      const bLength = 55.0;
+      const bCenter = fPoint.clone().addScaledVector(dir, bLength / 2);
+      const bQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      const dQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir);
+
+      return {
+        focalPoint: fPoint,
+        rimRays: rays,
+        beamCenter: bCenter,
+        beamQuat: bQuat,
+        beamLength: bLength,
+        pNozzle: nozzlePos,
+        dishQuat: dQuat,
+      };
+    }, []);
 
   useFrame((state) => {
     // Cinematic Slowed-Down 18-second Cycle:
@@ -111,7 +112,7 @@ function SuperlaserCannon() {
       }
       if (nozzleLightRef.current) {
         nozzleLightRef.current.intensity = 0.5 + Math.sin(et * 2.5) * 0.2;
-        nozzleLightRef.current.color.set("#10b981");
+        nozzleLightRef.current.color.set('#10b981');
       }
 
       emitterDotMeshes.current.forEach((mesh) => {
@@ -157,7 +158,7 @@ function SuperlaserCannon() {
 
       if (nozzleLightRef.current) {
         nozzleLightRef.current.intensity = 1.0 + p * 3.0;
-        nozzleLightRef.current.color.set("#34d399");
+        nozzleLightRef.current.color.set('#34d399');
       }
 
       tributaryMeshes.current.forEach((mesh) => {
@@ -210,7 +211,7 @@ function SuperlaserCannon() {
           if (pulseMesh) {
             pulseMesh.visible = true;
             // Travel from rim to focal point
-            const travelProgress = ((et * 1.8 + bead * 0.33 + rayIdx * 0.125) % 1.0);
+            const travelProgress = (et * 1.8 + bead * 0.33 + rayIdx * 0.125) % 1.0;
             pulseMesh.position.copy(ray.start).lerp(ray.end, travelProgress);
             const beadScale = 0.8 + Math.sin(travelProgress * Math.PI) * 0.5;
             pulseMesh.scale.setScalar(beadScale);
@@ -229,7 +230,7 @@ function SuperlaserCannon() {
 
       if (nozzleLightRef.current) {
         nozzleLightRef.current.intensity = 3.0 + p * 7.0 + Math.random() * 1.5;
-        nozzleLightRef.current.color.set("#10b981");
+        nozzleLightRef.current.color.set('#10b981');
       }
     }
 
@@ -259,7 +260,7 @@ function SuperlaserCannon() {
           const pulseMesh = energyPulseMeshes.current[pulseIdx++];
           if (pulseMesh) {
             pulseMesh.visible = true;
-            const travelProgress = ((et * 3.2 + bead * 0.33 + rayIdx * 0.125) % 1.0);
+            const travelProgress = (et * 3.2 + bead * 0.33 + rayIdx * 0.125) % 1.0;
             pulseMesh.position.copy(ray.start).lerp(ray.end, travelProgress);
             pulseMesh.scale.setScalar(1.2);
             (pulseMesh.material as THREE.MeshBasicMaterial).opacity = 1.0;
@@ -277,7 +278,7 @@ function SuperlaserCannon() {
 
       if (nozzleLightRef.current) {
         nozzleLightRef.current.intensity = 10.0 + p * 8.0 + Math.random() * 3.0;
-        nozzleLightRef.current.color.set("#a7f3d0");
+        nozzleLightRef.current.color.set('#a7f3d0');
       }
     }
 
@@ -332,10 +333,8 @@ function SuperlaserCannon() {
 
       // Blinding illumination flash across space and Death Star hull
       if (nozzleLightRef.current) {
-        nozzleLightRef.current.intensity = isPeak
-          ? 24.0 + Math.random() * 6.0
-          : (1 - bp) * 20.0;
-        nozzleLightRef.current.color.set("#10b981");
+        nozzleLightRef.current.intensity = isPeak ? 24.0 + Math.random() * 6.0 : (1 - bp) * 20.0;
+        nozzleLightRef.current.color.set('#10b981');
       }
     }
 
@@ -375,7 +374,7 @@ function SuperlaserCannon() {
 
       if (nozzleLightRef.current) {
         nozzleLightRef.current.intensity = Math.max(0.5, (1 - cp) * 5.0);
-        nozzleLightRef.current.color.set("#059669");
+        nozzleLightRef.current.color.set('#059669');
       }
     }
   });
@@ -487,12 +486,7 @@ function SuperlaserCannon() {
       </mesh>
 
       {/* Main Superlaser Blast Beam - Blinding White-Hot Core */}
-      <mesh
-        ref={beamCoreRef}
-        position={beamCenter}
-        quaternion={beamQuat}
-        visible={false}
-      >
+      <mesh ref={beamCoreRef} position={beamCenter} quaternion={beamQuat} visible={false}>
         <cylinderGeometry args={[0.16, 0.16, beamLength, 16, 1, true]} />
         <meshBasicMaterial
           color="#ffffff"
@@ -504,12 +498,7 @@ function SuperlaserCannon() {
       </mesh>
 
       {/* Main Superlaser Blast Beam - Intense Emerald Plasma Sheath */}
-      <mesh
-        ref={beamGlowRef}
-        position={beamCenter}
-        quaternion={beamQuat}
-        visible={false}
-      >
+      <mesh ref={beamGlowRef} position={beamCenter} quaternion={beamQuat} visible={false}>
         <cylinderGeometry args={[0.62, 0.62, beamLength, 16, 1, true]} />
         <meshBasicMaterial
           color="#10b981"
@@ -534,7 +523,7 @@ function SuperlaserCannon() {
 
 function DeathStarModel() {
   const group = useRef<THREE.Group>(null);
-  const { scene } = useGLTF("/models/death-star/death_star.glb");
+  const { scene } = useGLTF('/models/death-star/death_star.glb');
   const clonedScene = useMemo(() => scene.clone(), [scene]);
 
   useEffect(() => {
@@ -548,8 +537,8 @@ function DeathStarModel() {
           mat.roughness = 0.82;
           mat.metalness = 0.28;
           // Accentuate panel textures and surface details
-          if (mat.name === "Material.001" && mat.emissiveMap) {
-            mat.emissive = new THREE.Color("#34d399");
+          if (mat.name === 'Material.001' && mat.emissiveMap) {
+            mat.emissive = new THREE.Color('#34d399');
             mat.emissiveIntensity = 0.45;
           }
           mesh.material = mat;
@@ -570,8 +559,10 @@ function DeathStarModel() {
       const targetY = Math.PI * 0.42 + t * 0.04 + x * 0.35 + s * Math.PI * 1.6;
       const targetX = -0.12 - y * 0.25 + s * 0.35;
 
-      group.current.rotation.y += (targetY - group.current.rotation.y) * (1 - Math.exp(-2.5 * delta));
-      group.current.rotation.x += (targetX - group.current.rotation.x) * (1 - Math.exp(-2.5 * delta));
+      group.current.rotation.y +=
+        (targetY - group.current.rotation.y) * (1 - Math.exp(-2.5 * delta));
+      group.current.rotation.x +=
+        (targetX - group.current.rotation.x) * (1 - Math.exp(-2.5 * delta));
 
       // Space station zero-G subtle float
       group.current.position.y = Math.sin(t * 0.45) * 0.08 - s * 0.55;
@@ -594,7 +585,7 @@ function DeathStarModel() {
   );
 }
 
-useGLTF.preload("/models/death-star/death_star.glb");
+useGLTF.preload('/models/death-star/death_star.glb');
 
 function Nodes({ count = 16 }: { count?: number }) {
   const group = useRef<THREE.Group>(null);
@@ -644,17 +635,26 @@ function Nodes({ count = 16 }: { count?: number }) {
   );
 }
 
+function getDustPositions(count: number): Float32Array {
+  const arr = new Float32Array(count * 3);
+  let seed = 42;
+  for (let i = 0; i < count; i++) {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    const r1 = seed / 4294967296;
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    const r2 = seed / 4294967296;
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    const r3 = seed / 4294967296;
+    arr[i * 3] = (r1 - 0.5) * 26;
+    arr[i * 3 + 1] = (r2 - 0.5) * 16;
+    arr[i * 3 + 2] = (r3 - 0.5) * 18;
+  }
+  return arr;
+}
+
 function Dust({ count = 500 }: { count?: number }) {
   const points = useRef<THREE.Points>(null);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 26;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 16;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 18;
-    }
-    return arr;
-  }, [count]);
+  const positions = useMemo(() => getDustPositions(count), [count]);
 
   useFrame((_, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
@@ -672,13 +672,13 @@ function Dust({ count = 500 }: { count?: number }) {
 }
 
 function CameraRig() {
-  const { camera } = useThree();
   useFrame((state, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const k = 1 - Math.exp(-2.2 * delta);
-    camera.position.x += (state.pointer.x * 1.1 - camera.position.x) * k;
-    camera.position.y += (state.pointer.y * 0.7 + 0.3 - camera.position.y) * k;
-    camera.lookAt(0, 0, 0);
+    const cam = state.camera;
+    cam.position.x += (state.pointer.x * 1.1 - cam.position.x) * k;
+    cam.position.y += (state.pointer.y * 0.7 + 0.3 - cam.position.y) * k;
+    cam.lookAt(0, 0, 0);
   });
   return null;
 }

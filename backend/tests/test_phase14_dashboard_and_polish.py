@@ -214,7 +214,7 @@ async def test_notification_service_crud():
 
     success = await service.mark_as_read(session, notif.id, org_id)
     assert success is True
-    assert getattr(notif, "read") is True
+    assert notif.read is True
 
 
 @pytest.mark.asyncio
