@@ -217,17 +217,18 @@ async def test_ai_status_endpoint():
     app.dependency_overrides[get_current_user] = lambda: test_user
 
     try:
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get(
-                "/api/ai/status",
-                headers={"Authorization": f"Bearer {token}"},
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert data["provider"] == "nvidia_nim"
-            assert data["model"] == "nvidia/nemotron-3.5-lightning-30b-a3b"
-            assert data["thinking_enabled"] is True
-            assert data["configured"] is True
+        with patch.object(settings, "nvidia_nim_api_key", "test-key"):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get(
+                    "/api/ai/status",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+                assert response.status_code == 200
+                data = response.json()
+                assert data["provider"] == "nvidia_nim"
+                assert data["model"] == "nvidia/nemotron-3.5-lightning-30b-a3b"
+                assert data["thinking_enabled"] is True
+                assert data["configured"] is True
     finally:
         app.dependency_overrides.pop(get_current_user, None)
