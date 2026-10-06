@@ -425,17 +425,20 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
     if not profile["specs_found"] and app_obj:
         from app.services.demo_workloads import get_demo_openapi_spec, match_demo_app_key
 
-        demo_key = match_demo_app_key(app_obj.name, app_obj.source_url)
-        if demo_key:
-            demo_spec = get_demo_openapi_spec(demo_key)
-            if demo_spec:
-                profile["specs_found"].append("/openapi.json")
-                _extract_endpoints_from_spec(demo_spec, profile)
-                logger.info(
-                    "endpoint_discovery_preset_spec_applied",
-                    demo_key=demo_key,
-                    endpoint_count=len(profile["endpoints"]),
-                )
+        app_name = getattr(app_obj, "name", None)
+        if isinstance(app_name, str):
+            app_url = getattr(app_obj, "source_url", None)
+            demo_key = match_demo_app_key(app_name, app_url if isinstance(app_url, str) else None)
+            if demo_key:
+                demo_spec = get_demo_openapi_spec(demo_key)
+                if demo_spec:
+                    profile["specs_found"].append("/openapi.json")
+                    _extract_endpoints_from_spec(demo_spec, profile)
+                    logger.info(
+                        "endpoint_discovery_preset_spec_applied",
+                        demo_key=demo_key,
+                        endpoint_count=len(profile["endpoints"]),
+                    )
 
     return profile
 

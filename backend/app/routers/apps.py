@@ -507,12 +507,39 @@ async def preview_app(
     if effective_port is None:
         effective_port = 8085
 
-    target_host = os.getenv("PANTHEON_TARGET_HOST", "localhost")
-    target_url = f"http://{target_host}:{effective_port}/"
-
     # Derive the external host the client used to reach Pantheon (for direct links and base tags)
     client_host = request.headers.get("x-forwarded-host") or request.url.hostname or "localhost"
     client_hostname = client_host.split(":")[0]
+
+    def _render_fallback_page() -> str:
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pantheon Live App Preview</title>
+    <style>
+        body {{ background: #07090d; color: #e2e8f0; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }}
+        .card {{ background: #0d1117; border: 1px solid #00d4aa; padding: 40px; border-radius: 16px; max-width: 500px; box-shadow: 0 10px 30px rgba(0,212,170,0.15); }}
+        h2 {{ color: #00d4aa; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }}
+        p {{ color: #94a3b8; font-size: 14px; line-height: 1.6; }}
+        .btn {{ display: inline-block; background: #00d4aa; color: #07090d; font-weight: 700; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px; font-size: 13px; }}
+        .btn:hover {{ background: #00b38f; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>⚡ Pantheon App Instance Running</h2>
+        <p>Your application is deployed and active in the tenant cluster on port <strong>{effective_port}</strong>.</p>
+        <a href="http://{client_hostname}:{effective_port}" target="_blank" class="btn">Launch Direct Window (http://{client_hostname}:{effective_port})</a>
+    </div>
+</body>
+</html>"""
+
+    if not app_obj:
+        return Response(content=_render_fallback_page(), status_code=200, media_type="text/html")
+
+    target_host = os.getenv("PANTHEON_TARGET_HOST", "localhost")
+    target_url = f"http://{target_host}:{effective_port}/"
 
     async with httpx.AsyncClient(timeout=3.0) as client:
         try:
@@ -572,29 +599,9 @@ async def preview_app(
             )
         except Exception:
             # Fallback mock preview page if container server is offline
-            fallback_html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Pantheon Live App Preview</title>
-    <style>
-        body {{ background: #07090d; color: #e2e8f0; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }}
-        .card {{ background: #0d1117; border: 1px solid #00d4aa; padding: 40px; border-radius: 16px; max-width: 500px; box-shadow: 0 10px 30px rgba(0,212,170,0.15); }}
-        h2 {{ color: #00d4aa; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }}
-        p {{ color: #94a3b8; font-size: 14px; line-height: 1.6; }}
-        .btn {{ display: inline-block; background: #00d4aa; color: #07090d; font-weight: 700; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 16px; font-size: 13px; }}
-        .btn:hover {{ background: #00b38f; }}
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>⚡ Pantheon App Instance Running</h2>
-        <p>Your application is deployed and active in the tenant cluster on port <strong>{effective_port}</strong>.</p>
-        <a href="http://{client_hostname}:{effective_port}" target="_blank" class="btn">Launch Direct Window (http://{client_hostname}:{effective_port})</a>
-    </div>
-</body>
-</html>"""
-            return Response(content=fallback_html, status_code=200, media_type="text/html")
+            return Response(
+                content=_render_fallback_page(), status_code=200, media_type="text/html"
+            )
 
 
 @router.api_route(

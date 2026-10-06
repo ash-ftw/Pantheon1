@@ -404,7 +404,11 @@ class AppRuntimeService:
             except Exception:
                 pass
 
-        if not has_explicit_exposed_port and app.target_profile and "exposed_ports" in app.target_profile:
+        if (
+            not has_explicit_exposed_port
+            and app.target_profile
+            and "exposed_ports" in app.target_profile
+        ):
             ports = app.target_profile.get("exposed_ports", [])
             if ports and isinstance(ports, list) and len(ports) > 0:
                 p_val = ports[0]
