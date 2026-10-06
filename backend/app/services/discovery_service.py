@@ -36,9 +36,12 @@ logger = get_logger(__name__)
 
 
 def _get_app_exposed_port(target_profile: dict[str, Any] | None) -> int:
-    """Return the first exposed port from the target profile, defaulting to 8085."""
-    if target_profile and target_profile.get("exposed_ports"):
-        return target_profile["exposed_ports"][0]
+    """Return the accessible port from the target profile, preferring host_port if mapped locally."""
+    if target_profile:
+        if target_profile.get("host_port"):
+            return int(target_profile["host_port"])
+        if target_profile.get("exposed_ports"):
+            return target_profile["exposed_ports"][0]
     return 8085
 
 
@@ -366,6 +369,7 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
     probe_host = os.getenv("PANTHEON_TARGET_HOST") or getattr(
         settings, "target_probe_host", "localhost"
     )
+    app_obj = None
     try:
         async with async_session_factory() as db:
             res = await db.execute(select(App).where(App.id == app_id))
@@ -416,6 +420,22 @@ async def discover_endpoints(app_id: uuid.UUID, org_id: uuid.UUID) -> dict[str, 
             except Exception as e:
                 logger.debug("prance_parse_failed", path=path, error=str(e))
                 continue
+
+    # Fallback: preset demo application spec detection if probe yielded no spec
+    if not profile["specs_found"] and app_obj:
+        from app.services.demo_workloads import get_demo_openapi_spec, match_demo_app_key
+
+        demo_key = match_demo_app_key(app_obj.name, app_obj.source_url)
+        if demo_key:
+            demo_spec = get_demo_openapi_spec(demo_key)
+            if demo_spec:
+                profile["specs_found"].append("/openapi.json")
+                _extract_endpoints_from_spec(demo_spec, profile)
+                logger.info(
+                    "endpoint_discovery_preset_spec_applied",
+                    demo_key=demo_key,
+                    endpoint_count=len(profile["endpoints"]),
+                )
 
     return profile
 
@@ -479,12 +499,12 @@ def _classify_endpoint(path: str, method: str, details: dict) -> str:
 
     # Likely admin paths
     admin_kw = ["admin", "manage", "delete", "drop", "configure", "settings"]
-    if any(kw in path_lower for kw in admin_kw):
+    if any(kw in path_lower or kw in summary_lower for kw in admin_kw):
         return "likely_admin"
 
     # Likely auth endpoints
     auth_kw = ["login", "logout", "auth", "token", "signup", "signin", "credentials", "register"]
-    if any(kw in path_lower for kw in auth_kw):
+    if any(kw in path_lower or kw in summary_lower for kw in auth_kw):
         return "likely_auth"
 
     # Default to public

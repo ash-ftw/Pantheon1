@@ -278,6 +278,50 @@ async def test_discover_endpoints_mocked_http() -> None:
         assert len(result["classification"]["public"]) == 1
 
 
+@pytest.mark.asyncio
+async def test_discover_endpoints_preset_demo_fallback() -> None:
+    """Verify endpoint discovery falls back to preset demo spec when HTTP probe fails."""
+    app_id = uuid.uuid4()
+    org_id = uuid.uuid4()
+
+    mock_app = MagicMock()
+    mock_app.name = "BankCore FinTech API Gateway"
+    mock_app.source_url = "https://github.com/pantheon-cyber/demo-fintech-gateway.git"
+    mock_app.target_profile = {"exposed_ports": [8085]}
+
+    mock_session = AsyncMock()
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_app
+    mock_session.execute.return_value = mock_result
+
+    with (
+        patch("app.services.discovery_service.async_session_factory") as mock_session_factory,
+        patch("httpx.AsyncClient.get", side_effect=Exception("Connection refused")),
+    ):
+        mock_session_factory.return_value.__aenter__.return_value = mock_session
+
+        result = await discover_endpoints(app_id, org_id)
+
+        assert len(result["specs_found"]) == 1
+        assert result["specs_found"][0] == "/openapi.json"
+        assert len(result["endpoints"]) >= 5
+        paths = [ep["path"] for ep in result["endpoints"]]
+        assert "/api/v1/accounts" in paths
+        assert "/api/v1/accounts/{id}" in paths
+        assert "/api/v1/accounts/{id}/transfer" in paths
+        assert "/api/v1/auth/token" in paths
+        assert "/api/v1/admin/audit-logs" in paths
+        assert "/api/v1/kyc/document/upload" in paths
+        assert "/api/v1/transactions/search" in paths
+
+        # Verify classifications exist across categories
+        assert len(result["classification"]["likely_auth"]) >= 1
+        assert len(result["classification"]["likely_admin"]) >= 1
+        assert len(result["classification"]["upload"]) >= 1
+        assert len(result["classification"]["search"]) >= 1
+        assert len(result["classification"]["public"]) >= 1
+
+
 def test_discovery_pydantic_schemas() -> None:
     """Verify Pydantic response models deserialize properly."""
     target_data = {
