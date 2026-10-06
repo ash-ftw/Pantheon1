@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -648,3 +649,370 @@ def write_demo_files(demo_key: str, target_dir: str | Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
     for fname, content in files.items():
         (p / fname).write_text(content, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# DEMO OPENAPI SPECIFICATIONS (Endpoint Discovery PRD Module 6)
+# ---------------------------------------------------------------------------
+
+DEMO_OPENAPI_SPECS: dict[str, dict[str, Any]] = {
+    "juice-shop": {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "OWASP Juice Shop (Micro Edition)",
+            "version": "1.4.0",
+            "description": "Intentionally vulnerable juice shop e-commerce REST API.",
+        },
+        "paths": {
+            "/api/products": {
+                "get": {
+                    "summary": "List juice inventory",
+                    "description": "Retrieve all beverage and merchandise products.",
+                    "parameters": [],
+                }
+            },
+            "/api/products/search": {
+                "get": {
+                    "summary": "Search products catalog",
+                    "description": "Catalog search vulnerable to SQL Injection (CWE-89).",
+                    "parameters": [
+                        {
+                            "name": "q",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Product search query",
+                        }
+                    ],
+                }
+            },
+            "/api/users/{id}": {
+                "get": {
+                    "summary": "Retrieve customer profile",
+                    "description": "Fetch user record by ID. Vulnerable to BOLA / IDOR (CWE-639).",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "integer"},
+                            "description": "User identifier",
+                        }
+                    ],
+                }
+            },
+            "/api/users/login": {
+                "post": {
+                    "summary": "Customer and staff authentication",
+                    "description": "Authenticate user credentials. Vulnerable to SQLi auth bypass and weak JWT.",
+                    "parameters": [],
+                }
+            },
+            "/api/reviews": {
+                "post": {
+                    "summary": "Submit product review",
+                    "description": "Post customer review. Vulnerable to Reflected/Stored XSS (CWE-79).",
+                    "parameters": [],
+                }
+            },
+            "/api/files/upload": {
+                "post": {
+                    "summary": "Upload profile avatar image",
+                    "description": "Upload customer avatar or attachment.",
+                    "parameters": [
+                        {
+                            "name": "file",
+                            "in": "formData",
+                            "required": True,
+                            "schema": {"type": "file"},
+                            "description": "Avatar image file",
+                        }
+                    ],
+                }
+            },
+            "/api/admin/system/metrics": {
+                "get": {
+                    "summary": "Admin system diagnostic metrics",
+                    "description": "Privileged administration diagnostic telemetry.",
+                    "parameters": [],
+                }
+            },
+            "/health": {
+                "get": {
+                    "summary": "Service health check",
+                    "description": "Microservice liveness probe.",
+                    "parameters": [],
+                }
+            },
+        },
+    },
+    "fintech": {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "BankCore FinTech API Gateway",
+            "version": "2.3.1",
+            "description": "Payment Processing & Financial Ledger API Gateway with corporate and retail services.",
+        },
+        "paths": {
+            "/api/v1/accounts": {
+                "get": {
+                    "summary": "List banking accounts",
+                    "description": "Retrieve corporate and retail accounts in the ledger.",
+                    "parameters": [],
+                }
+            },
+            "/api/v1/accounts/{id}": {
+                "get": {
+                    "summary": "Get account details and balance",
+                    "description": "Retrieve balance and owner for a specific account. Vulnerable to BOLA (CWE-639).",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Account identifier",
+                        }
+                    ],
+                }
+            },
+            "/api/v1/accounts/{id}/transfer": {
+                "post": {
+                    "summary": "Execute funds transfer",
+                    "description": "Transfer funds between accounts without authorization checks (BOLA / CWE-862).",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Source account ID",
+                        }
+                    ],
+                }
+            },
+            "/api/v1/auth/token": {
+                "post": {
+                    "summary": "Request OAuth2 Bearer token",
+                    "description": "API client credentials authentication exchange.",
+                    "parameters": [],
+                }
+            },
+            "/api/v1/admin/audit-logs": {
+                "get": {
+                    "summary": "Ledger compliance audit log export",
+                    "description": "Administrative ledger audit trail inspection.",
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer"},
+                            "description": "Maximum records to return",
+                        }
+                    ],
+                }
+            },
+            "/api/v1/kyc/document/upload": {
+                "post": {
+                    "summary": "Upload KYC proof document",
+                    "description": "Customer identity verification document upload.",
+                    "parameters": [
+                        {
+                            "name": "account_id",
+                            "in": "formData",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Associated account ID",
+                        }
+                    ],
+                }
+            },
+            "/api/v1/transactions/search": {
+                "get": {
+                    "summary": "Search transactions by query or counterparty",
+                    "description": "Filter ledger transaction history.",
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Search term or counterparty",
+                        }
+                    ],
+                }
+            },
+            "/health": {
+                "get": {
+                    "summary": "Gateway health check",
+                    "description": "Operational status and database probe.",
+                    "parameters": [],
+                }
+            },
+        },
+    },
+    "cloudstore": {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "CloudStore E-Commerce Platform",
+            "version": "3.1.0",
+            "description": "Multi-tier cloud e-commerce microservices with product and order management.",
+        },
+        "paths": {
+            "/api/products": {
+                "get": {
+                    "summary": "Browse catalog products",
+                    "description": "List storefront retail products.",
+                    "parameters": [],
+                }
+            },
+            "/api/products/search": {
+                "get": {
+                    "summary": "Filter products by keyword or category",
+                    "description": "Search catalog items.",
+                    "parameters": [
+                        {
+                            "name": "q",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Search keyword",
+                        }
+                    ],
+                }
+            },
+            "/api/orders/{id}": {
+                "get": {
+                    "summary": "Inspect order invoice",
+                    "description": "Fetch order details by ID without ownership validation (IDOR / CWE-639).",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Order identifier",
+                        }
+                    ],
+                }
+            },
+            "/api/media/fetch": {
+                "post": {
+                    "summary": "Upload and preview remote media",
+                    "description": "Fetch external preview image. Vulnerable to Server-Side Request Forgery SSRF (CWE-918).",
+                    "parameters": [
+                        {
+                            "name": "url",
+                            "in": "query",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Target media URL",
+                        }
+                    ],
+                }
+            },
+            "/api/admin/panel": {
+                "get": {
+                    "summary": "Merchant administrator settings",
+                    "description": "Administrative console panel (vulnerable to cookie tampering).",
+                    "parameters": [],
+                }
+            },
+            "/api/reports/orders": {
+                "get": {
+                    "summary": "Export transaction order reports",
+                    "description": "Unauthenticated order report ledger dump.",
+                    "parameters": [],
+                }
+            },
+            "/api/auth/login": {
+                "post": {
+                    "summary": "Storefront customer login",
+                    "description": "Customer session authentication.",
+                    "parameters": [],
+                }
+            },
+            "/health": {
+                "get": {
+                    "summary": "Storefront health check",
+                    "description": "Platform health probe.",
+                    "parameters": [],
+                }
+            },
+        },
+    },
+    "devops": {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "DevOps Task Pipeline Worker",
+            "version": "1.0.8",
+            "description": "Distributed CI/CD task runner and build execution agent.",
+        },
+        "paths": {
+            "/api/build/execute": {
+                "post": {
+                    "summary": "Execute admin pipeline build task",
+                    "description": "Runs shell commands without sanitization. Vulnerable to RCE (CWE-78).",
+                    "parameters": [],
+                }
+            },
+            "/env": {
+                "get": {
+                    "summary": "Inspect worker environment variables",
+                    "description": "Dump environment secrets and pipeline credentials (CWE-214).",
+                    "parameters": [],
+                }
+            },
+            "/api/artifacts/{path}": {
+                "get": {
+                    "summary": "Download build artifacts bundle",
+                    "description": "Retrieve artifact file by path. Vulnerable to path traversal (CWE-22).",
+                    "parameters": [
+                        {
+                            "name": "path",
+                            "in": "path",
+                            "required": True,
+                            "schema": {"type": "string"},
+                            "description": "Artifact relative path",
+                        }
+                    ],
+                }
+            },
+            "/api/logs/search": {
+                "get": {
+                    "summary": "Search build execution logs",
+                    "description": "Query runner terminal logs.",
+                    "parameters": [
+                        {
+                            "name": "filter",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "string"},
+                            "description": "Log filter string",
+                        }
+                    ],
+                }
+            },
+            "/api/auth/token": {
+                "post": {
+                    "summary": "Worker agent token exchange",
+                    "description": "Agent registration authentication.",
+                    "parameters": [],
+                }
+            },
+            "/api/status": {
+                "get": {
+                    "summary": "Agent status and system info",
+                    "description": "Worker daemon heartbeat and system info.",
+                    "parameters": [],
+                }
+            },
+        },
+    },
+}
+
+
+def get_demo_openapi_spec(demo_key: str) -> dict[str, Any] | None:
+    """Return OpenAPI 3.0 specification dict for preset demo application."""
+    return DEMO_OPENAPI_SPECS.get(demo_key)
