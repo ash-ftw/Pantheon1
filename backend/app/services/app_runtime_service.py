@@ -354,6 +354,36 @@ class AppRuntimeService:
                 except Exception as get_err:
                     logger.warning("get_built_demo_image_failed", error=str(get_err))
 
+        if img is None:
+            # 3. Fuzzy check: if any locally built image matches this app name, tag it
+            try:
+                all_images = await asyncio.to_thread(client.images.list)
+                app_token = app.name.lower().replace(" ", "-")
+                for candidate in all_images:
+                    tags = candidate.tags or []
+                    for t in tags:
+                        t_lower = t.lower()
+                        if app_token in t_lower or ("app-" + app_token) in t_lower:
+                            logger.info(
+                                "re_tagging_matched_local_image",
+                                matched_tag=t,
+                                target_tag=current_image_tag,
+                            )
+                            await asyncio.to_thread(candidate.tag, current_image_tag)
+                            img = await asyncio.to_thread(client.images.get, current_image_tag)
+                            break
+                    if img is not None:
+                        break
+            except Exception as match_err:
+                logger.warning("fuzzy_image_match_failed", error=str(match_err))
+
+        if img is None:
+            raise ValueError(
+                f"Container image '{current_image_tag}' was not found locally or in registry (localhost:5000). "
+                "Please rebuild or redeploy the application."
+            )
+
+        has_explicit_exposed_port = False
         if img is not None:
             try:
                 img_config = img.attrs.get("Config") or {}
@@ -362,6 +392,7 @@ class AppRuntimeService:
                     for port_spec in img_exposed.keys():
                         port_num = int(port_spec.split("/")[0])
                         container_port = port_num
+                        has_explicit_exposed_port = True
                         break
 
                 cmd = img_config.get("Cmd")
@@ -373,7 +404,7 @@ class AppRuntimeService:
             except Exception:
                 pass
 
-        if container_port == 8085 and app.target_profile and "exposed_ports" in app.target_profile:
+        if not has_explicit_exposed_port and app.target_profile and "exposed_ports" in app.target_profile:
             ports = app.target_profile.get("exposed_ports", [])
             if ports and isinstance(ports, list) and len(ports) > 0:
                 p_val = ports[0]
