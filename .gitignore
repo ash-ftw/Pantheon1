@@ -54,3 +54,4 @@ logs/
 # Generated local data & exports
 backend/data/
 data/
+documentation/
