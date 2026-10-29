@@ -1,0 +1,54 @@
+name: 🐛 Bug Report
+description: Report a reproducible bug or defect in Pantheon
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug report! Please provide as much detail as possible to help us triage and fix the issue.
+        *If this is a security vulnerability, please refer to our [Security Policy](../../SECURITY.md).*
+  - type: input
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which part of Pantheon is affected?
+      placeholder: e.g. Backend API, Ingestion Pipeline, Live Preview Proxy, Frontend XYFlow Attack Graph
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior.
+      placeholder: |
+        1. Navigate to '...'
+        2. Click on '...'
+        3. Observe error '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs & Screenshots
+      description: Relevant console logs, backend traceback, or screenshots.
+      render: shell
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Info
+      description: OS, browser version, Docker version, Python version.
+      placeholder: Windows 11 / Ubuntu 22.04 / Docker 26.1 / Node 20 / Chrome 124
