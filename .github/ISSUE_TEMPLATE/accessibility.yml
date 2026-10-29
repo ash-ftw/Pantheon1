@@ -1,0 +1,35 @@
+name: ♿ Accessibility Barrier
+description: Report an accessibility barrier or assistive technology issue
+labels: ["accessibility", "a11y"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We are dedicated to making Pantheon accessible to everyone. See our [Accessibility Statement](../../ACCESSIBILITY.md).
+  - type: input
+    id: component-url
+    attributes:
+      label: Page or Component
+      description: Where did you encounter this barrier?
+      placeholder: e.g. Route Browser, Live Preview iframe, Findings Table
+    validations:
+      required: true
+  - type: textarea
+    id: barrier-description
+    attributes:
+      label: Description of Accessibility Barrier
+      description: Explain the barrier you encountered and how it impacted your usage.
+    validations:
+      required: true
+  - type: textarea
+    id: assistive-tech
+    attributes:
+      label: Assistive Technology & Browser Details
+      description: E.g., NVDA 2024.1 with Chrome 124, keyboard-only navigation on macOS Safari, VoiceOver on iOS.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-experience
+    attributes:
+      label: Expected Accessible Behavior
+      description: How should this component behave to be accessible?

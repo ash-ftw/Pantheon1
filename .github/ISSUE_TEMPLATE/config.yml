@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🛡️ Security Vulnerability Report
+    url: https://github.com/ash-ftw/Pantheon1/blob/main/SECURITY.md
+    about: Please report security vulnerabilities privately via our security policy.
+  - name: ♿ Accessibility Policy
+    url: https://github.com/ash-ftw/Pantheon1/blob/main/ACCESSIBILITY.md
+    about: Learn more about Pantheon's accessibility commitments and standards.

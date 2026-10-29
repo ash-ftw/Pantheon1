@@ -6,6 +6,9 @@
 [![React 19](https://img.shields.io/badge/react-19-61dafb.svg)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-blueviolet)](ACCESSIBILITY.md)
 
 **Pantheon** is a modern, enterprise-grade B2B Cyber Range and Security Testing Platform. It allows security teams and developers to deploy target web applications into sandboxed environments, execute simulated attack scenarios through ephemeral route brokers, visualize real-time attack graphs, observe system telemetry, and generate actionable defense remediations powered by AI.
 
@@ -31,6 +34,8 @@
 - [API Endpoints Overview](#-api-endpoints-overview)
 - [Project Directory Structure](#-project-directory-structure)
 - [Troubleshooting & FAQ](#-troubleshooting--faq)
+- [Community & Contributing](#-community--contributing)
+- [License](#-license)
 
 ---
 
@@ -473,6 +478,17 @@ Pantheon1/
 
 ### 5. AI Dockerfile Generation Fallback
 - If `NVIDIA_NIM_API_KEY` or `GROQ_API_KEY` is not provided, Pantheon automatically falls back to hardened deterministic Dockerfile templates matching the detected language and framework without interrupting the onboarding flow.
+
+---
+
+## 🤝 Community & Contributing
+
+We welcome contributions from developers, security researchers, and accessibility advocates!
+
+- **[Contributing Guide](CONTRIBUTING.md)**: Setup, workflows, coding style, and pull request guidelines.
+- **[Code of Conduct](CODE_OF_CONDUCT.md)**: Community standards and enforcement based on Contributor Covenant v2.1.
+- **[Security Policy](SECURITY.md)**: Responsible disclosure instructions and vulnerability reporting SLAs.
+- **[Accessibility Statement](ACCESSIBILITY.md)**: WCAG 2.1 AA commitments, known limitations, and accessibility barrier reporting.
 
 ---
 
